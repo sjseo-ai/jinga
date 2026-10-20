@@ -1,0 +1,2306 @@
+<title>진가</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    --bg: #F1F3F5;
+    --bg-alt: #E7EAEE;
+    --surface: #FFFFFF;
+    --surface-2: #F7F8FA;
+    --ink: #121729;
+    --ink-soft: #4A5164;
+    --ink-faint: #7A8194;
+    --border: #D9DDE3;
+    --border-strong: #C2C8D2;
+
+    --navy: #1E2A47;
+    --navy-fg: #F4F6FA;
+    --selection-fg: #0F1830;
+    --accent: #A9762C;
+    --accent-ink: #8A5F20;
+    --accent-soft: #F1E3C7;
+    --line: #35798A;
+    --line-soft: #DCEBEE;
+
+    --good: #2E7D5B;
+    --warn: #B4552B;
+    --data-kb: #4A6FA5;
+
+    /* sequential ramp — value-index choropleth, low→high, validated (ordinal, light). Navy-blue, matches --navy brand color for a data/financial feel. */
+    --seq-0: #8FB3D6;
+    --seq-1: #7099C4;
+    --seq-2: #4F7DAE;
+    --seq-3: #356093;
+    --seq-4: #22456F;
+    --seq-5: #122A48;
+    --tile-text-dark: #14213A;
+    --tile-text-light: #F3F7FC;
+
+    /* 5-tier choropleth (구 지도) — sampled from the same validated ramp, ordinal-checked at 5 stops */
+    --tier-0: #8FB3D6;
+    --tier-1: #6892BF;
+    --tier-2: #426FA1;
+    --tier-3: #274C78;
+    --tier-4: #122A48;
+    --tier-stroke: #FFFFFF;
+    --tier-label-halo: #FFFFFF;
+    --tier-label-fill: #14213A;
+
+    --font-display: "Noto Serif KR", "Nanum Myeongjo", serif;
+    --font-body: "IBM Plex Sans KR", "Noto Sans KR", -apple-system, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+    --shadow-sm: 0 1px 2px rgba(18,23,41,0.06), 0 1px 1px rgba(18,23,41,0.04);
+    --shadow-md: 0 8px 24px rgba(18,23,41,0.10), 0 2px 6px rgba(18,23,41,0.06);
+    --shadow-lg: 0 20px 48px rgba(18,23,41,0.16), 0 6px 16px rgba(18,23,41,0.08);
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #0C0F1A;
+      --bg-alt: #10141F;
+      --surface: #131826;
+      --surface-2: #171D2D;
+      --ink: #E9EBF2;
+      --ink-soft: #A8AEC0;
+      --ink-faint: #767C90;
+      --border: #262E43;
+      --border-strong: #333C56;
+
+      --navy: #263252;
+      --navy-fg: #F4F6FA;
+      --selection-fg: #0F1830;
+      --accent: #DDAA5C;
+      --accent-ink: #EEC583;
+      --accent-soft: #2C2413;
+      --line: #3D93A3;
+      --line-soft: #142A2E;
+
+      --good: #4FAE85;
+      --warn: #D68159;
+      --data-kb: #7FA6E0;
+
+      /* sequential ramp — value-index choropleth, low→high, validated (ordinal, dark). Navy-blue, matches --navy brand color. */
+      --seq-0: #3A5883;
+      --seq-1: #4E76A6;
+      --seq-2: #6A93BE;
+      --seq-3: #8FB3D6;
+      --seq-4: #B7D2EB;
+      --seq-5: #DCECFA;
+      --tile-text-dark: #14213A;
+      --tile-text-light: #F3F7FC;
+
+      --tier-0: #3A5883;
+      --tier-1: #557DAC;
+      --tier-2: #7DA3CA;
+      --tier-3: #ADCAE6;
+      --tier-4: #DCECFA;
+      --tier-stroke: #0C0F1A;
+      --tier-label-halo: #0C0F1A;
+      --tier-label-fill: #F3F7FC;
+
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.30);
+      --shadow-md: 0 8px 24px rgba(0,0,0,0.40);
+      --shadow-lg: 0 24px 56px rgba(0,0,0,0.50);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #0C0F1A;
+    --bg-alt: #10141F;
+    --surface: #131826;
+    --surface-2: #171D2D;
+    --ink: #E9EBF2;
+    --ink-soft: #A8AEC0;
+    --ink-faint: #767C90;
+    --border: #262E43;
+    --border-strong: #333C56;
+
+    --navy: #263252;
+    --navy-fg: #F4F6FA;
+    --selection-fg: #0F1830;
+    --accent: #DDAA5C;
+    --accent-ink: #EEC583;
+    --accent-soft: #2C2413;
+    --line: #3D93A3;
+    --line-soft: #142A2E;
+
+    --good: #4FAE85;
+    --warn: #D68159;
+    --data-kb: #7FA6E0;
+
+    --seq-0: #3A5883;
+    --seq-1: #4E76A6;
+    --seq-2: #6A93BE;
+    --seq-3: #8FB3D6;
+    --seq-4: #B7D2EB;
+    --seq-5: #DCECFA;
+    --tile-text-dark: #14213A;
+    --tile-text-light: #F3F7FC;
+
+    --tier-0: #3A5883;
+    --tier-1: #557DAC;
+    --tier-2: #7DA3CA;
+    --tier-3: #ADCAE6;
+    --tier-4: #DCECFA;
+    --tier-stroke: #0C0F1A;
+    --tier-label-halo: #0C0F1A;
+    --tier-label-fill: #F3F7FC;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.30);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.40);
+    --shadow-lg: 0 24px 56px rgba(0,0,0,0.50);
+  }
+
+  /* ============ RESET / BASE ============ */
+  *,*::before,*::after{ box-sizing: border-box; }
+  html{ background: var(--bg); }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  h1,h2,h3,h4{
+    font-family: var(--font-display);
+    color: var(--ink);
+    margin: 0;
+    text-wrap: balance;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  p{ margin:0; }
+  a{ color: inherit; }
+  img{ max-width:100%; display:block; }
+  ::selection{ background: var(--accent-soft); color: var(--selection-fg); }
+  :focus-visible{ outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+  .tabular{ font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+  .mono{ font-family: var(--font-mono); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+  }
+
+  /* ============ LAYOUT SHELL ============ */
+  .wrap{
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+  section{ position: relative; }
+
+  .blueprint{
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent);
+            mask-image: linear-gradient(to bottom, black, transparent);
+    opacity: 0.5;
+  }
+
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    font-weight: 500;
+  }
+  .eyebrow::before{
+    content:"";
+    width: 16px; height: 1px;
+    background: var(--accent);
+  }
+
+  .section-head{
+    max-width: 640px;
+    margin: 0 0 44px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .section-head h2{ font-size: clamp(26px, 3.4vw, 36px); line-height:1.25; }
+  .section-head p{ color: var(--ink-soft); font-size: 16.5px; }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding: 13px 24px;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration:none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color .15s ease;
+    white-space: nowrap;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn-primary{
+    background: var(--navy);
+    color: var(--navy-fg);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary:hover{ box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .btn-ghost{
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--border-strong);
+  }
+  .btn-ghost:hover{ background: var(--surface-2); border-color: var(--ink-faint); }
+
+  /* ============ HEADER ============ */
+  header{
+    position: sticky; top:0; z-index: 40;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav{
+    display:flex; align-items:center; justify-content:space-between;
+    height: 68px;
+  }
+  .brand{
+    display:flex; align-items:baseline; gap:8px;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 21px;
+    letter-spacing: -0.01em;
+  }
+  .brand .mark{
+    color: var(--accent);
+  }
+  .brand small{
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.14em;
+  }
+  .nav-links{
+    display:flex; align-items:center; gap: 30px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+  }
+  .nav-links a{ text-decoration:none; transition: color .15s; }
+  .nav-links a:hover{ color: var(--ink); }
+  .nav-cta{ display:flex; align-items:center; gap:14px; }
+  .nav-links-mobile{ display:none; }
+
+  /* ============ HERO ============ */
+  .hero{
+    padding: 76px 0 88px;
+    overflow: hidden;
+  }
+  .hero-grid{
+    display:grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 56px;
+    align-items:center;
+  }
+  .hero-eyebrow{ margin-bottom: 20px; }
+  .hero h1{
+    font-size: clamp(32px, 4.6vw, 50px);
+    line-height: 1.2;
+    margin-bottom: 22px;
+  }
+  .hero h1 em{
+    font-style: normal;
+    color: var(--accent-ink);
+    background: linear-gradient(to top, var(--accent-soft) 34%, transparent 34%);
+    padding: 0 2px;
+  }
+  .hero-sub{
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 480px;
+    margin-bottom: 32px;
+  }
+  .hero-actions{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom: 34px;}
+  .hero-note{
+    display:flex; align-items:center; gap:10px;
+    font-size: 13px; color: var(--ink-faint);
+  }
+  .hero-note .dot{ width:6px; height:6px; border-radius:50%; background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 22%, transparent); }
+
+  /* ---- Hero comparison instrument ---- */
+  .instrument{
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 22px 20px 20px;
+    animation: rise .7s cubic-bezier(.2,.8,.2,1) both;
+  }
+  @keyframes rise{ from{ opacity:0; transform: translateY(14px);} to{opacity:1; transform:translateY(0);} }
+  .instrument-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 16px;
+  }
+  .instrument-title{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .08em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .instrument-cycle{
+    display:flex; align-items:center; gap:6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px;
+  }
+  .cycle-btn{
+    width: 26px; height: 26px;
+    border-radius:50%;
+    border:none;
+    background: transparent;
+    color: var(--ink-soft);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .cycle-btn:hover{ background: var(--surface); color: var(--ink); }
+
+  .duo{
+    position: relative;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface-2);
+  }
+  .duo::before{
+    content:"";
+    position:absolute; top:0; bottom:0; left:50%;
+    width:1px;
+    background: repeating-linear-gradient(to bottom, var(--line) 0 6px, transparent 6px 11px);
+    z-index: 2;
+  }
+  .duo::after{
+    content: "MATCH";
+    position:absolute; top:-1px; left:50%; transform: translate(-50%,-50%);
+    font-family: var(--font-mono); font-size: 10px; letter-spacing:.1em;
+    background: var(--navy); color: var(--navy-fg);
+    padding: 3px 8px; border-radius: 20px; z-index:3;
+  }
+  .side{
+    padding: 30px 16px 18px;
+    text-align:center;
+    transition: opacity .25s ease;
+  }
+  .side .compass{
+    font-family: var(--font-mono); font-size: 11px; letter-spacing:.14em;
+    color: var(--ink-faint); margin-bottom: 10px; text-transform:uppercase;
+  }
+  .side .place{
+    font-family: var(--font-display); font-weight:700; font-size: 19px;
+    margin-bottom: 4px;
+  }
+  .side .gu{ font-size: 12.5px; color: var(--ink-faint); margin-bottom: 16px; }
+  .side .index{
+    font-family: var(--font-mono);
+    font-size: 34px; font-weight:600;
+    color: var(--accent-ink);
+    line-height:1;
+    margin-bottom: 4px;
+  }
+  .side .index-label{ font-size: 11px; color: var(--ink-faint); margin-bottom: 18px; }
+  .side .price{
+    font-family: var(--font-mono); font-size: 15px; font-weight:500; color: var(--ink);
+  }
+  .side .price-label{ font-size: 11px; color: var(--ink-faint); margin-top:2px; }
+
+  .instrument-foot{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top: 16px; padding-top:14px;
+    border-top: 1px dashed var(--border-strong);
+    font-size: 12.5px; color: var(--ink-soft);
+  }
+  .instrument-foot b{ color: var(--good); font-weight:600; }
+
+  /* ============ PROBLEM ============ */
+  .problem{ padding: 92px 0; background: var(--bg-alt); border-block: 1px solid var(--border); }
+  .problem-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  .p-card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 26px 24px 24px;
+    display:flex; flex-direction:column; gap: 14px;
+  }
+  .p-card .glyph{
+    width:38px; height:38px;
+    border-radius: 9px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    color: var(--warn);
+  }
+  .p-card h3{ font-size: 17.5px; font-weight:700; }
+  .p-card p{ color: var(--ink-soft); font-size: 14.5px; }
+  .p-card .apps{ font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); margin-top:auto; padding-top: 6px; }
+
+  /* ============ SOLUTION: 6 factors ============ */
+  .solution{ padding: 96px 0; }
+  .solution-layout{
+    display:grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 56px;
+    align-items:start;
+  }
+  .solution-copy h2{ font-size: clamp(26px,3.4vw,36px); margin-bottom:16px; }
+  .solution-copy p{ color: var(--ink-soft); font-size: 16px; margin-bottom: 22px; }
+  .solution-gu-switch{
+    display:flex; align-items:center; gap:10px; margin-bottom:16px;
+  }
+  .solution-gu-switch label{
+    font-family: var(--font-mono); font-size: 11px; letter-spacing:.06em;
+    color: var(--ink-faint); text-transform:uppercase;
+  }
+  .solution-gu-switch select{
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    cursor:pointer;
+  }
+  .index-badge{
+    display:inline-flex; align-items:baseline; gap:8px;
+    font-family: var(--font-mono);
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .index-badge b{ font-size: 20px; }
+  .index-badge span{ color: var(--ink-soft); font-family: var(--font-body); }
+
+  .factors{ display:flex; flex-direction:column; gap: 2px; border-top:1px solid var(--border); }
+  .factor{ border-bottom: 1px solid var(--border); }
+  .factor-head{
+    display:grid;
+    grid-template-columns: 20px 88px 1fr 96px;
+    align-items:center;
+    gap: 18px;
+    padding: 16px 4px;
+    width:100%;
+    background:none; border:none; text-align:left; cursor:pointer;
+    font: inherit; color: inherit;
+    -webkit-appearance:none; appearance:none;
+    border-radius: 6px;
+  }
+  .factor-head:hover{ background: var(--surface-2); }
+  .factor-head:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+  .fchev{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:20px; height:20px; color: var(--ink-faint);
+    transition: transform .18s ease;
+    flex-shrink:0;
+  }
+  .factor[data-open="true"] .fchev{ transform: rotate(180deg); color: var(--accent-ink); }
+  .factor .fname{
+    font-family: var(--font-display); font-weight:700; font-size:15.5px;
+  }
+  .factor .fdesc{ font-size: 13.5px; color: var(--ink-soft); }
+  .meter{
+    height: 6px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    overflow:hidden;
+    position:relative;
+  }
+  .meter i{
+    display:block; height:100%;
+    background: linear-gradient(90deg, var(--line), var(--accent));
+    border-radius: 4px;
+  }
+  .meter.mini{ height:5px; }
+  .factor .fscore{
+    font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-faint);
+    text-align:right;
+  }
+  .factor-detail{
+    display:grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .22s ease;
+  }
+  .factor[data-open="true"] .factor-detail{ grid-template-rows: 1fr; }
+  .factor-detail-inner{ overflow:hidden; }
+  .factor-detail-body{
+    padding: 4px 4px 20px 38px;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .fsub-row{
+    display:grid;
+    grid-template-columns: 120px 1fr 44px;
+    align-items:center;
+    gap: 14px;
+  }
+  .fsub-row .fsub-name{ font-size: 13px; color: var(--ink); }
+  .fsub-row .fsub-score{
+    font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); text-align:right;
+  }
+  .factor-note{
+    font-size: 12.5px; color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .factor-disclaimer{
+    font-size: 12px; color: var(--ink-faint); margin-top: 14px; line-height:1.5;
+  }
+
+  /* ============ MATCHING FEATURE ============ */
+  .matching{ padding: 96px 0; background: var(--bg-alt); border-block: 1px solid var(--border); }
+  .match-map{
+    position:relative;
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow-md);
+    padding: 44px 32px;
+    margin-top: 44px;
+    overflow:hidden;
+  }
+  .match-axis{
+    position:absolute; top:0; bottom:0; left:50%;
+    width:0; border-left: 1.5px dashed var(--line);
+  }
+  .match-row{
+    display:grid;
+    grid-template-columns: 1fr 44px 1fr;
+    align-items:center;
+    gap: 0;
+    position:relative;
+    z-index:1;
+  }
+  .match-pin{
+    justify-self: center;
+    width: 44px; height:44px;
+    border-radius: 50%;
+    background: var(--line-soft);
+    border: 1px solid var(--line);
+    color: var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-mono); font-size: 11px; font-weight:600;
+  }
+  .match-card{
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    max-width: 320px;
+  }
+  .match-card.east{ justify-self:end; text-align:right; }
+  .match-card.west{ justify-self:start; }
+  .match-card .tag{
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing:.1em;
+    color: var(--ink-faint); text-transform:uppercase; margin-bottom:8px; display:block;
+  }
+  .match-card h4{ font-family: var(--font-display); font-size:18px; margin-bottom:10px; }
+  .match-stats{ display:flex; flex-direction:column; gap:6px; }
+  .match-card.east .match-stats{ align-items:flex-end; }
+  .match-stat{ font-size: 13px; color: var(--ink-soft); display:flex; gap:6px; }
+  .match-card.east .match-stat{ flex-direction:row-reverse; }
+  .match-stat b{ font-family: var(--font-mono); color: var(--ink); font-weight:600; }
+
+  .match-legend{
+    display:flex; justify-content:center; gap: 28px;
+    margin-top: 30px;
+    font-size: 12.5px; color: var(--ink-faint);
+  }
+  .match-legend span{ display:flex; align-items:center; gap:7px; }
+  .match-legend i{ width:14px; height:2px; background: var(--line); display:inline-block; }
+  .match-source{ text-align:center; margin-top:14px; font-size:11.5px; color: var(--ink-faint); }
+
+  .tier-table-wrap{ margin-top: 48px; }
+  .tier-table-title{ font-size: 16px; font-weight:700; color: var(--ink); margin-bottom:8px; }
+  .tier-table-note{ font-size: 13px; color: var(--ink-soft); line-height:1.6; margin-bottom:18px; max-width: 760px; }
+  .tier-table-scroll{ overflow-x:auto; border: 1px solid var(--border); border-radius: 14px; }
+  table.tier-table{ width:100%; border-collapse:collapse; font-size:13.5px; min-width: 640px; }
+  .tier-table th{
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing:.07em; text-transform:uppercase;
+    color: var(--ink-faint); background: var(--surface-2);
+    text-align:left; padding: 12px 16px; border-bottom: 1px solid var(--border);
+  }
+  .tier-table td{ padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--ink-soft); vertical-align:top; }
+  .tier-table tr:last-child td{ border-bottom:none; }
+  .tier-table td.tname{ color: var(--ink); font-weight:600; white-space:nowrap; }
+  .tier-table td.tprice{ font-family: var(--font-mono); color: var(--ink-faint); white-space:nowrap; }
+  .tier-table td.tpair{ font-weight:600; color: var(--ink); }
+  .tier-table td.tcorr{ font-family: var(--font-mono); font-weight:700; }
+  .tier-table td.tnone{ color: var(--ink-faint); font-style:normal; }
+  .gu-chip{
+    all: unset; box-sizing:border-box; cursor:pointer;
+    color: var(--ink-soft); border-bottom: 1px dashed var(--border-strong);
+    padding-bottom: 1px; font: inherit;
+  }
+  .gu-chip:hover{ color: var(--accent-ink); border-color: var(--accent-ink); }
+  .gu-chip:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+  tr.trow-flash{ background: var(--accent-soft); transition: background 1.4s ease; }
+  .tier-flag-box{
+    margin-top: 18px; font-size: 13px; line-height:1.7; color: var(--ink-soft);
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px;
+  }
+  .tier-flag-box b{ color: var(--ink); }
+
+  /* ---- 상관계수 방법론 설명 ---- */
+  .corr-method{
+    margin-top: 48px; padding: 28px 30px; border-radius: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+  }
+  .corr-method-title{ font-size: 16px; font-weight:700; color: var(--ink); margin-bottom:10px; }
+  .corr-method p{ font-size: 13.5px; line-height:1.75; color: var(--ink-soft); margin-bottom: 12px; }
+  .corr-method p:last-child{ margin-bottom:0; }
+  .corr-scale{ display:flex; flex-wrap:wrap; gap:10px; margin: 14px 0 16px; }
+  .corr-scale-item{
+    display:flex; align-items:center; gap:8px; font-size:12.5px; color: var(--ink-soft);
+    background: var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:6px 13px;
+  }
+  .corr-scale-item i{ width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0; }
+  .corr-steps{ display:flex; flex-direction:column; gap:14px; margin: 16px 0; counter-reset: corrstep; }
+  .corr-step{ display:flex; gap:14px; align-items:flex-start; }
+  .corr-step-num{
+    counter-increment: corrstep; flex-shrink:0; width:26px; height:26px; border-radius:50%;
+    background: var(--navy); color: var(--navy-fg); font-family: var(--font-mono); font-size:12px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; margin-top:1px;
+  }
+  .corr-step-num::before{ content: counter(corrstep); }
+  .corr-step p{ margin:0; }
+  .corr-formula-box{
+    font-family: var(--font-mono); font-size: 13px; line-height:2;
+    background: var(--surface-2); border:1px solid var(--border-strong); border-radius: 10px;
+    padding: 16px 20px; margin: 8px 0 16px; overflow-x:auto; color: var(--ink);
+  }
+  .corr-formula-box .fx{ color: var(--ink-faint); }
+
+  /* ---- 급지별 전체 비교표 ---- */
+  .corr-detail-wrap{ margin-top: 40px; }
+  .corr-detail-tier{ margin-bottom: 30px; }
+  .corr-detail-tier:last-child{ margin-bottom:0; }
+  .corr-detail-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .corr-detail-head h4{ font-size:14.5px; font-weight:700; color: var(--ink); }
+  .corr-detail-head span{ font-size:12px; color: var(--ink-faint); }
+  table.corr-detail-table{ width:100%; border-collapse:collapse; font-size:13.5px; min-width: 480px; }
+  .corr-detail-table th{
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing:.07em; text-transform:uppercase;
+    color: var(--ink-faint); background: var(--surface-2);
+    text-align:left; padding: 10px 16px; border-bottom: 1px solid var(--border);
+  }
+  .corr-detail-table td{ padding: 9px 16px; border-bottom: 1px solid var(--border); color: var(--ink-soft); }
+  .corr-detail-table tr:last-child td{ border-bottom:none; }
+  .corr-detail-table td.cpair{ color: var(--ink); font-weight:500; }
+  .corr-detail-table td.cval{ font-family: var(--font-mono); font-weight:600; text-align:right; }
+  .corr-detail-table tr.cbest td{ background: color-mix(in oklch, var(--seq-1) 18%, transparent); }
+  .corr-detail-table tr.cbest td.cpair::after{ content:" ★ 최적 쌍"; font-size:11px; font-weight:600; color: var(--seq-4); }
+  .corr-detail-empty{ font-size:13px; color: var(--ink-faint); padding: 10px 2px; }
+
+  /* ============ REGION MAP (구/동 가치지수) ============ */
+  .map-section{ padding: 96px 0; border-bottom: 1px solid var(--border); }
+
+  .map-tabs{
+    display:flex; gap: 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .map-tab{
+    all: unset;
+    box-sizing: border-box;
+    cursor:pointer;
+    padding: 4px 2px 12px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--ink-faint);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .map-tab:hover{ color: var(--ink-soft); }
+  .map-tab.active{ color: var(--ink); border-bottom-color: var(--accent); }
+  .map-tab:focus-visible{ outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+  .map-panel[hidden]{ display:none; }
+
+  .metric-toggle{
+    display:inline-flex; gap:4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+  .metric-btn{
+    all: unset;
+    box-sizing: border-box;
+    cursor:pointer;
+    padding: 9px 16px;
+    border-radius: 7px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    display:flex; flex-direction:column; align-items:flex-start; gap:1px;
+    transition: background .12s ease, color .12s ease;
+  }
+  .metric-btn span{
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    letter-spacing: .02em;
+  }
+  .metric-btn:hover{ color: var(--ink); }
+  .metric-btn.active{ background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .metric-btn.active span{ color: var(--accent-ink); }
+  .metric-btn:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 7px; }
+
+  .map-layout{
+    display:grid;
+    grid-template-columns: 1fr 300px;
+    gap: 40px;
+    align-items:start;
+  }
+  .tile-col{ min-width:0; }
+  .gu-map-wrap{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px;
+  }
+  .gu-map{ display:block; width:100%; height:auto; }
+  .gu-path{
+    cursor:pointer;
+    stroke: var(--tier-stroke);
+    stroke-width: 1.5;
+    transition: filter .12s ease, stroke-width .12s ease;
+  }
+  .gu-path:hover, .gu-path:focus-visible{ filter: brightness(1.08); outline:none; }
+  .gu-path.selected{ stroke: var(--navy); stroke-width: 3; }
+  .gu-label{
+    font-family: var(--font-mono);
+    text-anchor: middle;
+    pointer-events: none;
+    line-height:1;
+    fill: var(--tier-label-fill);
+    stroke: var(--tier-label-halo);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+    paint-order: stroke fill;
+  }
+  .gu-label .g-name{ font-size: 11.5px; font-weight:600; letter-spacing:.01em; }
+  .gu-label .g-val{ font-size: 15px; font-weight:700; }
+
+  .legend-row{
+    display:flex; align-items:center; gap:18px;
+    margin-top: 18px;
+    font-size: 12px; color: var(--ink-faint);
+    flex-wrap:wrap;
+  }
+  .legend-tiers{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .legend-tier{ display:flex; align-items:center; gap:6px; }
+  .legend-tier i{ width:14px; height:14px; border-radius:4px; border:1px solid var(--border); display:inline-block; flex-shrink:0; }
+  .legend-note{ margin-left:auto; }
+
+  .gu-detail{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    position: sticky;
+    top: 88px;
+  }
+  .gu-detail .gd-eyebrow{
+    font-family: var(--font-mono); font-size: 11px; letter-spacing:.1em;
+    color: var(--ink-faint); text-transform:uppercase; margin-bottom:8px;
+  }
+  .gu-detail h3{ font-family: var(--font-display); font-size: 20px; margin-bottom:2px; }
+  .gu-detail .gd-diff{ font-size: 12.5px; color: var(--ink-faint); margin-bottom: 6px; }
+  .gu-detail .gd-diff b{ font-weight:600; }
+  .gu-score-big{
+    font-family: var(--font-mono); font-size: 42px; font-weight:700;
+    color: var(--seq-4); line-height:1; margin: 10px 0 20px;
+  }
+  .gd-sub{
+    font-family: var(--font-mono); font-size: 11px; letter-spacing:.08em;
+    color: var(--ink-faint); text-transform:uppercase;
+    margin-bottom: 12px; padding-top: 16px; border-top: 1px dashed var(--border-strong);
+  }
+  .dong-mini{ display:flex; flex-direction:column; gap: 4px; }
+  .dong-mini-row{
+    display:flex; flex-direction:column; gap:6px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .dong-mini-row:last-child{ border-bottom:none; padding-bottom:2px; }
+  .dong-mini-top{ display:flex; align-items:baseline; gap:8px; font-size: 13px; color: var(--ink-soft); }
+  .dong-mini-top .drank{
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint);
+    width: 14px; flex-shrink:0;
+  }
+  .dong-mini-top .dname{ flex:1; color: var(--ink); font-weight:500; }
+  .dong-mini-top b{ font-family: var(--font-mono); color: var(--ink); font-weight:600; }
+  .dong-mini-bottom{ display:flex; align-items:center; gap:10px; padding-left:22px; }
+  .dong-mini-bottom .meter{ flex:1; }
+  .dong-mini-bottom .meter i{ background: linear-gradient(90deg, var(--seq-1), var(--seq-4)); }
+  .dong-mini-bottom .dcount{ font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); flex-shrink:0; }
+  .gd-drilldown{
+    all: unset;
+    box-sizing: border-box;
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%;
+    margin-top: 16px; padding: 11px 14px;
+    border-radius: 9px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    color: var(--ink);
+    font-family: var(--font-body); font-weight:600; font-size: 13px;
+    cursor:pointer;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .gd-drilldown:hover{ background: var(--surface); border-color: var(--seq-3); }
+  .gd-drilldown:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .gd-tier-card{
+    margin: 14px 0 18px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+  }
+  .gtc-label{
+    font-family: var(--font-mono); font-size: 11px; letter-spacing:.06em;
+    color: var(--accent-ink); text-transform:uppercase; margin-bottom:6px;
+  }
+  .gtc-pair{ font-size: 14px; color: var(--ink); margin-bottom:4px; }
+  .gtc-pair b{ font-weight:700; }
+  .gtc-corr{ font-size:12.5px; color: var(--ink-soft); }
+  .gtc-note{ font-size: 12.5px; color: var(--ink-faint); line-height:1.5; }
+  .gd-tier-link{
+    all: unset; box-sizing:border-box; display:inline-flex; align-items:center; gap:4px;
+    margin-top:10px; font-size:12.5px; font-weight:600; color: var(--accent-ink); cursor:pointer;
+  }
+  .gd-tier-link:hover{ text-decoration: underline; }
+  .gd-tier-link:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .dong-controls{
+    display:flex; align-items:center; gap: 14px;
+    margin-bottom: 18px; flex-wrap:wrap;
+  }
+  .dong-controls select{
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+  }
+  .dong-count{ font-size: 13px; color: var(--ink-faint); margin-left:auto; }
+  .dong-note{
+    font-size: 12.5px; line-height:1.6; color: var(--ink-faint);
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px; margin: -4px 0 16px;
+  }
+  .dong-note b{ color: var(--ink-soft); font-weight:600; }
+  .dong-table-wrap{
+    overflow-x:auto;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  table.dong-table{ width:100%; border-collapse:collapse; font-size:14px; min-width: 520px; }
+  .dong-table th{
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing:.07em; text-transform:uppercase;
+    color: var(--ink-faint); background: var(--surface-2);
+    text-align:left; padding: 12px 16px; border-bottom: 1px solid var(--border);
+  }
+  .dong-table td{ padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--ink-soft); }
+  .dong-table tr:last-child td{ border-bottom:none; }
+  .dong-table tr:hover td{ background: var(--surface-2); }
+  .dong-table td.rank{ font-family: var(--font-mono); color: var(--ink-faint); }
+  .dong-table td.dname{ color: var(--ink); font-weight:500; }
+  .dong-table td.score-cell{ display:flex; align-items:center; gap:10px; }
+  .dong-table .score-num{ font-family: var(--font-mono); font-weight:600; color: var(--ink); width: 30px; text-align:right; }
+  .dong-table .score-bar-track{ flex:1; max-width:120px; height:6px; border-radius:3px; background: var(--surface-2); border:1px solid var(--border); overflow:hidden; }
+  .dong-table .score-bar-fill{ height:100%; border-radius:3px; }
+
+  .dong-full-block{ margin-top: 28px; }
+  .dong-full-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    margin-bottom: 12px;
+  }
+  .dong-full-head h4{ font-size: 14px; font-weight:700; color: var(--ink); margin:0; }
+  .dong-full-head span{ font-size: 12px; color: var(--ink-faint); }
+  .dong-chip-wrap{ display:flex; flex-wrap:wrap; gap: 7px; }
+  .dong-chip{
+    font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft);
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 12px;
+  }
+  .dong-full-empty{ font-size: 13px; color: var(--ink-faint); padding: 4px 0; }
+
+  .map-source{
+    margin-top: 22px;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    text-align:center;
+  }
+  .map-tip{
+    position:fixed;
+    pointer-events:none;
+    background: var(--navy);
+    color: var(--navy-fg);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    box-shadow: var(--shadow-md);
+    opacity:0;
+    transform: translate(-50%, -130%);
+    transition: opacity .1s ease;
+    z-index: 50;
+    white-space:nowrap;
+  }
+  .map-tip.show{ opacity:1; }
+
+  /* ============ GAP ANALYSIS ============ */
+  .gap-section{ padding: 96px 0; }
+  .gap-layout{ display:grid; grid-template-columns: 0.95fr 1.05fr; gap: 56px; align-items:center; }
+  .gap-bars{
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius: 16px;
+    padding: 26px 26px 22px;
+    box-shadow: var(--shadow-sm);
+  }
+  .gbar{ margin-bottom: 18px; }
+  .gbar:last-child{ margin-bottom:0; }
+  .gbar-top{ display:flex; justify-content:space-between; font-size:13px; margin-bottom:7px; }
+  .gbar-top .name{ color: var(--ink-soft); }
+  .gbar-top .val{ font-family: var(--font-mono); color: var(--ink); font-weight:500; }
+  .gbar-track{ height:9px; border-radius:5px; background: var(--surface-2); border:1px solid var(--border); overflow:hidden; }
+  .gbar-fill{ height:100%; border-radius:5px; }
+  .fill-kb{ background: var(--data-kb); }
+  .fill-official{ background: var(--ink-faint); }
+  .fill-actual{ background: var(--good); }
+  .fill-ask{ background: var(--warn); }
+  .gap-callout{
+    margin-top: 18px; padding-top:16px; border-top:1px dashed var(--border-strong);
+    font-size: 13px; color: var(--ink-soft);
+  }
+  .gap-callout b{ color: var(--warn); font-weight:600; }
+
+  .feature-list{ display:flex; flex-direction:column; gap:22px; }
+  .feature-item{ display:flex; gap:16px; }
+  .feature-item .num{
+    font-family: var(--font-mono); font-size:12px; color: var(--accent-ink);
+    background: var(--accent-soft); width:26px;height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;
+  }
+  .feature-item h4{ font-size:16px; margin-bottom:6px; }
+  .feature-item p{ font-size:14px; color: var(--ink-soft); }
+
+  /* ============ PRICING ============ */
+  .pricing{ padding: 96px 0; background: var(--bg-alt); border-block: 1px solid var(--border); }
+  .price-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 22px; max-width: 760px; margin: 0 auto; }
+  .price-card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 30px 28px;
+    display:flex; flex-direction:column; gap: 18px;
+  }
+  .price-card.premium{
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+    position:relative;
+  }
+  .price-card.premium::before{
+    content: "가장 정확한 정보";
+    position:absolute; top:-12px; left:28px;
+    background: var(--navy); color: var(--navy-fg);
+    font-size: 11.5px; font-weight:600;
+    padding: 4px 12px; border-radius: 20px;
+  }
+  .price-top h3{ font-size: 18px; margin-bottom: 6px; }
+  .price-top .desc{ font-size: 13.5px; color: var(--ink-faint); }
+  .price-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+  .price-list li{
+    font-size: 14px; color: var(--ink-soft);
+    display:flex; gap:9px; align-items:flex-start;
+  }
+  .price-list li::before{
+    content:"";
+    width: 6px; height:6px;
+    margin-top: 7px;
+    border-radius:1px;
+    background: var(--accent);
+    flex-shrink:0;
+    transform: rotate(45deg);
+  }
+  .price-card.free .price-list li::before{ background: var(--ink-faint); }
+  .price-note{ font-size: 12px; color: var(--ink-faint); margin-top:auto; padding-top:6px; }
+
+  /* ============ ROADMAP ============ */
+  .roadmap{ padding: 96px 0; }
+  .roadmap-track{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    position:relative;
+  }
+  .roadmap-track::before{
+    content:"";
+    position:absolute; top:19px; left:5%; right:5%; height:1px;
+    background: repeating-linear-gradient(to right, var(--border-strong) 0 8px, transparent 8px 14px);
+    z-index:0;
+  }
+  .rm-step{ position:relative; z-index:1; }
+  .rm-dot{
+    width:38px; height:38px; border-radius:50%;
+    background: var(--surface);
+    border: 1.5px solid var(--border-strong);
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-mono); font-weight:600; font-size:14px;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+  }
+  .rm-step.active .rm-dot{ border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
+  .rm-step h4{ font-size:15px; margin-bottom:8px; line-height:1.4; }
+  .rm-step p{ font-size:13px; color: var(--ink-soft); }
+  .rm-tag{
+    display:inline-block; margin-top:10px;
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing:.06em;
+    padding: 3px 9px; border-radius: 20px;
+    background: var(--surface-2); border:1px solid var(--border); color: var(--ink-faint);
+  }
+  .rm-step.active .rm-tag{ background: var(--navy); border-color: var(--navy); color: var(--navy-fg); }
+
+  /* ============ CTA ============ */
+  .cta{ padding: 100px 0 110px; text-align:center; }
+  .cta h2{ font-size: clamp(26px,3.6vw,38px); margin-bottom: 14px; }
+  .cta p{ color: var(--ink-soft); font-size:16px; max-width: 480px; margin: 0 auto 34px; }
+  .signup{
+    display:flex; gap:10px; max-width: 420px; margin: 0 auto;
+  }
+  .signup input{
+    flex:1;
+    padding: 13px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14.5px;
+  }
+  .signup input:focus{ outline:2px solid var(--accent); outline-offset:1px; border-color:transparent; }
+  .signup input::placeholder{ color: var(--ink-faint); }
+  .signup-msg{
+    margin-top: 14px; font-size: 13.5px; color: var(--good);
+    display:none; align-items:center; justify-content:center; gap:7px;
+  }
+  .signup-msg.show{ display:flex; }
+  .cta-fine{ margin-top: 22px; font-size:12px; color: var(--ink-faint); }
+
+  /* ============ FOOTER ============ */
+  footer{ border-top:1px solid var(--border); padding: 36px 0; }
+  .foot-row{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; }
+  .foot-brand{ font-family: var(--font-display); font-weight:700; font-size:15px; }
+  .foot-meta{ font-size:12.5px; color: var(--ink-faint); }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 880px){
+    .nav-links{ display:none; }
+    .hero-grid{ grid-template-columns: 1fr; gap: 48px; }
+    .problem-grid{ grid-template-columns: 1fr; }
+    .solution-layout{ grid-template-columns: 1fr; }
+    .factor-head{ grid-template-columns: 16px 72px 1fr 74px; gap:12px; }
+    .factor-detail-body{ padding-left: 30px; }
+    .fsub-row{ grid-template-columns: 96px 1fr 40px; gap:10px; }
+    .gap-layout{ grid-template-columns: 1fr; }
+    .gap-layout .feature-list{ order:2; }
+    .price-grid{ grid-template-columns: 1fr; }
+    .roadmap-track{ grid-template-columns: 1fr 1fr; row-gap: 36px; }
+    .roadmap-track::before{ display:none; }
+    .match-row{ grid-template-columns: 1fr; gap: 16px; text-align:center; }
+    .match-card.east, .match-card.west{ justify-self:center; text-align:center; max-width: 100%; }
+    .match-card.east .match-stats, .match-card .match-stats{ align-items:center; }
+    .match-card.east .match-stat{ flex-direction:row; }
+    .match-axis{ display:none; }
+    .signup{ flex-direction:column; }
+    .map-layout{ grid-template-columns: 1fr; }
+    .gu-detail{ position:static; }
+  }
+  @media (max-width: 560px){
+    .wrap{ padding: 0 20px; }
+    .duo{ grid-template-columns: 1fr; }
+    .duo::before{ display:none; }
+    .duo::after{ top:0; left:50%; }
+  }
+</style>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <div class="wrap nav">
+    <div class="brand"><span class="mark">진</span>가 <small>JINGA</small></div>
+    <nav class="nav-links">
+      <a href="#problem">문제의식</a>
+      <a href="#map">지역 지도</a>
+      <a href="#solution">가치지수</a>
+      <a href="#matching">동급지 매칭</a>
+      <a href="#pricing">이용 방법</a>
+      <a href="#roadmap">로드맵</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-primary" href="#cta">사전 알림 신청</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow hero-eyebrow">감정평가 이론 기반 부동산 가치분석</div>
+      <h1>같은 단지, 같은 평형인데<br>왜 시세는 <em>수천만 원</em> 다를까요</h1>
+      <p class="hero-sub">동 위치, 경사도, 지하주차장 연결 여부, 평면 구조 하나로 실거주 가치가 갈립니다. 진가는 감정평가사가 실무에서 쓰는 6대 개별요인을 데이터로 계산해, 단지가 아닌 &lsquo;그 호수&rsquo;의 진짜 가치를 보여드립니다.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#cta">사전 알림 신청하기</a>
+        <a class="btn btn-ghost" href="#solution">가치지수 알아보기</a>
+      </div>
+      <div class="hero-note"><span class="dot"></span> 서울 주요 단지 MVP 출시 준비 중 · 정식 서비스 전 사전 등록 시 우선 초대</div>
+    </div>
+
+    <div class="instrument" aria-label="동서 급지 매칭 미리보기">
+      <div class="instrument-head">
+        <span class="instrument-title">동급지 매칭 미리보기</span>
+        <div class="instrument-cycle">
+          <button class="cycle-btn" id="prevPair" aria-label="이전 비교쌍" type="button">‹</button>
+          <button class="cycle-btn" id="nextPair" aria-label="다음 비교쌍" type="button">›</button>
+        </div>
+      </div>
+      <div class="duo" id="duoPanel">
+        <div class="side">
+          <div class="compass">EAST · 동쪽</div>
+          <div class="place" id="eastPlace">고덕동</div>
+          <div class="gu" id="eastGu">강동구</div>
+          <div class="index tabular" id="eastIndex">8,052</div>
+          <div class="index-label">평당 평균가(만원)</div>
+          <div class="price tabular" id="eastPrice">28건</div>
+          <div class="price-label">2026.06 실거래 신고</div>
+        </div>
+        <div class="side">
+          <div class="compass">WEST · 서쪽</div>
+          <div class="place" id="westPlace">공덕동</div>
+          <div class="gu" id="westGu">마포구</div>
+          <div class="index tabular" id="westIndex">6,968</div>
+          <div class="index-label">평당 평균가(만원)</div>
+          <div class="price tabular" id="westPrice">14건</div>
+          <div class="price-label">2026.06 실거래 신고</div>
+        </div>
+      </div>
+      <div class="instrument-foot">
+        <span>평당가 격차 <b class="tabular" id="pairDelta">1.4</b>% · 상관계수 <b class="tabular" id="pairCorr">0.938</b></span>
+        <span class="mono" id="pairIndex">01 / 03</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROBLEM ============ -->
+<section class="problem" id="problem">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">이런 경험, 있으신가요</div>
+      <h2>기존 부동산 앱이 알려주지 않는 것들</h2>
+      <p>네이버부동산, 아실, 호갱노노 같은 서비스는 단지 대표 시세는 잘 보여주지만, 정작 내가 사려는 &lsquo;그 동, 그 호수&rsquo;의 가치는 알려주지 않습니다.</p>
+    </div>
+    <div class="problem-grid">
+      <div class="p-card">
+        <div class="glyph">▤</div>
+        <h3>단지 평균 시세만 압니다</h3>
+        <p>동일 단지·동일 평형이라도 동 위치, 조망, 층수, 평면 타입(A/B)에 따라 실거주 가치는 크게 다르지만, 이를 구분해서 비교해 주는 곳이 없습니다.</p>
+        <div class="apps">네이버부동산 · 아실 · 호갱노노</div>
+      </div>
+      <div class="p-card">
+        <div class="glyph">◈</div>
+        <h3>대출 기준이 제각각입니다</h3>
+        <p>KB부동산시세, 공시지가, 실제 매물 호가, 전세가율이 따로 놀아서 내 자산 상황에 맞는 실투자금과 대출 한도를 가늠하기 어렵습니다.</p>
+        <div class="apps">KB시세 · 공시지가 · 호가 · 전세가율</div>
+      </div>
+      <div class="p-card">
+        <div class="glyph">⇄</div>
+        <h3>다른 지역과 비교할 방법이 없습니다</h3>
+        <p>강동 상일동과 동작 사당동처럼 떨어져 있는 지역이라도 입지와 시세 흐름이 비슷한 &lsquo;동급지&rsquo;일 수 있는데, 이를 한눈에 비교할 도구가 없습니다.</p>
+        <div class="apps">동쪽 ⇄ 서쪽 비교 부재</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REGION MAP ============ -->
+<section class="map-section" id="map">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">세부 데이터 · 공공데이터 연동</div>
+      <h2>서울 25개 자치구, 동별 시세 지표</h2>
+      <p>자치구를 눌러 소속 동의 실거래가를 확인하세요. 상단에서 지도에 표시할 지표를 바꿀 수 있습니다 — 국토교통부 아파트매매 실거래가(2026년 6월 신고분)의 평당 평균가인 &lsquo;실거래가(평당가)&rsquo;와, 한국부동산원이 공표하는 &lsquo;아파트 매매가격지수&rsquo;(2017년 4분기=100 기준 가격 변동 지수, 2026년 2분기 값) 중 선택해 보세요. 두 지표 모두 실제 값 기준 5단계 구간으로 나눠 표시하며, 지도는 통계청 행정구역 경계를 단순화해 그린 것으로 실제 축척과는 다릅니다. 이 아티팩트는 정적 페이지라 실시간 자동 갱신 없이 해당 시점의 스냅샷을 담고 있습니다. <b style="color:var(--ink);">자치구를 클릭하면 오른쪽 상세 정보에 그 자치구가 속한 동급지 매칭 결과가 표시되고, 아래 &lsquo;핵심 기술&rsquo; 섹션의 6대 요인 점수도 그 자치구 기준으로 함께 바뀝니다.</b></p>
+    </div>
+
+    <div class="map-tabs" role="tablist" aria-label="지역 데이터 보기 방식">
+      <button class="map-tab active" id="tabBtnGu" role="tab" aria-selected="true" aria-controls="panelGu" data-tab="gu">자치구 지도</button>
+      <button class="map-tab" id="tabBtnDong" role="tab" aria-selected="false" aria-controls="panelDong" data-tab="dong">동 단위 데이터</button>
+    </div>
+
+    <div class="map-panel" id="panelGu" role="tabpanel" aria-labelledby="tabBtnGu">
+      <div class="metric-toggle" role="group" aria-label="지도에 표시할 지표 선택">
+        <button type="button" class="metric-btn active" data-metric="trade">실거래가(평당가) <span>국토부·실거래</span></button>
+        <button type="button" class="metric-btn" data-metric="mm">매매가격지수 <span>한국부동산원</span></button>
+      </div>
+      <div class="map-layout">
+        <div class="tile-col">
+          <figure class="gu-map-wrap" style="margin:0;">
+            <svg class="gu-map" id="guMap" viewBox="0 0 840 702.6" role="img" aria-label="서울 25개 자치구 실거래 지표 지도"></svg>
+            <figcaption class="visually-hidden" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);">자치구를 클릭하면 오른쪽에 상세 정보가 표시됩니다.</figcaption>
+          </figure>
+          <div class="legend-row">
+            <div class="legend-tiers" id="legendTiers"></div>
+            <span class="legend-note tabular" id="cityAvg">서울 평균 —</span>
+          </div>
+        </div>
+        <aside class="gu-detail" id="guDetail" aria-live="polite"></aside>
+      </div>
+    </div>
+
+    <div class="map-panel" id="panelDong" role="tabpanel" aria-labelledby="tabBtnDong" hidden>
+      <div class="dong-controls">
+        <select id="dongGuFilter" aria-label="자치구로 필터">
+          <option value="all">전체 자치구</option>
+        </select>
+        <span class="dong-count tabular" id="dongCount"></span>
+      </div>
+      <p class="dong-note">아래 표는 국토교통부 실거래가 원자료가 집계하는 <b>법정동</b> 단위입니다(예: 종로구 &lsquo;명륜2가&rsquo;). 행정 서비스 기준인 <b>행정동</b>과는 경계가 달라 두 표를 분리해 보여드립니다 — 실거래가 랭킹은 법정동 기준, 아래 전체 목록은 행정동 기준입니다.</p>
+      <div class="dong-table-wrap">
+        <table class="dong-table">
+          <thead>
+            <tr><th style="width:44px;">순위</th><th>법정동</th><th>자치구</th><th style="width:80px;">거래건수</th><th style="width:170px;">실거래가 지수</th></tr>
+          </thead>
+          <tbody id="dongTableBody"></tbody>
+        </table>
+      </div>
+      <div class="dong-full-block" id="dongFullBlock"></div>
+    </div>
+    <div class="map-source">국토교통부 아파트매매 실거래가(공공데이터포털, data.go.kr) · 2026년 6월 신고분 기준 · 자치구 평당 평균가를 0~100으로 정규화</div>
+  </div>
+  <div class="map-tip" id="mapTip"></div>
+</section>
+
+<!-- ============ SOLUTION: VALUE INDEX ============ -->
+<section class="solution" id="solution">
+  <div class="wrap solution-layout">
+    <div class="solution-copy">
+      <div class="eyebrow">핵심 기술 · 지역지도 연동</div>
+      <h2>감정평가 6대 개별요인을<br>자치구별 데이터 점수로 계산합니다</h2>
+      <p>감정평가사가 부동산의 개별성을 판단할 때 쓰는 6가지 기준을 그대로 데이터화했습니다. 위 지역지도에서 자치구를 클릭하면 그 구의 실거래가·매매가격지수 순위를 반영해 아래 6대 요인 점수가 자동으로 다시 계산됩니다.</p>
+      <div class="solution-gu-switch">
+        <label for="factorGuSelect">자치구 선택</label>
+        <select id="factorGuSelect"></select>
+      </div>
+      <div class="index-badge">가치지수 <b class="tabular" id="factorIndexVal">—</b> / 100 <span id="factorIndexGu"></span></div>
+    </div>
+    <div>
+      <div class="factors" id="factorsList"></div>
+      <p class="factor-disclaimer">※ 6대 요인 및 하위 세부항목은 감정평가 실무기준(토지가격비준표)의 표준 판단 기준을 바탕으로, 자치구의 실거래가·매매가격지수 순위를 반영해 계산한 예시 산식입니다. 실제 감정평가 결과가 아니며, 실제 서비스에서는 동·호수별 실거래·매물 데이터를 기반으로 자동 산출됩니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MATCHING ============ -->
+<section class="matching" id="matching">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">동서 급지 매칭 · 재분류</div>
+      <h2>동쪽과 서쪽, 실제로 함께 오르내리는 동급지</h2>
+      <p>평당가가 비슷하다고 같은 급지는 아닙니다. 한국부동산원 구별 아파트 매매가격지수(2010.01~2026.07, 월간)로 오르내림의 상관계수를 계산해, 가격 수준과 시세 흐름이 함께 검증된 쌍만 &lsquo;동급지&rsquo;로 다시 묶었습니다. 위 지역지도에서 자치구를 클릭해도 바로 이 표로 연결됩니다 — 아래 표에서 자치구 이름을 눌러 지도로 돌아갈 수도 있습니다.</p>
+    </div>
+    <div class="match-map">
+      <div class="match-axis"></div>
+      <div class="match-row">
+        <div class="match-card west">
+          <span class="tag">West · 서쪽</span>
+          <h4>서대문구 남가좌동</h4>
+          <div class="match-stats">
+            <div class="match-stat">평당 평균가 <b class="tabular">5,870만원</b></div>
+            <div class="match-stat">2026.06 거래 <b class="tabular">43건</b></div>
+          </div>
+        </div>
+        <div class="match-pin">≈</div>
+        <div class="match-card east">
+          <span class="tag">East · 동쪽</span>
+          <h4>성북구 길음동</h4>
+          <div class="match-stats">
+            <div class="match-stat">평당 평균가 <b class="tabular">5,789만원</b></div>
+            <div class="match-stat">2026.06 거래 <b class="tabular">51건</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="match-legend">
+        <span><i></i> 평당가 격차 1.4% 이내</span>
+        <span><i></i> 매매가격지수 상관계수 0.938 (분석 대상 중 최고)</span>
+      </div>
+      <div class="match-source">평당가: 국토교통부 아파트매매 실거래가(공공데이터포털) 2026년 6월 신고분 · 상관계수: 한국부동산원 구별 아파트 매매가격지수(R-ONE) 2010.01~2026.07 월간, 전월 대비 변동률 기준</div>
+    </div>
+
+    <div class="corr-method">
+      <div class="corr-method-title">상관계수란? 어떻게 계산했나</div>
+      <p>여기서 말하는 &lsquo;상관계수&rsquo;는 통계학의 <b style="color:var(--ink);">피어슨(Pearson) 상관계수</b>입니다. 두 자치구의 아파트값이 오르고 내릴 때 얼마나 같은 방향으로, 비슷한 크기로 함께 움직였는지를 -1~1 사이 숫자 하나로 나타냅니다. 1에 가까울수록 &lsquo;같이 오르고 같이 내린다&rsquo;는 뜻이고, 0에 가까우면 서로 무관하게 따로 움직인다는 뜻이며, 음수면 한쪽이 오를 때 다른 쪽은 내리는 반대 움직임을 뜻합니다. 평당가가 비슷한 두 지역이라도 상관계수가 낮다면, 지금 가격이 우연히 겹쳤을 뿐 실제로는 다른 힘에 의해 움직이는 시장일 수 있습니다.</p>
+
+      <div class="corr-scale">
+        <span class="corr-scale-item"><i style="background:var(--seq-4);"></i>0.9 이상 — 매우 강함</span>
+        <span class="corr-scale-item"><i style="background:var(--seq-3);"></i>0.8~0.9 — 강함</span>
+        <span class="corr-scale-item"><i style="background:var(--seq-2);"></i>0.7~0.8 — 보통</span>
+        <span class="corr-scale-item"><i style="background:var(--seq-0);"></i>0.7 미만 — 약함</span>
+      </div>
+      <p style="margin-top:-6px; font-size:12px; color:var(--ink-faint);">※ 통계학의 절대 기준이 아니라, 이 페이지에서 25개 구를 서로 비교하며 정한 참고 구간입니다.</p>
+
+      <div class="corr-steps">
+        <div class="corr-step"><span class="corr-step-num"></span><p><b style="color:var(--ink);">원자료 수집</b> — 한국부동산원 R-ONE 통계포털에서 구별 아파트 매매가격지수(월간, 2017년 4분기=100)를 2010년 1월부터 2026년 7월까지 <b class="tabular" style="color:var(--ink);">199개월치</b>, 서울 25개 구 전체에 대해 받았습니다.</p></div>
+        <div class="corr-step"><span class="corr-step-num"></span><p><b style="color:var(--ink);">변동률로 변환</b> — 지수 값 자체가 아니라 전월 대비 변동률(로그수익률)로 바꿨습니다. 구마다 지수의 절대 수준이 달라 값 자체를 비교하면 의미가 없기 때문에, &lsquo;얼마나 올랐다 내렸다 했는지&rsquo;의 패턴만 남깁니다.</p></div>
+        <div class="corr-step"><span class="corr-step-num"></span><p><b style="color:var(--ink);">두 구간 상관계수 계산</b> — 비교하려는 두 자치구의 199개월 변동률 시계열 사이의 피어슨 상관계수를 계산합니다.</p></div>
+        <div class="corr-step"><span class="corr-step-num"></span><p><b style="color:var(--ink);">급지별 최적 쌍 선정</b> — 같은 평당가 급지 안에서 동쪽 자치구 × 서쪽 자치구로 만들 수 있는 모든 조합의 상관계수를 계산하고, 가장 높은 조합을 &lsquo;최적 동급지 쌍&rsquo;으로 뽑았습니다.</p></div>
+      </div>
+
+      <div class="corr-formula-box">
+        <div><span class="fx">// 1단계 — 월별 변동률(로그수익률)</span></div>
+        <div>r(t) = ln( 지수(t) / 지수(t-1) )</div>
+        <div style="margin-top:10px;"><span class="fx">// 2단계 — 두 구간 A, B의 피어슨 상관계수</span></div>
+        <div>corr(A,B) = Σ(rA(t) − rA̅)(rB(t) − rB̅) / √[ Σ(rA(t) − rA̅)² · Σ(rB(t) − rB̅)² ]</div>
+      </div>
+
+      <p>가격 데이터(평당 실거래가)는 국토교통부 아파트매매 실거래가(공공데이터포털)에서, 지수 데이터는 한국부동산원 R-ONE 통계포털의 공개 통계표에서 각각 받아왔습니다. API 키 없이도 접근 가능한 공개 통계표를 사용했으며, 두 데이터 모두 이 페이지에 원문 그대로가 아니라 계산된 결과만 반영되어 있습니다.</p>
+    </div>
+
+    <div class="tier-table-wrap">
+      <h3 class="tier-table-title">급지 재분류 전체표 — 5단계 x 동/서</h3>
+      <p class="tier-table-note">자치구를 실거래가 평당가로 5단계 급지로 나누고, 급지별 동쪽·서쪽 자치구 중 매매가격지수 상관계수가 가장 높은 쌍을 &lsquo;동급지&rsquo; 근거로 표시했습니다. 상관계수가 낮거나 동/서 어느 한쪽이 아예 없는 급지는 억지로 짝짓지 않고 그대로 밝혔습니다.</p>
+      <div class="tier-table-scroll">
+        <table class="tier-table">
+          <thead>
+            <tr><th>급지</th><th>평당가대</th><th>동쪽 자치구</th><th>서쪽 자치구</th><th>최적 동급지 쌍</th><th>상관계수</th></tr>
+          </thead>
+          <tbody id="tierTableBody"></tbody>
+        </table>
+      </div>
+      <div class="tier-flag-box">
+        <b>재분류로 바뀐 점</b> — 기존에 내세웠던 강동구·마포구 쌍(상관계수 0.816)은 같은 급지 내 6개 조합 중 5위로 근거가 약했고, 강동구·서대문구 쌍(0.736)은 조사한 조합 중 가장 낮아 &lsquo;동급지&rsquo;로 보기 어려웠습니다. 이번 재분류에서는 성북구·서대문구(0.938), 강동구·동작구(0.863), 노원구·은평구(0.903)처럼 상관계수가 더 높은 조합으로 교체했습니다.
+      </div>
+    </div>
+
+    <div class="corr-detail-wrap">
+      <h3 class="tier-table-title">급지별 전체 비교 데이터</h3>
+      <p class="tier-table-note">최적 쌍 하나만 보여드리면 왜 그 조합이 선택됐는지 알 수 없어서, 각 급지에서 실제로 계산한 모든 동-서 조합의 상관계수를 전부 공개합니다. 1·2급지는 서쪽에 대응하는 자치구가 없어 급지 내부 조합만 표시했습니다.</p>
+      <div id="corrDetailBody"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GAP ANALYSIS ============ -->
+<section class="gap-section" id="gap">
+  <div class="wrap gap-layout">
+    <div class="gap-bars">
+      <div class="gbar">
+        <div class="gbar-top"><span class="name">KB부동산시세 (대출 기준)</span><span class="val tabular">15.80억</span></div>
+        <div class="gbar-track"><div class="gbar-fill fill-kb" style="width:88%;"></div></div>
+      </div>
+      <div class="gbar">
+        <div class="gbar-top"><span class="name">공시지가 환산가</span><span class="val tabular">11.20억</span></div>
+        <div class="gbar-track"><div class="gbar-fill fill-official" style="width:62%;"></div></div>
+      </div>
+      <div class="gbar">
+        <div class="gbar-top"><span class="name">최근 실거래가</span><span class="val tabular">16.10억</span></div>
+        <div class="gbar-track"><div class="gbar-fill fill-actual" style="width:90%;"></div></div>
+      </div>
+      <div class="gbar">
+        <div class="gbar-top"><span class="name">현재 매물 호가</span><span class="val tabular">17.50억</span></div>
+        <div class="gbar-track"><div class="gbar-fill fill-ask" style="width:98%;"></div></div>
+      </div>
+      <div class="gap-callout">호가가 실거래가 대비 <b>약 8.7% 높습니다</b> · 거품 가능성을 확인해 보세요</div>
+    </div>
+    <div>
+      <div class="eyebrow">통합 시세 분석</div>
+      <h2 style="font-size: clamp(24px,3vw,32px); margin: 14px 0 20px;">KB시세, 공시지가, 호가&hellip;<br>이제 한 화면에서</h2>
+      <p style="font-size:12.5px; color:var(--ink-faint); margin-bottom:22px;">※ 왼쪽 그래프는 완성될 기능을 보여주는 예시입니다. 실거래가는 국토교통부 공공데이터로, 구별 매매가격지수는 한국부동산원 공공데이터로 실제 연동을 마쳤고(위 지도 예시 참고), 개별 매물 단위의 KB시세·공시지가·호가는 아직 연동 전이라 예시 수치입니다.</p>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="num">1</div>
+          <div><h4>대출 기준부터 정확히</h4><p>대출 한도의 기준이 되는 KB시세를 먼저 보여드려, 실제 조달 가능한 자금부터 가늠할 수 있습니다.</p></div>
+        </div>
+        <div class="feature-item">
+          <div class="num">2</div>
+          <div><h4>거품 매물을 걸러냅니다</h4><p>호가와 실거래가·공시지가 갭을 자동 계산해, 시세보다 부풀려진 매물을 미리 알려드립니다.</p></div>
+        </div>
+        <div class="feature-item">
+          <div class="num">3</div>
+          <div><h4>전세가율까지 한 번에</h4><p>갭투자·실거주 판단에 필요한 전세가율을 함께 제공해 자금 계획을 더 촘촘하게 세울 수 있습니다.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRICING ============ -->
+<section class="pricing" id="pricing">
+  <div class="wrap">
+    <div class="section-head" style="margin-left:auto; margin-right:auto; text-align:center; align-items:center;">
+      <div class="eyebrow">이용 방법</div>
+      <h2>필요한 만큼, 무료로 시작하세요</h2>
+      <p>기본적인 시세 확인은 무료입니다. 동·호수 단위 정밀 분석이 필요할 때 프리미엄으로 넓혀 보세요.</p>
+    </div>
+    <div class="price-grid">
+      <div class="price-card free">
+        <div class="price-top">
+          <h3>Free</h3>
+          <div class="desc">누구나 무료로</div>
+        </div>
+        <ul class="price-list">
+          <li>기본 실거래가 조회</li>
+          <li>KB부동산시세 확인</li>
+          <li>단지별 대표 가치지수</li>
+        </ul>
+        <div class="price-note">가입 없이도 단지 단위 정보 열람 가능</div>
+      </div>
+      <div class="price-card premium">
+        <div class="price-top">
+          <h3>Premium</h3>
+          <div class="desc">정밀 분석이 필요할 때</div>
+        </div>
+        <ul class="price-list">
+          <li>동·호수별 정밀 가치 분석 리포트</li>
+          <li>동서 권역 동급지 매칭 풀버전</li>
+          <li>공시지가 갭 분석 및 거품 매물 알림</li>
+          <li>급매물 실시간 알림</li>
+        </ul>
+        <div class="price-note">월 구독 요금은 정식 출시 시 안내됩니다</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ROADMAP ============ -->
+<section class="roadmap" id="roadmap">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">사업 단계별 로드맵</div>
+      <h2>서울 MVP에서 수도권 전역으로</h2>
+      <p>데이터 연동부터 정성 데이터 융합까지, 4단계를 거쳐 서비스를 완성해 나갑니다.</p>
+    </div>
+    <div class="roadmap-track">
+      <div class="rm-step active">
+        <div class="rm-dot">1</div>
+        <h4>데이터 연동 &amp; 6대 요인 수치화</h4>
+        <p>KB시세·공시지가·실거래가·공공 API 연동, 6대 개별요인 스코어링 알고리즘 구축</p>
+        <span class="rm-tag">진행 중</span>
+      </div>
+      <div class="rm-step">
+        <div class="rm-dot">2</div>
+        <h4>개별성 균질화 &amp; 동급지 매칭 엔진</h4>
+        <p>시세 갭 분석, 가치지수 개발, 동·서 유사 패턴 매칭 AI 구현</p>
+        <span class="rm-tag">예정</span>
+      </div>
+      <div class="rm-step">
+        <div class="rm-dot">3</div>
+        <h4>실거주자 정성 데이터 융합</h4>
+        <p>실거주 커뮤니티·후기 NLP 분석으로 정량 데이터의 한계 보완</p>
+        <span class="rm-tag">예정</span>
+      </div>
+      <div class="rm-step">
+        <div class="rm-dot">4</div>
+        <h4>서울 MVP 출시 &amp; 수도권 확장</h4>
+        <p>서울 주요 단지 대상 웹/앱 출시, 검증 후 경기·인천으로 확장</p>
+        <span class="rm-tag">예정</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="cta" id="cta">
+  <div class="wrap">
+    <div class="eyebrow" style="justify-content:center;">사전 알림 신청</div>
+    <h2 style="margin-top:14px;">가장 먼저, 진짜 가치를 만나보세요</h2>
+    <p>서울 MVP 출시 소식과 동급지 매칭 미리보기를 가장 먼저 받아보실 수 있습니다.</p>
+    <form class="signup" id="signupForm">
+      <input type="email" id="signupEmail" placeholder="이메일 주소를 입력하세요" required aria-label="이메일 주소">
+      <button type="submit" class="btn btn-primary">알림 신청</button>
+    </form>
+    <div class="signup-msg" id="signupMsg">✓ 신청이 접수되었습니다. 가장 먼저 소식을 전해드릴게요.</div>
+    <div class="cta-fine">이 페이지는 사업 아이디어를 소개하기 위한 초기 소개 페이지입니다.</div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap foot-row">
+    <div class="foot-brand">진가 JINGA</div>
+    <div class="foot-meta">감정평가 기반 부동산 가치분석 및 매칭 플랫폼 · Concept Preview</div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    // 평당 평균가: 2026년 6월 국토교통부 아파트매매 실거래가 공공데이터 기준(만원)
+    // corr: 한국부동산원 구별 아파트 매매가격지수(2010.01~2026.07, 월간) 로그수익률 상관계수 — 같은 급지(가격대) 내에서 실제로 함께 오르내리는 정도의 근거
+    var pairs = [
+      { eastPlace:"길음동", eastGu:"성북구", eastIdx:"5,789", eastPrice:"51건",
+        westPlace:"남가좌동", westGu:"서대문구", westIdx:"5,870", westPrice:"43건", delta:"1.4", corr:"0.938" },
+      { eastPlace:"상일동", eastGu:"강동구", eastIdx:"7,868", eastPrice:"23건",
+        westPlace:"사당동", westGu:"동작구", westIdx:"6,577", westPrice:"48건", delta:"19.6", corr:"0.863" },
+      { eastPlace:"월계동", eastGu:"노원구", eastIdx:"3,909", eastPrice:"103건",
+        westPlace:"응암동", westGu:"은평구", westIdx:"4,202", westPrice:"68건", delta:"7.0", corr:"0.903" }
+    ];
+    var i = 0;
+    var els = {
+      eastPlace: document.getElementById('eastPlace'), eastGu: document.getElementById('eastGu'),
+      eastIndex: document.getElementById('eastIndex'), eastPrice: document.getElementById('eastPrice'),
+      westPlace: document.getElementById('westPlace'), westGu: document.getElementById('westGu'),
+      westIndex: document.getElementById('westIndex'), westPrice: document.getElementById('westPrice'),
+      delta: document.getElementById('pairDelta'), corr: document.getElementById('pairCorr'), idx: document.getElementById('pairIndex'),
+      panel: document.getElementById('duoPanel')
+    };
+    function render(){
+      var p = pairs[i];
+      els.eastPlace.textContent = p.eastPlace; els.eastGu.textContent = p.eastGu;
+      els.eastIndex.textContent = p.eastIdx; els.eastPrice.textContent = p.eastPrice;
+      els.westPlace.textContent = p.westPlace; els.westGu.textContent = p.westGu;
+      els.westIndex.textContent = p.westIdx; els.westPrice.textContent = p.westPrice;
+      els.delta.textContent = p.delta;
+      if (els.corr) els.corr.textContent = p.corr;
+      els.idx.textContent = ('0'+(i+1)).slice(-2) + ' / 0' + pairs.length;
+    }
+    function go(dir){
+      els.panel.style.opacity = '0';
+      setTimeout(function(){
+        i = (i + dir + pairs.length) % pairs.length;
+        render();
+        els.panel.style.opacity = '1';
+      }, 160);
+    }
+    document.getElementById('nextPair').addEventListener('click', function(){ go(1); });
+    document.getElementById('prevPair').addEventListener('click', function(){ go(-1); });
+    els.panel.style.transition = 'opacity .16s ease';
+    render();
+
+    // ---- 급지 재분류 표: 실거래가 평당가 5단계 x 동/서, 매매가격지수(REB) 상관계수 기반 최적 쌍 ----
+    // 상관계수: 한국부동산원 구별 아파트 매매가격지수 2010.01~2026.07 월간 시계열, 전월비 로그수익률의 피어슨 상관계수
+    var TIERS = [
+      { label:"1급지 · 최상급", range:"9,000만원 이상", east:["강남구","서초구"], west:[],
+        pair:null, note:"서쪽엔 이 가격대에 해당하는 자치구가 없어 동급지 비교 대상 자체가 없습니다." },
+      { label:"2급지 · 상급", range:"7,000~9,000만원", east:["송파구","성동구"], west:[],
+        pair:null, note:"서쪽 대응 급지가 없습니다. 다만 송파구는 같은 급지인 성동구(상관계수 0.834)보다 1급지인 서초·강남구(0.877~0.891)와 더 강하게 함께 움직여, 사실상 1급지에 가깝게 재분류할 필요가 있습니다." },
+      { label:"3급지 · 중상급", range:"5,500~7,000만원", east:["강동구","광진구"], west:["마포구","영등포구","동작구"],
+        pair:["광진구","영등포구",0.869], note:"기존에 대표 사례로 썼던 강동구·마포구(0.816)는 이 급지의 동서 조합 6개 중 5위로 근거가 약했습니다. 광진구·영등포구(0.869)와 강동구·동작구(0.863)가 더 강한 근거입니다." },
+      { label:"4급지 · 중급", range:"4,000~5,500만원", east:["성북구","동대문구"], west:["서대문구","강서구","관악구","양천구"],
+        pair:["성북구","서대문구",0.938], note:"전체 조사 대상 중 상관계수가 가장 높은 쌍입니다. 반대로 양천구는 성북·동대문구와의 상관계수가 0.69~0.71로 낮아, 가격대는 비슷해도 시세 흐름은 다른 급지처럼 움직입니다." },
+      { label:"5급지 · 보급형", range:"4,000만원 미만", east:["노원구","도봉구","강북구","중랑구"], west:["은평구","구로구","금천구"],
+        pair:["노원구","은평구",0.903], note:"노원구·은평구(0.903), 도봉구·은평구(0.900)가 가장 강한 조합입니다." }
+    ];
+    function guChips(list){
+      return list.map(function(g){ return '<button type="button" class="gu-chip" data-gu="'+g+'">'+g+'</button>'; }).join(', ');
+    }
+    var tierBody = document.getElementById('tierTableBody');
+    if (tierBody) {
+      tierBody.innerHTML = TIERS.map(function(t, idx){
+        var pairCell, corrCell;
+        if (t.pair) {
+          pairCell = t.pair[0] + ' ↔ ' + t.pair[1];
+          corrCell = t.pair[2].toFixed(3);
+        } else {
+          pairCell = '<span class="tnone">해당 없음</span>';
+          corrCell = '—';
+        }
+        return '<tr id="tierRow'+idx+'">'+
+          '<td class="tname">'+t.label+'</td>'+
+          '<td class="tprice">'+t.range+'</td>'+
+          '<td>'+guChips(t.east)+'</td>'+
+          '<td>'+(t.west.length ? guChips(t.west) : '<span class="tnone">없음</span>')+'</td>'+
+          '<td class="tpair">'+pairCell+'</td>'+
+          '<td class="tcorr">'+corrCell+'</td>'+
+        '</tr>'+
+        '<tr><td></td><td colspan="5" style="padding-top:0; font-size:12.5px; color:var(--ink-faint); line-height:1.6;">'+t.note+'</td></tr>';
+      }).join('');
+      tierBody.addEventListener('click', function(e){
+        var chip = e.target.closest('.gu-chip');
+        if (!chip) return;
+        var name = chip.getAttribute('data-gu');
+        if (window.jingaSelectGu) window.jingaSelectGu(name);
+      });
+    }
+
+    // ---- 급지별 전체 동-서 조합 상관계수 (실제 계산값, 최적 쌍 외 나머지 조합도 전부 표시) ----
+    var CORR_DETAIL = [
+      { label:"1급지 · 최상급 (급지 내부)", pairs:[["강남구","서초구",0.907]] },
+      { label:"2급지 · 상급 (급지 내부)", pairs:[["성동구","용산구",0.845],["성동구","송파구",0.834],["송파구","용산구",0.803]] },
+      { label:"3급지 · 중상급 (동 × 서)", pairs:[
+        ["광진구","영등포구",0.869],["강동구","동작구",0.863],["광진구","마포구",0.862],
+        ["강동구","영등포구",0.831],["강동구","마포구",0.816],["광진구","동작구",0.783]
+      ]},
+      { label:"4급지 · 중급 (동 × 서)", pairs:[
+        ["성북구","서대문구",0.938],["동대문구","서대문구",0.879],["동대문구","강서구",0.863],
+        ["성북구","강서구",0.850],["동대문구","관악구",0.857],["성북구","관악구",0.827],
+        ["동대문구","양천구",0.706],["성북구","양천구",0.686]
+      ]},
+      { label:"5급지 · 보급형 (동 × 서)", pairs:[
+        ["노원구","은평구",0.903],["도봉구","은평구",0.900],["강북구","은평구",0.878],
+        ["중랑구","구로구",0.869],["중랑구","은평구",0.868],["강북구","구로구",0.872],
+        ["노원구","구로구",0.855],["강북구","금천구",0.846],["도봉구","구로구",0.861],
+        ["도봉구","금천구",0.861],["중랑구","금천구",0.837],["노원구","금천구",0.838]
+      ]}
+    ];
+    var corrDetailBody = document.getElementById('corrDetailBody');
+    if (corrDetailBody) {
+      corrDetailBody.innerHTML = CORR_DETAIL.map(function(g){
+        var sorted = g.pairs.slice().sort(function(a,b){ return b[2]-a[2]; });
+        var bestVal = sorted.length ? sorted[0][2] : null;
+        var rows = sorted.map(function(p){
+          var isBest = p[2] === bestVal;
+          return '<tr'+(isBest ? ' class="cbest"' : '')+'>'+
+            '<td class="cpair">'+p[0]+' × '+p[1]+'</td>'+
+            '<td class="cval">'+p[2].toFixed(3)+'</td>'+
+          '</tr>';
+        }).join('');
+        return '<div class="corr-detail-tier">'+
+          '<div class="corr-detail-head"><h4>'+g.label+'</h4><span>조합 '+g.pairs.length+'개</span></div>'+
+          '<div class="tier-table-scroll"><table class="corr-detail-table"><thead><tr><th>자치구 조합</th><th style="text-align:right;">상관계수</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+        '</div>';
+      }).join('');
+    }
+
+    // ---- 지역지도 연동: 자치구명 -> 급지/동급지 매칭 결과 조회 테이블 ----
+    // (아래 지역지도 스크립트의 selectGu()가 이 테이블을 읽어 지도 클릭만으로 동급지 결과를 보여줍니다)
+    var GU_TIER_INFO = (function(){
+      var corrByGu = {};
+      CORR_DETAIL.forEach(function(tier, tierIdx){
+        tier.pairs.forEach(function(p){
+          var a = p[0], b = p[1], c = p[2];
+          (corrByGu[a] = corrByGu[a] || []).push({ partner:b, corr:c, tierIdx:tierIdx });
+          (corrByGu[b] = corrByGu[b] || []).push({ partner:a, corr:c, tierIdx:tierIdx });
+        });
+      });
+      var info = {};
+      TIERS.forEach(function(tier, tierIdx){
+        tier.east.concat(tier.west).forEach(function(gu){
+          var side = tier.east.indexOf(gu) > -1 ? 'east' : 'west';
+          var options = (corrByGu[gu] || []).slice().sort(function(x,y){ return y.corr - x.corr; });
+          var best = options[0];
+          var isOfficial = !!(tier.pair && best && (
+            (tier.pair[0] === gu && tier.pair[1] === best.partner) ||
+            (tier.pair[1] === gu && tier.pair[0] === best.partner)
+          ));
+          info[gu] = {
+            tierIdx: tierIdx, tierLabel: tier.label, range: tier.range, side: side,
+            partner: best ? best.partner : null, corr: best ? best.corr : null,
+            isOfficial: isOfficial, note: tier.note
+          };
+        });
+      });
+      // 용산구: 평당가로는 2급지 구간이지만 동/서 어느 쪽 목록에도 넣지 않았던 자치구 — 급지 내부 비교(성동·송파와의 상관계수)는 이미 계산되어 있어 지도 상세정보에는 포함합니다.
+      if (!info["용산구"] && corrByGu["용산구"]) {
+        var best2 = corrByGu["용산구"].slice().sort(function(x,y){ return y.corr - x.corr; })[0];
+        info["용산구"] = {
+          tierIdx: 1, tierLabel: TIERS[1].label, range: TIERS[1].range, side: 'east',
+          partner: best2.partner, corr: best2.corr, isOfficial: false,
+          note: "2급지 가격대에 속하지만, 동서 비교의 기준 자치구 목록에는 포함하지 않았습니다. 급지 내부 상관계수만 참고용으로 표시합니다."
+        };
+      }
+      return info;
+    })();
+    window.GU_TIER_INFO = GU_TIER_INFO;
+    window.jingaHighlightTier = function(idx){
+      var matchingSection = document.getElementById('matching');
+      var row = document.getElementById('tierRow' + idx);
+      if (!matchingSection) return;
+      matchingSection.scrollIntoView({ behavior:'smooth', block:'start' });
+      if (row) {
+        setTimeout(function(){
+          row.scrollIntoView({ behavior:'smooth', block:'center' });
+          row.classList.add('trow-flash');
+          setTimeout(function(){ row.classList.remove('trow-flash'); }, 1600);
+        }, 450);
+      }
+    };
+
+    // ---- 6대 개별요인: 지역지도 연동, 자치구별 점수 자동 계산 + 클릭 시 세부항목 펼치기 ----
+    // 점수 산식: 60점 기준값에 그 자치구의 실거래가 순위(price rank)·매매가격지수 순위(mm rank, 0~100)를
+    // 요인별 가중치로 반영한 예시 산식입니다. 실제 감정평가 결과가 아니라, 완성될 서비스가 동·호수 데이터로
+    // 무엇을 계산하게 될지 보여주는 데모입니다. 자치구가 바뀌어도 같은 결과가 나오도록 결정론적으로 계산합니다.
+    var FACTOR_DEFS = [
+      { key:"가로조건", desc:"단지 앞 도로의 폭, 접면, 보행 동선의 편의성", priceW:0.25, mmW:0,
+        subs:[
+          ["폭원상태","단지 접면 도로의 너비가 통행·소방활동에 충분한지"],
+          ["포장상태","노면 포장 상태 및 보행로 정비 수준"],
+          ["계통연속성","간선도로와의 연결성, 막다른 길 여부"]
+        ],
+        note:"감정평가실무기준상 &lsquo;가로조건&rsquo;은 폭원·구조 등의 상태, 포장 여부, 계통 및 연속성을 표준 판단 항목으로 봅니다." },
+      { key:"접근조건", desc:"지하철·버스 접근성, 지하주차장·엘리베이터 직결 여부", priceW:0.35, mmW:0,
+        subs:[
+          ["대중교통 접근성","지하철역·버스정류장까지의 도보 거리"],
+          ["생활편의시설 접근성","마트·병원 등 생활 인프라까지의 거리"],
+          ["공공시설 접근성","관공서·학교 등 공공시설과의 접근성"]
+        ],
+        note:"접근조건은 교통시설 및 생활·공공시설과의 거리·편의성을 기준으로 평가합니다." },
+      { key:"환경조건", desc:"조망, 일조, 소음, 인접 시설의 쾌적성", priceW:0.15, mmW:0,
+        subs:[
+          ["일조·통풍","동 배치에 따른 채광 및 통풍 조건"],
+          ["소음·진동","도로·철도 등 인접 소음원의 영향"],
+          ["조망","한강·공원 등 조망 확보 여부"]
+        ],
+        note:"환경조건은 쾌적성을 좌우하는 일조·통풍, 소음·진동, 조망 등을 종합적으로 판단합니다." },
+      { key:"획지조건", desc:"동 위치, 경사도, 세대 평면 구조(A/B 타입)", priceW:0.20, mmW:0,
+        subs:[
+          ["면적·형상","대지 면적과 형상의 효율성"],
+          ["방위","동·세대의 향(向)"],
+          ["고저·경사","단지 내 고저차 및 경사도"]
+        ],
+        note:"획지조건은 대지 자체의 면적·형상·방위·경사 등 물리적 특성을 기준으로 합니다." },
+      { key:"행정조건", desc:"학군, 재건축·재개발 등 정비사업 진행 단계", priceW:0.10, mmW:0.30,
+        subs:[
+          ["용도지역 및 규제","용도지역·지구단위계획 등 공법상 제한"],
+          ["정비사업 진행단계","재건축·재개발 등 정비사업의 진행 정도"],
+          ["학군","배정 학교 및 학군 선호도"]
+        ],
+        note:"행정조건은 용도지역·규제, 정비사업 진행 단계, 학군 등 제도적·행정적 요인을 다룹니다. 매매가격지수 상승률이 높을수록 정비사업 모멘텀이 크다고 보고 반영했습니다." },
+      { key:"기타요인", desc:"커뮤니티 시설, 관리 상태, 실거주자 정성 평가", priceW:0.15, mmW:0,
+        subs:[
+          ["커뮤니티 시설","헬스장·라운지 등 부대시설 수준"],
+          ["관리상태","건물 및 조경 관리 상태"],
+          ["실거주자 정성평가","실거주자 리뷰 기반 정성적 평가"]
+        ],
+        note:"기타요인은 위 5가지 조건으로 포착되지 않는 개별성을 보완하는 항목입니다." }
+    ];
+    // 문자열을 결정론적 0~1 값으로 바꾸는 간단한 해시(자치구가 같으면 항상 같은 결과)
+    function seededFrac(str){
+      var h = 0;
+      for (var i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; }
+      return (h % 1000) / 1000;
+    }
+    var SUB_PATTERNS = [[2,-3,1],[-1,3,-2],[4,-2,-2],[-3,1,2],[1,1,-2],[3,-1,-2],[-2,4,-2],[0,3,-3]];
+    var factorsListEl = document.getElementById('factorsList');
+    if (factorsListEl) {
+      factorsListEl.addEventListener('click', function(e){
+        var head = e.target.closest('.factor-head');
+        if (!head) return;
+        var item = head.closest('.factor');
+        var isOpen = item.getAttribute('data-open') === 'true';
+        item.setAttribute('data-open', isOpen ? 'false' : 'true');
+        head.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+      });
+    }
+    window.jingaRenderFactors = function(guName, priceRank, mmRank){
+      var scores = FACTOR_DEFS.map(function(f){
+        var base = 58 + (f.priceW * priceRank + f.mmW * mmRank) * 0.42;
+        var noise = Math.round((seededFrac(guName + '_' + f.key) * 2 - 1) * 8);
+        return Math.round(Math.max(55, Math.min(97, base + noise)));
+      });
+      var indexVal = Math.round((scores.reduce(function(a,b){ return a+b; }, 0) / scores.length) * 10) / 10;
+
+      var badgeVal = document.getElementById('factorIndexVal');
+      if (badgeVal) badgeVal.textContent = indexVal.toFixed(1);
+      var badgeGu = document.getElementById('factorIndexGu');
+      if (badgeGu) badgeGu.textContent = '· ' + guName + ' 기준';
+      var sel = document.getElementById('factorGuSelect');
+      if (sel && sel.value !== guName) sel.value = guName;
+
+      if (!factorsListEl) return;
+      factorsListEl.innerHTML = FACTOR_DEFS.map(function(f, i){
+        var score = scores[i];
+        var pattern = SUB_PATTERNS[Math.floor(seededFrac(guName + '_' + f.key + '_p') * SUB_PATTERNS.length)];
+        var subRows = f.subs.map(function(s, si){
+          var subScore = Math.max(40, Math.min(100, score + pattern[si]));
+          return '<div class="fsub-row">'+
+            '<span class="fsub-name">'+s[0]+'</span>'+
+            '<div><div style="font-size:12px;color:var(--ink-faint);margin-bottom:4px;">'+s[1]+'</div><div class="meter mini"><i style="width:'+subScore+'%;"></i></div></div>'+
+            '<span class="fsub-score tabular">'+subScore+'</span>'+
+          '</div>';
+        }).join('');
+        return '<div class="factor" data-open="false" data-idx="'+i+'">'+
+          '<button class="factor-head" type="button" aria-expanded="false" aria-controls="fdetail-'+i+'">'+
+            '<span class="fchev" aria-hidden="true">&#9662;</span>'+
+            '<span class="fname">'+f.key+'</span>'+
+            '<span><span class="fdesc">'+f.desc+'</span><span class="meter" style="display:block;margin-top:8px;"><i style="width:'+score+'%;"></i></span></span>'+
+            '<span class="fscore tabular">'+score+' / 100</span>'+
+          '</button>'+
+          '<div class="factor-detail" id="fdetail-'+i+'">'+
+            '<div class="factor-detail-inner"><div class="factor-detail-body">'+subRows+'<p class="factor-note">'+f.note+'</p></div></div>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+    };
+
+    var form = document.getElementById('signupForm');
+    var msg = document.getElementById('signupMsg');
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      msg.classList.add('show');
+      form.querySelector('input').value = '';
+    });
+  })();
+</script>
+
+<script>
+  /* ============ REGION MAP — 구/동 실거래가 지수 (국토교통부 공공데이터, 2026.06 스냅샷) ============ */
+  (function(){
+    // 8-col x 6-row schematic tile layout, approximating Seoul's real
+    // west→east / north→south relative positions (not to scale).
+    // price = 2026년 6월 국토교통부 아파트매매 실거래가(공공데이터포털) 평당 평균가(만원).
+    // dong = [법정동명, 평당 평균가(만원), 2026.06 거래건수] — 자치구별 거래건수 상위 3개 동
+    // (강동구는 페이지 다른 곳에서 다루는 고덕동/상일동/암사동으로 통일).
+    // mm = 한국부동산원 아파트 매매가격지수(구, 분기), 2017년 4분기=100, 2026년 2분기 값
+    var GU = [
+      { name:"강남구", short:"강남", total:223, price:11479, col:6, row:6, dong:[["개포동",13078,45],["대치동",11824,28],["도곡동",10904,28]], mm:210.3 },
+      { name:"서초구", short:"서초", total:187, price:10034, col:5, row:6, dong:[["반포동",14275,39],["서초동",7599,56],["방배동",6534,38]], mm:205.3 },
+      { name:"송파구", short:"송파", total:280, price:8770, col:7, row:6, dong:[["잠실동",13970,54],["가락동",7944,46],["문정동",7198,32]], mm:226.1 },
+      { name:"용산구", short:"용산", total:66, price:8618, col:3, row:4, dong:[["한강로3가",9410,8],["이촌동",9248,16],["문배동",6033,7]], mm:226.8 },
+      { name:"성동구", short:"성동", total:131, price:7803, col:6, row:4, dong:[["금호동1가",9296,15],["행당동",8134,24],["하왕십리동",7275,23]], mm:261.5 },
+      { name:"마포구", short:"마포", total:155, price:6637, col:1, row:4, dong:[["아현동",9543,20],["공덕동",6968,14],["상암동",5422,16]], mm:216.0 },
+      { name:"강동구", short:"강동", total:263, price:6156, col:8, row:6, dong:[["고덕동",8052,28],["상일동",7868,23],["암사동",6602,33]], mm:206.7 },
+      { name:"광진구", short:"광진", total:75, price:6189, col:7, row:4, dong:[["자양동",7011,17],["구의동",6687,26],["중곡동",3247,12]], mm:229.2 },
+      { name:"종로구", short:"종로", total:34, price:5584, col:3, row:3, dong:[["무악동",5802,5],["명륜2가",4844,5],["창신동",3639,8]], mm:178.6 },
+      { name:"중구",   short:"중구", total:61, price:5699, col:4, row:4, dong:[["신당동",6763,32],["회현동1가",5195,3],["황학동",4135,15]], mm:207.2 },
+      { name:"양천구", short:"양천", total:216, price:5491, col:2, row:5, dong:[["목동",7080,68],["신정동",6017,67],["신월동",3722,81]], mm:214.7 },
+      { name:"영등포구", short:"영등포", total:262, price:6167, col:3, row:5, dong:[["여의도동",9513,26],["신길동",6561,58],["대림동",4128,44]], mm:230.0 },
+      { name:"동작구", short:"동작", total:154, price:6339, col:4, row:5, dong:[["사당동",6577,48],["상도동",5993,35],["신대방동",4936,19]], mm:227.5 },
+      { name:"서대문구", short:"서대문", total:220, price:4931, col:1, row:3, dong:[["남가좌동",5870,43],["홍제동",4377,60],["홍은동",3229,32]], mm:200.9 },
+      { name:"강서구", short:"강서", total:380, price:4406, col:1, row:5, dong:[["등촌동",4749,60],["방화동",3574,67],["화곡동",3399,75]], mm:186.7 },
+      { name:"성북구", short:"성북", total:321, price:4287, col:4, row:2, dong:[["길음동",5789,51],["돈암동",3774,43],["정릉동",3051,67]], mm:200.5 },
+      { name:"동대문구", short:"동대문", total:244, price:4789, col:5, row:3, dong:[["전농동",5948,31],["답십리동",5426,56],["장안동",3867,52]], mm:203.0 },
+      { name:"은평구", short:"은평", total:262, price:3906, col:1, row:2, dong:[["응암동",4202,68],["불광동",4014,37],["진관동",3784,41]], mm:167.6 },
+      { name:"관악구", short:"관악", total:166, price:4127, col:4, row:6, dong:[["봉천동",4764,93],["남현동",3734,7],["신림동",3272,66]], mm:180.3 },
+      { name:"구로구", short:"구로", total:301, price:3588, col:2, row:6, dong:[["개봉동",3679,43],["구로동",3321,109],["고척동",3135,42]], mm:179.8 },
+      { name:"노원구", short:"노원", total:686, price:3565, col:6, row:1, dong:[["월계동",3909,103],["중계동",3632,117],["상계동",3393,302]], mm:185.9 },
+      { name:"도봉구", short:"도봉", total:285, price:2853, col:4, row:1, dong:[["창동",3547,106],["쌍문동",2534,83],["방학동",2359,64]], mm:168.5 },
+      { name:"강북구", short:"강북", total:107, price:3174, col:3, row:2, dong:[["미아동",3521,62],["번동",2826,25],["수유동",2637,17]], mm:174.4 },
+      { name:"중랑구", short:"중랑", total:216, price:3334, col:7, row:2, dong:[["면목동",3712,76],["상봉동",3221,26],["신내동",3071,63]], mm:178.8 },
+      { name:"금천구", short:"금천", total:104, price:3028, col:3, row:6, dong:[["독산동",3669,45],["가산동",3058,11],["시흥동",2420,48]], mm:161.0 }
+    ];
+
+    // 0~100 정규화: 25개 구 평당 평균가의 최소~최대를 스케일로 삼는다 (동 지수는 같은 스케일에 100 상한 클램프)
+    var GU_MIN = Math.min.apply(null, GU.map(function(g){ return g.price; }));
+    var GU_MAX = Math.max.apply(null, GU.map(function(g){ return g.price; }));
+    function toIndex(price){
+      var t = (price - GU_MIN) / (GU_MAX - GU_MIN) * 100;
+      return Math.round(Math.max(0, Math.min(100, t)));
+    }
+    // 매매가격지수(mm) 0~100 정규화 — 핵심기술(6대 요인) 섹션의 자치구별 점수 계산에 사용
+    var GU_MM_MIN = Math.min.apply(null, GU.map(function(g){ return g.mm; }));
+    var GU_MM_MAX = Math.max.apply(null, GU.map(function(g){ return g.mm; }));
+    function toMmIndex(mm){
+      var t = (mm - GU_MM_MIN) / (GU_MM_MAX - GU_MM_MIN) * 100;
+      return Math.round(Math.max(0, Math.min(100, t)));
+    }
+    GU.forEach(function(g){
+      g.dong = g.dong.map(function(d){ return [d[0], d[1], d[2], toIndex(d[1])]; }); // [name, price, count, index] — 법정동 랭킹표용 0~100 지수
+    });
+
+    // ---- 서울 25개 구 실제 경계 좌표 (통계청 행정구역 경계 GeoJSON을 단순 투영, southkorea/southkorea-maps 2013 기반) ----
+    var GU_VIEWBOX = "0 0 840.0 702.6";
+    var GU_GEO = {
+      "강동구": { d:"M 687.0,362.7 L 786.7,316.0 L 820.0,361.2 L 783.7,400.0 L 747.9,468.4 L 698.6,441.3 L 680.2,403.8 L 687.0,362.7 Z", cx:744.7, cy:388.1 },
+      "송파구": { d:"M 597.9,448.6 L 659.3,442.4 L 680.2,403.8 L 698.6,441.3 L 747.9,468.4 L 780.2,509.1 L 738.8,573.7 L 704.8,594.4 L 679.2,537.7 L 603.4,497.4 L 597.9,448.6 Z", cx:691.7, cy:498.5 },
+      "강남구": { d:"M 577.8,438.8 L 597.9,448.6 L 603.4,497.4 L 679.2,537.7 L 704.8,594.4 L 654.6,603.6 L 631.4,569.4 L 572.5,585.9 L 534.5,547.3 L 491.5,441.9 L 509.0,424.1 L 577.8,438.8 Z", cx:587.4, cy:517.1 },
+      "서초구": { d:"M 491.5,441.9 L 534.5,547.3 L 572.5,585.9 L 631.4,569.4 L 654.6,603.6 L 639.2,641.8 L 595.4,682.6 L 560.3,678.1 L 539.5,615.3 L 446.6,611.7 L 433.0,566.5 L 430.2,480.2 L 491.5,441.9 Z", cx:526.1, cy:572.8 },
+      "관악구": { d:"M 433.0,566.5 L 446.6,611.7 L 397.3,653.3 L 368.0,658.4 L 331.0,631.0 L 303.8,612.7 L 274.4,557.6 L 281.7,546.3 L 366.5,524.2 L 411.6,569.7 L 433.0,566.5 Z", cx:361.9, cy:590.0 },
+      "동작구": { d:"M 430.2,480.2 L 433.0,566.5 L 411.6,569.7 L 366.5,524.2 L 281.7,546.3 L 313.5,515.3 L 325.7,470.5 L 372.8,460.9 L 430.2,480.2 Z", cx:376.3, cy:509.5 },
+      "영등포구": { d:"M 255.7,387.5 L 359.6,438.0 L 372.8,460.9 L 325.7,470.5 L 313.5,515.3 L 281.7,546.3 L 263.6,491.5 L 235.8,468.8 L 248.8,403.5 L 255.7,387.5 Z", cx:292.2, cy:458.1 },
+      "금천구": { d:"M 274.4,557.6 L 303.8,612.7 L 331.0,631.0 L 276.4,662.3 L 226.7,545.3 L 274.4,557.6 Z", cx:275.4, cy:604.1 },
+      "구로구": { d:"M 130.2,489.5 L 235.8,468.8 L 263.6,491.5 L 281.7,546.3 L 274.4,557.6 L 226.7,545.3 L 170.3,572.4 L 146.9,565.9 L 122.1,532.5 L 126.7,495.5 L 130.2,489.5 Z", cx:198.5, cy:519.6 },
+      "강서구": { d:"M 70.1,310.9 L 91.9,256.3 L 121.8,288.4 L 193.9,327.9 L 255.7,387.5 L 248.8,403.5 L 206.5,384.5 L 206.0,437.1 L 160.5,445.0 L 125.1,410.6 L 26.7,391.0 L 20.0,377.7 L 70.1,310.9 Z", cx:133.4, cy:361.9 },
+      "양천구": { d:"M 125.1,410.6 L 160.5,445.0 L 206.0,437.1 L 206.5,384.5 L 248.8,403.5 L 235.8,468.8 L 130.2,489.5 L 125.1,410.6 Z", cx:189.0, cy:445.7 },
+      "마포구": { d:"M 281.5,322.4 L 346.7,375.4 L 394.2,366.3 L 396.0,384.2 L 359.6,438.0 L 255.7,387.5 L 193.9,327.9 L 241.2,288.2 L 281.5,322.4 Z", cx:293.7, cy:366.0 },
+      "서대문구": { d:"M 372.8,246.9 L 378.9,317.5 L 404.2,349.1 L 394.2,366.3 L 346.7,375.4 L 281.5,322.4 L 372.8,246.9 Z", cx:348.2, cy:322.1 },
+      "은평구": { d:"M 414.1,187.4 L 376.2,205.6 L 372.8,246.9 L 281.5,322.4 L 241.2,288.2 L 279.1,278.1 L 277.3,235.0 L 299.5,158.2 L 380.5,131.5 L 414.1,187.4 Z", cx:329.6, cy:219.3 },
+      "노원구": { d:"M 626.5,31.3 L 652.0,48.9 L 646.8,144.5 L 683.2,162.8 L 672.7,215.3 L 606.5,228.0 L 565.1,206.6 L 548.7,189.9 L 576.5,154.1 L 566.6,54.1 L 626.5,31.3 Z", cx:615.3, cy:138.4 },
+      "도봉구": { d:"M 566.6,54.1 L 576.5,154.1 L 548.7,189.9 L 492.8,138.9 L 504.3,95.7 L 484.6,59.8 L 499.2,20.0 L 566.6,54.1 Z", cx:533.1, cy:103.0 },
+      "강북구": { d:"M 452.6,72.5 L 484.6,59.8 L 504.3,95.7 L 492.8,138.9 L 548.7,189.9 L 565.1,206.6 L 539.7,235.6 L 489.3,226.0 L 438.9,177.0 L 429.3,132.4 L 452.6,72.5 Z", cx:486.3, cy:157.1 },
+      "성북구": { d:"M 420.5,189.6 L 438.9,177.0 L 489.3,226.0 L 539.7,235.6 L 565.1,206.6 L 606.5,228.0 L 607.1,249.5 L 547.0,277.8 L 513.3,319.6 L 451.9,287.1 L 442.9,230.3 L 420.5,189.6 Z", cx:508.1, cy:251.0 },
+      "중랑구": { d:"M 606.5,228.0 L 672.7,215.3 L 696.5,254.9 L 663.5,330.5 L 620.3,334.6 L 607.1,249.5 L 606.5,228.0 Z", cx:647.8, cy:271.9 },
+      "동대문구": { d:"M 513.3,319.6 L 547.0,277.8 L 607.1,249.5 L 620.3,334.6 L 607.8,363.4 L 561.2,338.3 L 513.7,334.9 L 513.3,319.6 Z", cx:575.5, cy:308.5 },
+      "광진구": { d:"M 620.3,334.6 L 663.5,330.5 L 687.0,362.7 L 680.2,403.8 L 659.3,442.4 L 597.9,448.6 L 577.8,438.8 L 607.8,363.4 L 620.3,334.6 Z", cx:636.4, cy:392.6 },
+      "성동구": { d:"M 513.7,334.9 L 561.2,338.3 L 607.8,363.4 L 577.8,438.8 L 509.0,424.1 L 485.2,402.6 L 513.7,334.9 Z", cx:546.2, cy:385.3 },
+      "용산구": { d:"M 485.2,402.6 L 509.0,424.1 L 491.5,441.9 L 430.2,480.2 L 372.8,460.9 L 359.6,438.0 L 396.0,384.2 L 440.4,378.8 L 485.2,402.6 Z", cx:429.8, cy:428.1 },
+      "중구": { d:"M 513.7,334.9 L 485.2,402.6 L 440.4,378.8 L 396.0,384.2 L 394.2,366.3 L 404.2,349.1 L 513.7,334.9 Z", cx:455.9, cy:364.4 },
+      "종로구": { d:"M 414.1,187.4 L 420.5,189.6 L 442.9,230.3 L 451.9,287.1 L 513.3,319.6 L 513.7,334.9 L 404.2,349.1 L 378.9,317.5 L 372.8,246.9 L 376.2,205.6 L 414.1,187.4 Z", cx:423.8, cy:280.5 }
+    };
+    GU.forEach(function(g){
+      var geo = GU_GEO[g.name];
+      g.d = geo.d; g.cx = geo.cx; g.cy = geo.cy;
+    });
+
+    // ---- 5단계 급지 구간(tier) — 실제 값 기준 경계. 25개 구 분포를 보고 사람이 읽기 좋은 값으로 고른 임계값이며
+    // 통계적 자동 분위수가 아니다(정확한 25개 구 값은 위 GU 배열의 price·mm 참고).
+    function tierIndex(breaks, v){
+      for(var i=0;i<breaks.length;i++){ if(v < breaks[i]) return i; }
+      return breaks.length;
+    }
+    function fmtWon(v){ return Math.round(v).toLocaleString('ko-KR'); }
+
+    var METRICS = {
+      trade: {
+        key:'trade', label:'실거래가(평당가)',
+        raw:function(g){ return g.price; },
+        breaks:[4000,5500,7000,9000],
+        tierLabel:function(i, b){
+          if(i===0) return fmtWon(b[0])+'만원 미만';
+          if(i===b.length) return fmtWon(b[b.length-1])+'만원 이상';
+          return fmtWon(b[i-1])+'~'+fmtWon(b[i])+'만원';
+        },
+        mapLabel:function(g){ return fmtWon(g.price); },
+        tileAria:function(g){ return g.name + ' 평당 평균가 ' + fmtWon(g.price) + '만원'; },
+        tip:function(g){ return g.name + ' · 평당 ' + fmtWon(g.price) + '만원'; },
+        cityAvgLabel:function(avg){ return '서울 평균 평당 ' + fmtWon(avg) + '만원 · 2026.06 기준'; },
+        detailLine:function(g){ return '평당 평균가 <b class="tabular">'+fmtWon(g.price)+'만원</b> · 2026.06 거래 <b class="tabular">'+g.total+'건</b>'; },
+        sourceNote:'국토교통부 아파트매매 실거래가(공공데이터포털, data.go.kr) · 2026년 6월 신고분 기준 · 자치구 평당 평균가, 5단계 구간은 사람이 읽기 좋게 반올림한 임계값'
+      },
+      mm: {
+        key:'mm', label:'매매가격지수(REB)',
+        raw:function(g){ return g.mm; },
+        breaks:[180,200,220,240],
+        tierLabel:function(i, b){
+          if(i===0) return b[0].toFixed(0)+' 미만';
+          if(i===b.length) return b[b.length-1].toFixed(0)+' 이상';
+          return b[i-1].toFixed(0)+'~'+b[i].toFixed(0);
+        },
+        mapLabel:function(g){ return g.mm.toFixed(1); },
+        tileAria:function(g){ return g.name + ' 아파트 매매가격지수 ' + g.mm.toFixed(1) + '(2017.4Q=100)'; },
+        tip:function(g){ return g.name + ' · 지수 ' + g.mm.toFixed(1); },
+        cityAvgLabel:function(avg){ return '서울 평균 지수 ' + avg.toFixed(1) + ' · 2026년 2분기 기준'; },
+        detailLine:function(g){ return '매매가격지수 <b class="tabular">'+g.mm.toFixed(1)+'</b> (2017년 4분기=100)'; },
+        sourceNote:'한국부동산원 아파트 매매가격지수(R-ONE, 구·분기) · 2026년 2분기 기준 · 절대 가격이 아닌 2017년 4분기 대비 변동 지수, 5단계 구간은 사람이 읽기 좋게 반올림한 임계값'
+      }
+    };
+    var activeMetric = 'trade';
+
+    var LIGHT_RAMP = ["#D9A94A","#C08F35","#A9762C","#8A5F20","#6B4718","#4D3211"];
+    var DARK_RAMP  = ["#614C28","#7C6435","#9A7D42","#B99850","#D9B565","#F5D998"];
+
+    function isDarkTheme(){
+      var attr = document.documentElement.getAttribute('data-theme');
+      if(attr === 'dark') return true;
+      if(attr === 'light') return false;
+      return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+    function hexToRgb(hex){
+      var v = parseInt(hex.slice(1),16);
+      return [ (v>>16)&255, (v>>8)&255, v&255 ];
+    }
+    function rampRgb(ramp, score){
+      var t = Math.max(0, Math.min(100, score)) / 100 * (ramp.length - 1);
+      var i = Math.floor(t);
+      if(i >= ramp.length - 1) return hexToRgb(ramp[ramp.length - 1]);
+      var f = t - i;
+      var a = hexToRgb(ramp[i]), b = hexToRgb(ramp[i+1]);
+      return [ a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f, a[2]+(b[2]-a[2])*f ];
+    }
+    function bgStyleFor(score){
+      var t = Math.max(0, Math.min(100, score)) / 100 * 5;
+      var i = Math.floor(t);
+      if(i >= 5) return 'var(--seq-5)';
+      var f = t - i, pctB = Math.round(f*100), pctA = 100 - pctB;
+      return 'color-mix(in oklch, var(--seq-'+i+') '+pctA+'%, var(--seq-'+(i+1)+') '+pctB+'%)';
+    }
+    function textVarFor(score){
+      var dark = isDarkTheme();
+      var rgb = rampRgb(dark ? DARK_RAMP : LIGHT_RAMP, score);
+      var perceived = (0.299*rgb[0] + 0.587*rgb[1] + 0.114*rgb[2]) / 255;
+      return perceived > 0.56 ? 'var(--tile-text-dark)' : 'var(--tile-text-light)';
+    }
+
+    function cityAvgFor(m){ return GU.reduce(function(s,g){ return s + m.raw(g); }, 0) / GU.length; }
+
+    // ---- SVG 구 지도 ----
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var mapEl = document.getElementById('guMap');
+    var tip = document.getElementById('mapTip');
+    var selected = null;
+
+    GU.forEach(function(g, idx){
+      var path = document.createElementNS(svgNS, 'path');
+      path.setAttribute('class', 'gu-path');
+      path.setAttribute('d', g.d);
+      path.setAttribute('tabindex', '0');
+      path.setAttribute('role', 'button');
+      path.addEventListener('click', function(){ selectGu(idx); });
+      path.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); selectGu(idx); } });
+      path.addEventListener('mouseenter', function(e){ showTip(g, e); });
+      path.addEventListener('mousemove', function(e){ moveTip(e); });
+      path.addEventListener('mouseleave', hideTip);
+      path.addEventListener('focus', function(e){ showTip(g, e); });
+      path.addEventListener('blur', hideTip);
+      mapEl.appendChild(path);
+      g._path = path;
+
+      var label = document.createElementNS(svgNS, 'text');
+      label.setAttribute('class', 'gu-label');
+      label.setAttribute('x', g.cx);
+      label.setAttribute('pointer-events', 'none');
+      var t1 = document.createElementNS(svgNS, 'tspan');
+      t1.setAttribute('class', 'g-name'); t1.setAttribute('x', g.cx); t1.setAttribute('y', g.cy - 4);
+      t1.textContent = g.short;
+      var t2 = document.createElementNS(svgNS, 'tspan');
+      t2.setAttribute('class', 'g-val tabular'); t2.setAttribute('x', g.cx); t2.setAttribute('y', g.cy + 11);
+      label.appendChild(t1); label.appendChild(t2);
+      mapEl.appendChild(label);
+      g._label = label; g._valTspan = t2;
+    });
+
+    function paintMap(){
+      var m = METRICS[activeMetric];
+      GU.forEach(function(g){
+        var tier = tierIndex(m.breaks, m.raw(g));
+        g._tier = tier;
+        g._path.style.fill = 'var(--tier-'+tier+')';
+        g._path.setAttribute('aria-label', m.tileAria(g));
+        g._valTspan.textContent = m.mapLabel(g);
+      });
+    }
+
+    function renderLegend(){
+      var m = METRICS[activeMetric];
+      var el = document.getElementById('legendTiers');
+      el.innerHTML = '';
+      for(var i=0;i<=m.breaks.length;i++){
+        var item = document.createElement('span');
+        item.className = 'legend-tier';
+        item.innerHTML = '<i style="background:var(--tier-'+i+');"></i>'+m.tierLabel(i, m.breaks);
+        el.appendChild(item);
+      }
+    }
+
+    function showTip(g, e){
+      tip.textContent = METRICS[activeMetric].tip(g);
+      tip.classList.add('show');
+      moveTip(e);
+    }
+    function moveTip(e){
+      var el = e.target.closest ? e.target.closest('.gu-path') : null;
+      var r = el ? el.getBoundingClientRect() : null;
+      if(r){ tip.style.left = (r.left + r.width/2) + 'px'; tip.style.top = r.top + 'px'; }
+    }
+    function hideTip(){ tip.classList.remove('show'); }
+
+    var detail = document.getElementById('guDetail');
+    function selectGu(idx){
+      var m = METRICS[activeMetric];
+      var g = GU[idx];
+      if(selected != null){ GU[selected]._path.classList.remove('selected'); }
+      selected = idx;
+      g._path.classList.add('selected');
+
+      var avg = cityAvgFor(m);
+      var v = m.raw(g);
+      var diff = v - avg;
+      var diffPct = avg !== 0 ? (diff / avg * 100) : 0;
+      var diffLabel = (diff >= 0 ? '+' : '') + diffPct.toFixed(1) + '%';
+
+      var sortedDong = g.dong.slice().sort(function(a,b){ return b[1] - a[1]; });
+      var rows = sortedDong.map(function(d, i){
+        // d = [name, price(만원), count, index] — 법정동 수준은 실거래가만 존재(REB 지수는 구 단위까지만 제공)
+        return '<div class="dong-mini-row">'+
+          '<div class="dong-mini-top"><span class="drank tabular">'+(i+1)+'</span><span class="dname">'+d[0]+'</span><b class="tabular">'+d[1].toLocaleString('ko-KR')+'만원</b></div>'+
+          '<div class="dong-mini-bottom"><div class="meter"><i style="width:'+d[3]+'%;"></i></div><span class="dcount tabular">'+d[2]+'건</span></div>'+
+        '</div>';
+      }).join('');
+
+      var tierInfo = (window.GU_TIER_INFO || {})[g.name];
+      var tierHtml;
+      if (tierInfo) {
+        tierHtml = '<div class="gd-tier-card">'+
+          '<div class="gtc-label">동급지 매칭 · '+tierInfo.tierLabel+'</div>'+
+          (tierInfo.partner
+            ? '<div class="gtc-pair">'+g.name+' <span style="color:var(--ink-faint);">≈</span> <b>'+tierInfo.partner+'</b></div>'+
+              '<div class="gtc-corr tabular">매매가격지수 상관계수 '+tierInfo.corr.toFixed(3)+(tierInfo.isOfficial ? ' · 이 급지의 최적 쌍' : '')+'</div>'
+            : '<div class="gtc-note">'+tierInfo.note+'</div>')+
+          '<button type="button" class="gd-tier-link" data-tier-idx="'+tierInfo.tierIdx+'">동급지 매칭 분석에서 자세히 보기 →</button>'+
+        '</div>';
+      } else {
+        tierHtml = '<div class="gd-tier-card">'+
+          '<div class="gtc-label">동급지 매칭</div>'+
+          '<div class="gtc-note">'+g.name+'는 한국부동산원 소권역 구분상 &lsquo;도심권&rsquo;에 속해 이번 동서 급지 비교 대상에서 제외했습니다.</div>'+
+        '</div>';
+      }
+
+      detail.innerHTML =
+        '<div class="gd-eyebrow">선택한 자치구 · '+m.label+'</div>'+
+        '<h3>'+g.name+'</h3>'+
+        '<div class="gd-diff">서울 평균 대비 <b class="tabular" style="color:'+(diff>=0?'var(--good)':'var(--warn)')+';">'+diffLabel+'</b></div>'+
+        '<div class="gu-score-big tabular">'+m.mapLabel(g)+'</div>'+
+        '<div class="gd-diff" style="margin-top:-14px;">'+m.detailLine(g)+'</div>'+
+        tierHtml+
+        '<div class="gd-sub">법정동별 시세 현황 (실거래가 기준, 거래건수 상위)</div>'+
+        '<div class="dong-mini">'+rows+'</div>'+
+        '<button type="button" class="gd-drilldown" data-gu="'+g.name+'">'+g.name+' 법정동 실거래 랭킹 보기 <span>→</span></button>';
+
+      if (window.jingaRenderFactors) window.jingaRenderFactors(g.name, toIndex(g.price), toMmIndex(g.mm));
+    }
+
+    detail.addEventListener('click', function(e){
+      var btn = e.target.closest('.gd-drilldown');
+      if (btn) {
+        var guName = btn.getAttribute('data-gu');
+        setTab('dong');
+        guFilter.value = guName;
+        renderDongTable();
+        document.getElementById('panelDong').scrollIntoView({ behavior:'smooth', block:'start' });
+        return;
+      }
+      var tierBtn = e.target.closest('.gd-tier-link');
+      if (tierBtn && window.jingaHighlightTier) {
+        window.jingaHighlightTier(parseInt(tierBtn.getAttribute('data-tier-idx'), 10));
+      }
+    });
+
+    window.jingaSetGu = function(name){
+      var idx = GU.findIndex(function(g){ return g.name === name; });
+      if (idx === -1) return;
+      setTab('gu');
+      selectGu(idx);
+    };
+    window.jingaSelectGu = function(name){
+      window.jingaSetGu(name);
+      document.getElementById('map').scrollIntoView({ behavior:'smooth', block:'start' });
+    };
+
+    var factorGuSelect = document.getElementById('factorGuSelect');
+    if (factorGuSelect) {
+      GU.slice().sort(function(a,b){ return a.name.localeCompare(b.name,'ko'); }).forEach(function(g){
+        var opt = document.createElement('option');
+        opt.value = g.name; opt.textContent = g.name;
+        factorGuSelect.appendChild(opt);
+      });
+      factorGuSelect.addEventListener('change', function(){
+        window.jingaSetGu(factorGuSelect.value);
+      });
+    }
+
+    var mapSourceEl = document.querySelector('.map-source');
+    function applyMetric(){
+      var m = METRICS[activeMetric];
+      paintMap();
+      renderLegend();
+      document.getElementById('cityAvg').textContent = m.cityAvgLabel(cityAvgFor(m));
+      if(mapSourceEl) mapSourceEl.textContent = m.sourceNote;
+      selectGu(selected != null ? selected : GU.findIndex(function(g){ return g.name === '강동구'; }));
+    }
+    applyMetric();
+
+    var metricBtns = document.querySelectorAll('.metric-toggle [data-metric]');
+    metricBtns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(btn.dataset.metric === activeMetric) return;
+        activeMetric = btn.dataset.metric;
+        metricBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.metric === activeMetric); });
+        applyMetric();
+      });
+    });
+
+    if(window.matchMedia){
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paintMap);
+    }
+
+    // ---- tabs ----
+    var tabBtnGu = document.getElementById('tabBtnGu'), tabBtnDong = document.getElementById('tabBtnDong');
+    var panelGu = document.getElementById('panelGu'), panelDong = document.getElementById('panelDong');
+    function setTab(which){
+      var guActive = which === 'gu';
+      tabBtnGu.classList.toggle('active', guActive);
+      tabBtnDong.classList.toggle('active', !guActive);
+      tabBtnGu.setAttribute('aria-selected', String(guActive));
+      tabBtnDong.setAttribute('aria-selected', String(!guActive));
+      panelGu.hidden = !guActive;
+      panelDong.hidden = guActive;
+    }
+    tabBtnGu.addEventListener('click', function(){ setTab('gu'); });
+    tabBtnDong.addEventListener('click', function(){ setTab('dong'); });
+
+    // 서울 25개 자치구 실제 행정동 전체 목록(427개) — 행정안전부 행정구역 경계자료(vuski/admdongkor, 2026.04) 기준
+    // 위 실거래가 표는 법정동 단위라 이름 체계가 달라 별도로 표시함(가격 데이터 아직 없음)
+    var SEOUL_DONG_ALL = {"종로구":["가회동","교남동","무악동","부암동","사직동","삼청동","숭인1동","숭인2동","이화동","종로1·2·3·4가동","종로5·6가동","창신1동","창신2동","창신3동","청운효자동","평창동","혜화동"],"중구":["광희동","다산동","동화동","명동","소공동","신당5동","신당동","약수동","을지로동","장충동","중림동","청구동","필동","황학동","회현동"],"용산구":["남영동","보광동","서빙고동","용문동","용산2가동","원효로1동","원효로2동","이촌1동","이촌2동","이태원1동","이태원2동","청파동","한강로동","한남동","효창동","후암동"],"성동구":["금호1가동","금호2·3가동","금호4가동","마장동","사근동","성수1가1동","성수1가2동","성수2가1동","성수2가3동","송정동","옥수동","왕십리2동","왕십리도선동","용답동","응봉동","행당1동","행당2동"],"광진구":["광장동","구의1동","구의2동","구의3동","군자동","능동","자양1동","자양2동","자양3동","자양4동","중곡1동","중곡2동","중곡3동","중곡4동","화양동"],"동대문구":["답십리1동","답십리2동","신설동","용두동","이문1동","이문2동","장안1동","장안2동","전농1동","전농2동","제기동","청량리동","회기동","휘경1동","휘경2동"],"중랑구":["망우3동","망우본동","면목2동","면목3·8동","면목4동","면목5동","면목7동","면목본동","묵1동","묵2동","상봉1동","상봉2동","신내1동","신내2동","중화1동","중화2동"],"성북구":["길음1동","길음2동","돈암1동","돈암2동","동선동","보문동","삼선동","석관동","성북동","안암동","월곡1동","월곡2동","장위1동","장위2동","장위3동","정릉1동","정릉2동","정릉3동","정릉4동","종암동"],"강북구":["미아동","번1동","번2동","번3동","삼각산동","삼양동","송중동","송천동","수유1동","수유2동","수유3동","우이동","인수동"],"도봉구":["도봉1동","도봉2동","방학1동","방학2동","방학3동","쌍문1동","쌍문2동","쌍문3동","쌍문4동","창1동","창2동","창3동","창4동","창5동"],"노원구":["공릉1동","공릉2동","상계10동","상계1동","상계2동","상계3·4동","상계5동","상계6·7동","상계8동","상계9동","월계1동","월계2동","월계3동","중계1동","중계2·3동","중계4동","중계본동","하계1동","하계2동"],"은평구":["갈현1동","갈현2동","구산동","녹번동","대조동","불광1동","불광2동","수색동","신사1동","신사2동","역촌동","응암1동","응암2동","응암3동","증산동","진관동"],"서대문구":["남가좌1동","남가좌2동","북가좌1동","북가좌2동","북아현동","신촌동","연희동","천연동","충현동","홍은1동","홍은2동","홍제1동","홍제2동","홍제3동"],"마포구":["공덕동","대흥동","도화동","망원1동","망원2동","상암동","서강동","서교동","성산1동","성산2동","신수동","아현동","연남동","염리동","용강동","합정동"],"양천구":["목1동","목2동","목3동","목4동","목5동","신월1동","신월2동","신월3동","신월4동","신월5동","신월6동","신월7동","신정1동","신정2동","신정3동","신정4동","신정6동","신정7동"],"강서구":["가양1동","가양2동","가양3동","공항동","등촌1동","등촌2동","등촌3동","발산1동","방화1동","방화2동","방화3동","염창동","우장산동","화곡1동","화곡2동","화곡3동","화곡4동","화곡6동","화곡8동","화곡본동"],"구로구":["가리봉동","개봉1동","개봉2동","개봉3동","고척1동","고척2동","구로1동","구로2동","구로3동","구로4동","구로5동","수궁동","신도림동","오류1동","오류2동","항동"],"금천구":["가산동","독산1동","독산2동","독산3동","독산4동","시흥1동","시흥2동","시흥3동","시흥4동","시흥5동"],"영등포구":["당산1동","당산2동","대림1동","대림2동","대림3동","도림동","문래동","신길1동","신길3동","신길4동","신길5동","신길6동","신길7동","양평1동","양평2동","여의동","영등포동","영등포본동"],"동작구":["노량진1동","노량진2동","대방동","사당1동","사당2동","사당3동","사당4동","사당5동","상도1동","상도2동","상도3동","상도4동","신대방1동","신대방2동","흑석동"],"관악구":["낙성대동","난곡동","난향동","남현동","대학동","미성동","보라매동","삼성동","서림동","서원동","성현동","신림동","신사동","신원동","은천동","인헌동","조원동","중앙동","청룡동","청림동","행운동"],"서초구":["내곡동","반포1동","반포2동","반포3동","반포4동","반포본동","방배1동","방배2동","방배3동","방배4동","방배본동","서초1동","서초2동","서초3동","서초4동","양재1동","양재2동","잠원동"],"강남구":["개포1동","개포2동","개포3동","개포4동","논현1동","논현2동","대치1동","대치2동","대치4동","도곡1동","도곡2동","삼성1동","삼성2동","세곡동","수서동","신사동","압구정동","역삼1동","역삼2동","일원1동","일원본동","청담동"],"송파구":["가락1동","가락2동","가락본동","거여1동","거여2동","마천1동","마천2동","문정1동","문정2동","방이1동","방이2동","삼전동","석촌동","송파1동","송파2동","오금동","오륜동","위례동","잠실2동","잠실3동","잠실4동","잠실6동","잠실7동","잠실본동","장지동","풍납1동","풍납2동"],"강동구":["강일동","고덕1동","고덕2동","길동","둔촌1동","둔촌2동","명일1동","명일2동","상일제1동","상일제2동","성내1동","성내2동","성내3동","암사1동","암사2동","암사3동","천호1동","천호2동","천호3동"]};
+    var SEOUL_DONG_TOTAL = Object.keys(SEOUL_DONG_ALL).reduce(function(s,k){ return s + SEOUL_DONG_ALL[k].length; }, 0);
+
+    // ---- dong ranking table ----
+    var ALL_DONG = [];
+    GU.forEach(function(g){
+      // d = [name, price(만원), count, index]
+      g.dong.forEach(function(d){ ALL_DONG.push({ name:d[0], price:d[1], count:d[2], score:d[3], gu:g.name }); });
+    });
+    ALL_DONG.sort(function(a,b){ return b.price - a.price; });
+
+    var guFilter = document.getElementById('dongGuFilter');
+    GU.slice().sort(function(a,b){ return a.name.localeCompare(b.name,'ko'); }).forEach(function(g){
+      var opt = document.createElement('option');
+      opt.value = g.name; opt.textContent = g.name;
+      guFilter.appendChild(opt);
+    });
+
+    var tbody = document.getElementById('dongTableBody');
+    var countEl = document.getElementById('dongCount');
+    var fullBlock = document.getElementById('dongFullBlock');
+    function renderDongTable(){
+      var filterVal = guFilter.value;
+      var rows = filterVal === 'all' ? ALL_DONG : ALL_DONG.filter(function(d){ return d.gu === filterVal; });
+      tbody.innerHTML = rows.map(function(d, i){
+        return '<tr>'+
+          '<td class="rank">'+(i+1)+'</td>'+
+          '<td class="dname">'+d.name+'</td>'+
+          '<td>'+d.gu+'</td>'+
+          '<td class="tabular" style="color:var(--ink-faint);">'+d.count+'건</td>'+
+          '<td><div class="score-cell">'+
+            '<div class="score-bar-track"><div class="score-bar-fill" style="width:'+d.score+'%; background:'+bgStyleFor(d.score)+';"></div></div>'+
+            '<span class="score-num tabular">'+d.score+'</span>'+
+          '</div></td>'+
+        '</tr>';
+      }).join('');
+      countEl.textContent = '법정동 실거래 ' + rows.length + '개';
+
+      if(filterVal === 'all'){
+        fullBlock.innerHTML =
+          '<div class="dong-full-empty">자치구를 선택하면 해당 구의 행정동 전체 목록(서울시 전체 '+SEOUL_DONG_TOTAL+'개)을 볼 수 있습니다.</div>';
+      } else {
+        var names = (SEOUL_DONG_ALL[filterVal] || []).slice().sort(function(a,b){ return a.localeCompare(b,'ko'); });
+        fullBlock.innerHTML =
+          '<div class="dong-full-head"><h4>'+filterVal+' 행정동 전체 ('+names.length+'개)</h4>'+
+          '<span>행정안전부 행정구역 경계자료 · 2026.04 기준 명칭 — 위 실거래가 표(법정동)와 이름 체계가 다를 수 있음, 가격 데이터는 준비 중</span></div>'+
+          '<div class="dong-chip-wrap">'+names.map(function(n){ return '<span class="dong-chip">'+n+'</span>'; }).join('')+'</div>';
+      }
+    }
+    guFilter.addEventListener('change', renderDongTable);
+    renderDongTable();
+  })();
+</script>

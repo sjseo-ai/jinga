@@ -1,0 +1,48 @@
+{
+  "name": "jinga-retech",
+  "private": true,
+  "version": "2026.09.11",
+  "description": "진가(JINGA) 재테크 — 부동산 가치평가 · 주식/환율 인텔리전스 (Cloudflare Workers)",
+  "scripts": {
+    "deploy:site": "wrangler deploy --config site/wrangler.toml",
+    "deploy:vercel": "vercel deploy site/public --prod --yes",
+    "deploy:vercel:auto": "node scripts/deploy-vercel.mjs",
+    "deploy:quotes": "wrangler deploy --config workers/jinga-yahoo-proxy/wrangler.toml",
+    "deploy:macro": "wrangler deploy --config workers/jinga-korea-macro/wrangler.toml",
+    "deploy:policy": "wrangler deploy --config workers/jinga-policy-proxy/wrangler.toml",
+    "deploy:all": "npm run deploy:site && npm run deploy:quotes && npm run deploy:macro && npm run deploy:policy",
+    "dev:site": "wrangler dev --config site/wrangler.toml",
+    "dev:macro": "wrangler dev --config workers/jinga-korea-macro/wrangler.toml",
+    "check": "node --check workers/jinga-yahoo-proxy/src/index.js && node --check workers/jinga-korea-macro/src/index.js && node --check workers/jinga-policy-proxy/src/index.js && node --check site/public/sw.js",
+    "test": "node --test scripts/smoke-workers.mjs scripts/smoke-report.mjs scripts/smoke-mail.mjs scripts/smoke-job.mjs scripts/smoke-auth.mjs scripts/smoke-market.mjs scripts/smoke-analysis.mjs scripts/smoke-flow.mjs scripts/smoke-reco.mjs scripts/smoke-annual.mjs scripts/smoke-peers.mjs scripts/smoke-universe.mjs scripts/smoke-port.mjs scripts/smoke-modes.mjs scripts/smoke-union.mjs scripts/smoke-community.mjs scripts/smoke-trades.mjs scripts/smoke-history.mjs scripts/smoke-ratelimit.mjs scripts/smoke-board.mjs scripts/smoke-hub.mjs scripts/smoke-outside.mjs scripts/smoke-album.mjs scripts/smoke-kapt.mjs scripts/smoke-stats.mjs scripts/smoke-post.mjs scripts/smoke-pages.mjs",
+    "build:site": "node scripts/build-site.mjs",
+    "vercel:env": "node scripts/vercel-env.mjs",
+    "admin:password": "node scripts/admin-password.mjs",
+    "report:weekly": "node scripts/weekly-report.mjs",
+    "kv:create": "wrangler kv namespace create JINGA_KV",
+    "map:key": "node scripts/kakao-key.mjs",
+    "kb:union": "node scripts/build-union.mjs",
+    "kb:complexes:gyeonggi": "node scripts/build-kb-complexes.mjs gyeonggi",
+    "kb:complexes": "node scripts/build-kb-complexes.mjs",
+    "sangga:key": "node scripts/sangga-key.mjs",
+    "kb:sangga": "node scripts/build-kb-sangga.mjs",
+    "kb:sangga:gyeonggi": "node scripts/build-kb-sangga.mjs gyeonggi",
+    "kb:slope": "node scripts/build-kb-slope.mjs",
+    "kb:slope:gyeonggi": "node scripts/build-kb-slope.mjs gyeonggi",
+    "kb:infra:gyeonggi": "node scripts/build-kb-infra.mjs gyeonggi",
+    "kb:infra": "node scripts/build-kb-infra.mjs",
+    "kb:gu": "node scripts/build-kb-gu.mjs",
+    "mail:setup": "node scripts/mail-setup.mjs",
+    "mail:confirm": "node scripts/mail-confirmations.mjs",
+    "mail:weekly": "node scripts/send-weekly-mail.mjs",
+    "mail:test": "node scripts/send-weekly-mail.mjs --test",
+    "mail:preview": "node scripts/mail-preview.mjs",
+    "build:pages": "node scripts/build-pages.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "dependencies": {
+    "nodemailer": "^10.0.9"
+  }
+}

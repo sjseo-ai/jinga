@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>진가 구독 관리</title>
+<!--
+  관리자 전용 — 주간 보고서 구독자 현황(인원·메일 주소·보고서 조건·발송 상태) · 서버 주간 작업
+  관리자가 직접 정한 비밀번호로 로그인(api/admin-login) → HttpOnly 세션 쿠키(12시간). 페이지 자체에는 데이터가 없습니다.
+  비밀번호는 운영 PC에서 scripts\admin-password.cmd 로 처음 정하고, 로그인한 뒤에는 이 페이지에서 바꿀 수 있습니다.
+-->
+<style>
+  :root{--ink:#0E1C2B;--text:#13212F;--muted:#6B7A89;--line:#D7DEE6;--soft:#F4F6F9;--bg:#EBEEF2;--surface:#fff;--blue:#1E5FCC;--green:#16805A;--amber:#B26A00;--red:#B3261E}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.6 "Pretendard","Malgun Gothic",system-ui,sans-serif}
+  .wrap{max-width:1240px;margin:0 auto;padding:24px 16px 48px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  h1{font-size:21px;margin:0;letter-spacing:-.02em} h1 small{font-size:12px;font-weight:700;color:#fff;background:var(--red);border-radius:6px;padding:2px 7px;margin-left:8px;vertical-align:3px}
+  h2{font-size:15px;margin:0 0 10px}
+  a.home{color:var(--muted);font-size:13px;text-decoration:none} a.home:hover{text-decoration:underline}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .muted{color:var(--muted);font-size:12.5px}
+  button{appearance:none;font:inherit;font-weight:700;font-size:13px;border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:9px;padding:8px 14px;cursor:pointer}
+  button.ghost{background:var(--surface);color:var(--text);border-color:var(--line)}
+  button.danger{background:var(--surface);color:var(--red);border-color:#E8C4C1;padding:4px 10px;font-size:12px}
+  button:disabled{opacity:.5;cursor:default}
+  input,select{font:inherit;font-size:14px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text)}
+  input:focus,select:focus{outline:2px solid var(--blue);outline-offset:1px}
+  #gate{max-width:440px;margin:60px auto}
+  #gate form{display:flex;gap:8px;margin-top:12px} #gate input{flex:1;min-width:0}
+  #gateMsg{min-height:1.3em;margin-top:8px;color:var(--red);font-size:13px}
+  .setup{background:var(--soft);border-radius:9px;padding:10px 12px;margin-top:12px;font-size:13px}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .stat .l{font-size:12px;color:var(--muted);font-weight:700} .stat .v{font-size:26px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .stat .s{font-size:11.5px;color:var(--muted)}
+  .two{display:grid;grid-template-columns:1fr 1.4fr;gap:14px;margin-bottom:14px}
+  .bars{display:flex;flex-direction:column;gap:6px}
+  .bar{display:grid;grid-template-columns:70px 1fr 64px;align-items:center;gap:8px;font-size:13px}
+  .bar .track{height:12px;background:var(--soft);border-radius:6px;overflow:hidden;display:flex}
+  .bar .on{background:var(--blue)} .bar .pend{background:#9DB9E8}
+  .bar .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .legend{display:flex;gap:12px;font-size:11.5px;color:var(--muted);margin-top:8px} .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
+  th{font-size:12px;color:var(--muted);font-weight:700;background:var(--soft);white-space:nowrap}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  td.date{white-space:nowrap;font-variant-numeric:tabular-nums;font-size:12px}
+  .badge{display:inline-block;font-size:11.5px;font-weight:700;border-radius:6px;padding:1px 7px;white-space:nowrap}
+  .b-ok{background:#E3F3EC;color:var(--green)} .b-wait{background:#FFF3DF;color:var(--amber)} .b-new{background:#E9F0FB;color:var(--blue)} .b-def{background:var(--soft);color:var(--muted)}
+  .email{font-weight:700;word-break:break-all}
+  .crit{min-width:260px} .crit .g{font-weight:700}
+  .change{margin-top:4px;font-size:12px;color:var(--amber)}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px} .filters input{flex:1;min-width:180px}
+  #status{min-height:1.3em;font-size:12.5px;color:var(--muted)}
+  #pwCard form{display:grid;gap:8px;max-width:380px}
+  #pwMsg{min-height:1.3em;font-size:13px}
+  @media (max-width:820px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section id="gate" class="card">
+    <h1>진가 구독 관리<small>관리자</small></h1>
+    <p class="muted">관리자 비밀번호를 입력하세요. 로그인은 이 브라우저에서 12시간 유지되고, 「로그아웃」을 누르면 바로 풀립니다.</p>
+    <form id="gateForm">
+      <input type="password" id="pwInput" autocomplete="current-password" placeholder="비밀번호" aria-label="관리자 비밀번호" required>
+      <button type="submit" id="loginBtn">로그인</button>
+    </form>
+    <div id="gateMsg" aria-live="polite"></div>
+    <div class="setup" id="setupNote" hidden>
+      <b>아직 관리자 비밀번호가 정해지지 않았습니다.</b><br>
+      운영 PC의 VS Code 터미널(jinga-project 폴더)에서 <b>.\scripts\admin-password.cmd</b> 를 실행해 직접 정하세요. 정한 뒤 이 페이지를 새로고침하면 됩니다.
+    </div>
+    <p style="margin:14px 0 0"><a class="home" href="/">← 진가 사이트로</a></p>
+  </section>
+
+  <main id="app" hidden>
+    <header>
+      <h1>진가 구독 관리<small>관리자</small></h1>
+      <div class="toolbar">
+        <span id="status" aria-live="polite"></span>
+        <button type="button" class="ghost" id="refreshBtn">새로고침</button>
+        <button type="button" class="ghost" id="csvBtn">CSV 내려받기</button>
+        <button type="button" class="ghost" id="pwToggleBtn">비밀번호 변경</button>
+        <button type="button" class="ghost" id="logoutBtn">로그아웃</button>
+      </div>
+    </header>
+
+    <section class="card" id="pwCard" hidden style="margin-bottom:14px">
+      <h2>관리자 비밀번호 변경</h2>
+      <form id="pwForm">
+        <input type="password" id="pwCurrent" autocomplete="current-password" placeholder="지금 비밀번호" aria-label="지금 비밀번호" required>
+        <input type="password" id="pwNext" autocomplete="new-password" placeholder="새 비밀번호 (8자 이상)" aria-label="새 비밀번호" minlength="8" required>
+        <input type="password" id="pwNext2" autocomplete="new-password" placeholder="새 비밀번호 한 번 더" aria-label="새 비밀번호 확인" minlength="8" required>
+        <div class="toolbar"><button type="submit" id="pwSaveBtn">바꾸기</button><button type="button" class="ghost" id="pwCancelBtn">닫기</button></div>
+      </form>
+      <div id="pwMsg" aria-live="polite"></div>
+      <p class="muted" style="margin:6px 0 0">바꾸면 다른 기기·브라우저의 로그인은 모두 풀립니다. 비밀번호를 잊었으면 운영 PC에서 scripts\admin-password.cmd 로 다시 정하세요.</p>
+    </section>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="two">
+      <section class="card">
+        <h2>자치구별 선택</h2>
+        <div class="bars" id="guBars"></div>
+        <div class="legend"><span><i style="background:var(--blue)"></i>구독 중</span><span><i style="background:#9DB9E8"></i>확인 대기</span></div>
+      </section>
+      <section class="card">
+        <h2>보고서 조건 종류 <span class="muted">(구독 중 기준 — 같은 조건은 보고서 하나)</span></h2>
+        <div class="scroll"><table><thead><tr><th>조건</th><th>구독자</th></tr></thead><tbody id="groupRows"></tbody></table></div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-bottom:14px">
+      <div class="toolbar" style="justify-content:space-between">
+        <h2 style="margin:0">주간 보고서 서버 작업 <span class="muted">(매주 월요일 08:30 전후 자동 실행)</span></h2>
+        <div class="toolbar">
+          <button type="button" class="ghost" id="jobRefreshBtn">상태 새로고침</button>
+          <button type="button" class="ghost" id="jobTestBtn">시험 실행 · 나에게만 발송</button>
+          <button type="button" class="ghost" id="jobFullBtn">이번 주 전체 발송 실행</button>
+        </div>
+      </div>
+      <div id="jobBox" style="margin-top:10px"><span class="muted">불러오는 중…</span></div>
+    </section>
+
+    <section class="card" style="margin-bottom:14px">
+      <div class="toolbar" style="justify-content:space-between">
+        <h2 style="margin:0">방문 집계 <span class="muted" id="stTotal"></span></h2>
+        <button type="button" class="ghost" id="stRefreshBtn">새로고침</button>
+      </div>
+      <div class="muted" style="margin-top:4px;font-size:12.5px">
+        어디서 왔는지만 셉니다 — IP·접속기록은 저장하지 않아 한 사람이 몇 번 왔는지는 알 수 없습니다.
+        링크에 <code>?utm_source=naverblog</code> 처럼 꼬리표를 붙이면 채널별로 갈라 보입니다.
+      </div>
+      <div id="stBox" style="margin-top:10px"><span class="muted">불러오는 중…</span></div>
+    </section>
+
+    <section class="card" style="margin-bottom:14px">
+      <div class="toolbar" style="justify-content:space-between">
+        <h2 style="margin:0">의견·문의 <span class="muted" id="bdCounts"></span></h2>
+        <button type="button" class="ghost" id="bdRefreshBtn">새로고침</button>
+      </div>
+      <div id="bdAdminBox" style="margin-top:10px"><span class="muted">불러오는 중…</span></div>
+    </section>
+
+    <section class="card" style="margin-bottom:14px">
+      <div class="toolbar" style="justify-content:space-between">
+        <h2 style="margin:0">임장동행 동행자 <span class="muted">(개업공인중개사는 등록번호를 확인해야 목록에 나옵니다)</span></h2>
+        <div class="toolbar">
+          <label class="muted" style="display:flex;align-items:center;gap:6px;font-size:13px">
+            <input type="checkbox" id="hostAllChk"> 전체 보기
+          </label>
+          <button type="button" class="ghost" id="hostRefreshBtn">새로고침</button>
+        </div>
+      </div>
+      <div id="hostBox" style="margin-top:10px"><span class="muted">불러오는 중…</span></div>
+    </section>
+
+    <section class="card">
+      <h2>구독자 목록</h2>
+      <div class="filters">
+        <input type="search" id="q" placeholder="메일 주소·자치구 검색" aria-label="검색">
+        <select id="fStatus" aria-label="상태">
+          <option value="">전체 상태</option>
+          <option value="confirmed">구독 중</option>
+          <option value="pending">확인 대기</option>
+          <option value="change">조건 변경 대기</option>
+        </select>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>#</th><th>메일 주소</th><th>상태</th><th>보고서 조건</th><th>신청</th><th>구독 확인</th><th>최근 보고서</th><th></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="muted">「기본 조건」은 조건 없이 신청한 예전 구독자 — 기본 조건 보고서를 받습니다. 확인 대기는 7일이 지나면 서버가 자동 삭제합니다. 삭제는 수신 거부와 같아 되돌릴 수 없습니다.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  const SEOUL_GUS = ['강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구','노원구','도봉구','동대문구','동작구','마포구',
+    '서대문구','서초구','성동구','성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구'];
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  let subs = [];
+  let jobTimer = null;
+
+  // ── 서버 호출 — 로그인은 HttpOnly 쿠키라 페이지가 비밀번호·키를 들고 있지 않음 ──
+  async function call(url, init){
+    const r = await fetch(url, { cache:'no-store', credentials:'same-origin', ...(init || {}), headers:{ 'Content-Type':'application/json' } });
+    const j = await r.json().catch(() => ({}));
+    if(r.status === 401){ const e = new Error(j.error || '로그인이 필요합니다.'); e.auth = true; throw e; }
+    if(!r.ok || !j.ok){ const e = new Error(j.error || `서버 응답 ${r.status}`); e.status = r.status; throw e; }
+    return j;
+  }
+  const api = init => call('/api/admin' + (init ? '' : '?view=page'), init);
+  const weeklyApi = init => call('/api/weekly' + (init ? '' : '?status=1'), init);
+  const loginApi = init => call('/api/admin-login', init);
+  const communityApi = init => call('/api/community', init);
+  const post = body => ({ method:'POST', body: JSON.stringify(body) });
+  const authLost = e => { if(e && e.auth){ lock('로그인이 풀렸습니다. 다시 로그인하세요.'); return true; } return false; };
+
+  // 조건 표시·묶음 — site/public/api/_core.mjs 의 criteriaLabel·criteriaKey 와 같은 규칙
+  const eokText = v => { const man = Math.round(v * 10000), e = Math.floor(man / 10000), r = man % 10000; return e ? `${e}억${r ? ` ${r.toLocaleString('ko-KR')}만` : ''}` : `${r.toLocaleString('ko-KR')}만`; };
+  const label = c => {
+    const money = c.budgetMinEok ? `${eokText(c.budgetMinEok)} ~ ${eokText(c.budgetEok)}` : `${eokText(c.budgetEok)} 이하`;
+    const area = c.maxArea ? (c.minArea ? `${c.minArea}~${c.maxArea}㎡` : `${c.maxArea}㎡ 이하`) : (c.minArea ? `${c.minArea}㎡ 이상` : '면적 무관');
+    return { gus: c.gus.join('·'), rest: `예산 ${money}(${c.priceBasis === 'kb' ? 'KB시세' : '매물 호가'} 기준) · 전용 ${area} · ${c.minHouseholds ? `${c.minHouseholds.toLocaleString('ko-KR')}세대 이상` : '규모 무관'}` };
+  };
+  const keyOf = c => [SEOUL_GUS.filter(g => c.gus.includes(g)).join(','), c.budgetMinEok || 0, c.budgetEok, c.minArea || 0, c.maxArea || 0, c.minHouseholds || 0, c.priceBasis === 'kb' ? 'kb' : 'ask'].join('|');
+  const critHtml = c => { if(!c) return '<span class="badge b-def">기본 조건</span>'; const l = label(c); return `<span class="g">${esc(l.gus)}</span><br><span class="muted">${esc(l.rest)}</span>`; };
+
+  const fmt = iso => {
+    if(!iso) return '—';
+    const d = new Date(iso);
+    return isNaN(d) ? '—' : d.toLocaleString('ko-KR', { timeZone:'Asia/Seoul', year:'2-digit', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
+  };
+  // 이번 주 월요일 0시(한국 시간) — 이후에 보고서를 받았으면 「이번 주 받음」
+  const weekStart = () => {
+    const k = new Date(Date.now() + 9 * 3600e3);
+    const day = (k.getUTCDay() + 6) % 7;
+    return Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate() - day) - 9 * 3600e3;
+  };
+  const weekMondayId = () => new Date(weekStart() + 9 * 3600e3).toISOString().slice(0, 10);
+  const kstDayNow = () => new Date(Date.now() + 9 * 3600e3).getUTCDay();
+  const isChange = s => s.status === 'confirmed' && !!s.pendingCriteria;
+  const statusBadge = s => s.status === 'confirmed'
+    ? '<span class="badge b-ok">구독 중</span>'
+    : `<span class="badge b-wait">확인 대기</span><div class="muted">${s.confirmMailSentAt ? '확인 메일 보냄' : '확인 메일 발송 전'}</div>`;
+
+  async function load(){
+    $('status').textContent = '불러오는 중…';
+    $('refreshBtn').disabled = true;
+    try{
+      const j = await api();
+      subs = j.subscribers.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+      $('gate').hidden = true; $('app').hidden = false;
+      render();
+      loadJob();
+      loadHosts();
+      loadBoard();
+      loadStats();
+      $('status').textContent = `조회 ${fmt(j.fetchedAt)}`;
+    }catch(e){
+      if(authLost(e)) return;
+      $('status').textContent = '불러오지 못했습니다: ' + e.message;
+    }finally{
+      $('refreshBtn').disabled = false;
+    }
+  }
+
+  function render(){
+    const confirmed = subs.filter(s => s.status === 'confirmed');
+    const pending = subs.filter(s => s.status !== 'confirmed');
+    const since = weekStart();
+    const gotThisWeek = confirmed.filter(s => s.lastWeeklySentAt && Date.parse(s.lastWeeklySentAt) >= since).length;
+    const groups = new Map();
+    for(const s of confirmed){
+      const k = s.criteria ? keyOf(s.criteria) : '기본';
+      const g = groups.get(k) || { c: s.criteria || null, n: 0 };
+      g.n++; groups.set(k, g);
+    }
+    const stat = (l, v, s = '') => `<div class="stat"><div class="l">${l}</div><div class="v">${v.toLocaleString('ko-KR')}</div><div class="s">${s}</div></div>`;
+    $('stats').innerHTML = [
+      stat('전체 신청', subs.length, '해지한 주소는 삭제되어 빠짐'),
+      stat('구독 중', confirmed.length, '확인 링크를 누른 주소'),
+      stat('확인 대기', pending.length, `확인 메일 발송 전 ${pending.filter(s => !s.confirmMailSentAt).length}명`),
+      stat('조건 변경 대기', confirmed.filter(isChange).length, '변경 확인 링크 누르기 전'),
+      stat('이번 주 보고서 받음', gotThisWeek, `구독 중 ${confirmed.length}명 중`),
+      stat('보고서 조건 종류', groups.size, '같은 조건끼리 보고서 하나'),
+    ].join('');
+
+    const guCount = SEOUL_GUS.map(g => ({
+      g,
+      on: confirmed.filter(s => s.criteria && s.criteria.gus.includes(g)).length,
+      pend: pending.filter(s => s.criteria && s.criteria.gus.includes(g)).length,
+    })).filter(x => x.on + x.pend).sort((a, b) => (b.on + b.pend) - (a.on + a.pend));
+    const max = Math.max(1, ...guCount.map(x => x.on + x.pend));
+    $('guBars').innerHTML = guCount.length ? guCount.map(x => `<div class="bar"><span>${esc(x.g)}</span>
+      <span class="track"><span class="on" style="width:${x.on / max * 100}%"></span><span class="pend" style="width:${x.pend / max * 100}%"></span></span>
+      <span class="n">${x.on}${x.pend ? ` +${x.pend}` : ''}명</span></div>`).join('')
+      : '<p class="muted">조건을 정해 신청한 구독자가 아직 없습니다.</p>';
+
+    $('groupRows').innerHTML = groups.size ? [...groups.values()].sort((a, b) => b.n - a.n)
+      .map(g => `<tr><td class="crit">${critHtml(g.c)}</td><td class="num">${g.n}명</td></tr>`).join('')
+      : '<tr><td colspan="2" class="muted">구독 중인 주소가 없습니다.</td></tr>';
+
+    renderRows();
+  }
+
+  function renderRows(){
+    const q = $('q').value.trim().toLowerCase();
+    const f = $('fStatus').value;
+    const list = subs.filter(s => {
+      if(f === 'confirmed' && s.status !== 'confirmed') return false;
+      if(f === 'pending' && s.status === 'confirmed') return false;
+      if(f === 'change' && !isChange(s)) return false;
+      if(!q) return true;
+      return [s.email, ...(s.criteria ? s.criteria.gus : []), ...(s.pendingCriteria ? s.pendingCriteria.gus : [])].join(' ').toLowerCase().includes(q);
+    });
+    $('rows').innerHTML = list.length ? list.map((s, i) => `<tr>
+      <td class="num">${i + 1}</td>
+      <td class="email">${esc(s.email)}</td>
+      <td>${statusBadge(s)}</td>
+      <td class="crit">${critHtml(s.criteria)}${isChange(s) ? `<div class="change">변경 대기 → ${esc(label(s.pendingCriteria).gus)} · ${esc(label(s.pendingCriteria).rest)}<br>요청 ${fmt(s.changeRequestedAt)}${s.changeMailSentAt ? ' · 확인 메일 보냄' : ' · 확인 메일 발송 전'}</div>` : ''}${s.criteriaChangedAt ? `<div class="muted">조건 변경 ${fmt(s.criteriaChangedAt)}</div>` : ''}</td>
+      <td class="date">${fmt(s.createdAt)}</td>
+      <td class="date">${fmt(s.confirmedAt)}</td>
+      <td class="date">${fmt(s.lastWeeklySentAt)}</td>
+      <td><button type="button" class="danger" data-del="${esc(s.id)}" data-email="${esc(s.email)}">삭제</button></td>
+    </tr>`).join('') : '<tr><td colspan="8" class="muted">조건에 맞는 구독자가 없습니다.</td></tr>';
+  }
+
+  function toCsv(){
+    const head = ['메일 주소','상태','자치구','예산 하한(억)','예산 상한(억)','전용 하한(㎡)','전용 상한(㎡)','최소 세대수','예산 기준','변경 대기 조건','신청','구독 확인','최근 보고서 발송'];
+    const cell = v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+    const rows = subs.map(s => {
+      const c = s.criteria;
+      return [s.email, s.status === 'confirmed' ? '구독 중' : '확인 대기',
+        c ? c.gus.join(' ') : '기본 조건', c ? c.budgetMinEok || '' : '', c ? c.budgetEok : '', c ? c.minArea || '' : '', c ? c.maxArea || '' : '',
+        c ? c.minHouseholds : '', c ? (c.priceBasis === 'kb' ? 'KB시세' : '매물 호가') : '',
+        isChange(s) ? `${label(s.pendingCriteria).gus} · ${label(s.pendingCriteria).rest}` : '',
+        fmt(s.createdAt), fmt(s.confirmedAt), fmt(s.lastWeeklySentAt)];
+    });
+    return '﻿' + [head, ...rows].map(r => r.map(cell).join(',')).join('\r\n');
+  }
+
+  // ── 주간 보고서 서버 작업(api/weekly) ──
+  const STAGE_LABEL = { plan:'구독자 조건 묶기', kb:'KB시세 조회', map:'지역 지도 집계', listing:'매물 호가·단지 정보', news:'지역 뉴스·시장 지표', render:'보고서 만들기', send:'메일 발송', done:'완료' };
+  function renderJob(job, lastFull){
+    const box = $('jobBox');
+    clearTimeout(jobTimer);
+    // 운영 실행은 월요일에만 자동 시작 — 월요일이 지났는데 이번 주 기록이 없으면 알려 줌(직접 시작 가능)
+    const missed = kstDayNow() !== 1 && (!lastFull || lastFull.id !== weekMondayId())
+      ? `<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:#FFF6E5;color:#8A6100;font-size:13px">이번 주(${weekMondayId()} 월요일) 운영 실행 기록이 없습니다 — 아래 「운영 실행」으로 직접 보낼 수 있습니다.</div>`
+      : '';
+    if(!job){ box.innerHTML = missed + '<span class="muted">아직 서버에서 실행한 작업이 없습니다. 「시험 실행」으로 확인해 보세요.</span>'; return; }
+    const running = !job.done && !job.failed;
+    const state = job.failed ? '<span class="badge" style="background:#FDECEC;color:var(--red)">실패</span>'
+      : job.done ? '<span class="badge b-ok">완료</span>' : '<span class="badge b-new">진행 중</span>';
+    const kb = job.kb ? ` · KB ${job.kb.got.toLocaleString('ko-KR')}/${job.kb.total.toLocaleString('ko-KR')}개 단지` : '';
+    const sent = job.sendState ? ` · 메일 ${job.sendState.sent}건 발송` : '';
+    const reports = (job.reports || []).map(r => `<li><a href="/${esc(r.web)}" target="_blank" rel="noopener">${r.isDefault ? '기본 조건' : `구독자 ${r.subscribers}명`}</a> — ${esc(r.label)} · ${r.complexCount}곳 · 1위 ${esc(r.best1 || '없음')}</li>`).join('');
+    box.innerHTML = missed + `<div>${state} <b>${job.mode === 'test' ? '시험' : '운영'} ${esc(job.id)}</b> · ${esc(STAGE_LABEL[job.stage] || job.stage)}${kb}${sent}
+      <span class="muted">· 시작 ${fmt(job.startedAt)} · 갱신 ${fmt(job.updatedAt)} · 실행 ${job.invocations}회</span></div>
+      ${job.error ? `<div style="color:var(--red);font-size:13px;margin-top:4px">${esc(job.error)}</div>` : ''}
+      ${reports ? `<ul style="margin:8px 0 0;padding-left:18px;font-size:13px">${reports}</ul>` : ''}
+      <details style="margin-top:8px"${running ? ' open' : ''}><summary class="muted" style="cursor:pointer">작업 기록</summary>
+      <pre style="white-space:pre-wrap;font-size:12px;background:var(--soft);border-radius:8px;padding:8px 10px;margin:6px 0 0;max-height:220px;overflow:auto">${esc((job.log || []).slice(-15).join('\n'))}</pre></details>`;
+    if(running && !$('app').hidden) jobTimer = setTimeout(loadJob, 15000);
+  }
+  // ── 방문 집계 — 「어느 홍보가 먹혔나」 ──────────────
+  async function loadStats(){
+    $('stRefreshBtn').disabled = true;
+    try{
+      const r = await call('/api/community?area=stats');
+      $('stTotal').textContent = `(최근 3개월 ${(r.total || 0).toLocaleString('ko-KR')}회)`;
+      renderStats(r);
+    }catch(e){
+      if(authLost(e)) return;
+      $('stBox').innerHTML = '<span class="muted">불러오지 못했습니다: ' + esc(e.message) + '</span>';
+    }finally{ $('stRefreshBtn').disabled = false; }
+  }
+
+  function renderStats(r){
+    const days = r.days || [], refs = r.refs || [], utm = r.utm || [], dev = r.device || [];
+    if(!days.length){
+      $('stBox').innerHTML = '<span class="muted">아직 방문 기록이 없습니다. 사이트를 한 번 열면 쌓이기 시작합니다.</span>';
+      return;
+    }
+    // 날짜 막대 — 최근 30일만, 가장 많은 날을 100%로
+    const last = days.slice(-30);
+    const peak = Math.max(...last.map(d => d.n), 1);
+    const bars = last.map(d => `<div title="${esc(d.day)} · ${d.n}회" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:64px">
+        <div style="background:#1E5FCC;border-radius:2px 2px 0 0;height:${Math.max(2, Math.round(d.n / peak * 100))}%"></div>
+      </div>`).join('');
+    const list = (rows, empty) => rows.length
+      ? '<table style="width:100%;border-collapse:collapse;font-size:13px">' + rows.map(x =>
+          `<tr><td style="padding:3px 0">${esc(x.key)}</td><td style="text-align:right;font-weight:700">${x.n.toLocaleString('ko-KR')}</td></tr>`).join('') + '</table>'
+      : `<span class="muted">${empty}</span>`;
+
+    $('stBox').innerHTML = `
+      <div style="display:flex;gap:2px;align-items:flex-end">${bars}</div>
+      <div class="muted" style="font-size:11.5px;display:flex;justify-content:space-between;margin-top:3px">
+        <span>${esc(last[0].day)}</span><span>최근 ${last.length}일 · 가장 많은 날 ${peak}회</span><span>${esc(last[last.length - 1].day)}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:16px">
+        <div><div style="font-weight:800;font-size:13px;margin-bottom:5px">어디서 왔나</div>${list(refs, '아직 없습니다')}</div>
+        <div><div style="font-weight:800;font-size:13px;margin-bottom:5px">링크 꼬리표(utm_source)</div>${list(utm, '꼬리표 붙은 링크로 들어온 방문이 아직 없습니다')}</div>
+        <div><div style="font-weight:800;font-size:13px;margin-bottom:5px">휴대폰 / PC</div>${list(dev, '아직 없습니다')}</div>
+      </div>`;
+  }
+
+  // ── 의견·문의 게시판 — 상태 바꾸기·답글·감추기 ──────────────
+  // 점수 산식을 공개해 둔 만큼 지적이 들어옵니다. 답을 달고 어떻게 처리했는지 상태로 남깁니다.
+  let boardAll = [];
+  const BD_TONE = { open:'b-wait', reviewing:'b-wait', accepted:'b-ok', answered:'b-ok', declined:'b-def' };
+  let boardStatuses = [], boardKinds = [];
+
+  async function loadBoard(){
+    $('bdRefreshBtn').disabled = true;
+    try{
+      const r = await communityApi(post({ action:'admin', op:'postList' }));
+      boardAll = r.posts || [];
+      boardStatuses = r.statuses || [];
+      boardKinds = r.kinds || [];
+      const c = r.counts || {};
+      $('bdCounts').textContent = `(전체 ${c.total || 0} · 접수 ${c.open || 0} · 검토 중 ${c.reviewing || 0} · 반영함 ${c.accepted || 0})`;
+      renderBoard();
+    }catch(e){
+      if(authLost(e)) return;
+      $('bdAdminBox').innerHTML = '<span class="muted">불러오지 못했습니다: ' + esc(e.message) + '</span>';
+    }finally{ $('bdRefreshBtn').disabled = false; }
+  }
+
+  function renderBoard(){
+    if(!boardAll.length){ $('bdAdminBox').innerHTML = '<span class="muted">아직 올라온 의견이 없습니다.</span>'; return; }
+    const kindLabel = k => (boardKinds.find(x => x.key === k) || { label:'기타' }).label;
+    const stLabel = k => (boardStatuses.find(x => x.key === k) || { label:'접수' }).label;
+    $('bdAdminBox').innerHTML = boardAll.map(p => `
+      <div style="border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px${p.hidden ? ';opacity:.6' : ''}">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span class="badge b-new">${esc(kindLabel(p.kind))}</span>
+          <span class="badge ${BD_TONE[p.status] || 'b-def'}">${esc(stLabel(p.status))}</span>
+          <b style="font-size:14px">${esc(p.title)}</b>
+          ${p.hidden ? '<span class="badge b-def">감춰짐</span>' : ''}
+          <span class="muted" style="font-size:12px;margin-left:auto">${esc(p.name)} · ${esc(String(p.at).slice(0,10))} · 답글 ${p.replyCount}</span>
+        </div>
+        <div style="white-space:pre-wrap;font-size:13px;line-height:1.7;margin:8px 0;color:var(--muted)">${esc(p.body || '(감춰진 글)')}</div>
+        ${(p.replies || []).map(r => `<div style="font-size:12.5px;padding:7px 10px;border-radius:8px;background:${r.admin ? '#E9F0FB' : 'var(--soft)'};margin-bottom:5px">
+            <b>${r.admin ? '운영자' : esc(r.name)}</b> <span class="muted">${esc(String(r.at).slice(0,10))}</span>
+            <div style="white-space:pre-wrap;margin-top:3px">${esc(r.body || '(감춰진 답글)')}</div></div>`).join('')}
+        <div class="toolbar" style="margin-top:8px;gap:6px;flex-wrap:wrap">
+          <select data-bd-st="${esc(p.id)}" style="font-size:12px;padding:5px 8px">
+            ${boardStatuses.map(x => `<option value="${esc(x.key)}"${x.key === p.status ? ' selected' : ''}>${esc(x.label)}</option>`).join('')}
+          </select>
+          <button type="button" class="ghost" data-bd-reply="${esc(p.id)}">답글</button>
+          <button type="button" class="ghost" data-bd-${p.hidden ? 'show' : 'hide'}="${esc(p.id)}">${p.hidden ? '되살리기' : '감추기'}</button>
+          <button type="button" class="ghost" data-bd-remove="${esc(p.id)}">지우기</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function boardOp(body, word){
+    try{
+      await communityApi(post({ action:'admin', ...body }));
+      await loadBoard();
+    }catch(e){
+      if(authLost(e)) return;
+      alert(`${word} 처리에 실패했습니다: ` + e.message);
+    }
+  }
+
+  // ── 임장동행 동행자 — 개업공인중개사 등록번호 확인 ──────────
+  // 공인중개사법상 중개(알선)는 개업공인중개사만 할 수 있어, 등록번호를 사람이 확인한 뒤에만 활동시킵니다.
+  // 확인은 국가공간정보포털·시군구 부동산중개업 조회에서 등록번호와 상호가 맞는지 보고 누르면 됩니다.
+  let hostsAll = [];
+  const HOST_STATUS = { pending: ['확인 대기', 'b-wait'], active: ['활동 중', 'b-ok'], rejected: ['거절', 'b-def'], paused: ['멈춤', 'b-def'] };
+
+  async function loadHosts(){
+    $('hostRefreshBtn').disabled = true;
+    try{
+      const r = await communityApi(post({ action:'admin', op:'listHosts' }));
+      hostsAll = r.hosts || [];
+      renderHosts();
+    }catch(e){
+      if(authLost(e)) return;
+      $('hostBox').innerHTML = `<span class="muted">동행자 목록을 불러오지 못했습니다: ${esc(e.message)}</span>`;
+    }finally{ $('hostRefreshBtn').disabled = false; }
+  }
+
+  function renderHosts(){
+    const all = $('hostAllChk').checked;
+    const rows = hostsAll
+      .filter(h => all || h.status === 'pending')
+      .sort((a, b) => (a.status === 'pending' ? -1 : 1) - (b.status === 'pending' ? -1 : 1) || String(b.at).localeCompare(String(a.at)));
+    const waiting = hostsAll.filter(h => h.status === 'pending').length;
+    if(!rows.length){
+      $('hostBox').innerHTML = `<span class="muted">${waiting ? '' : '확인을 기다리는 공인중개사가 없습니다. '}${all ? '등록된 동행자가 없습니다.' : '「전체 보기」를 켜면 활동 중인 동행자도 볼 수 있습니다.'}</span>`;
+      return;
+    }
+    $('hostBox').innerHTML = `
+      ${waiting ? `<div class="muted" style="margin-bottom:8px">확인 대기 <b>${waiting}명</b> — 등록번호와 상호가 맞는지 확인한 뒤 눌러 주세요.</div>` : ''}
+      <div class="scroll"><table>
+        <thead><tr><th>상태</th><th>종류</th><th>이름</th><th>등록번호</th><th>지역</th><th>소개</th><th>등록</th><th>처리</th></tr></thead>
+        <tbody>${rows.map(h => {
+          const [label, cls] = HOST_STATUS[h.status] || ['—', 'b-def'];
+          const agent = h.kind === 'agent';
+          const lic = agent ? esc(h.license || '') : '<span class="muted">해당 없음</span>';
+          const search = agent && h.license
+            ? ` <a href="https://www.google.com/search?q=${encodeURIComponent('중개사무소 등록번호 ' + h.license + ' ' + h.name)}" target="_blank" rel="noopener">조회</a>`
+            : '';
+          return `<tr>
+            <td><span class="badge ${cls}">${label}${h.verified ? ' ✓' : ''}</span></td>
+            <td>${agent ? '개업공인중개사' : '이웃·경험자'}</td>
+            <td>${esc(h.name)}</td>
+            <td>${lic}${search}</td>
+            <td>${esc((h.regions || []).join('·'))}</td>
+            <td class="muted">${esc((h.intro || '').slice(0, 40))}</td>
+            <td class="muted">${fmt(h.at)}</td>
+            <td>${h.status === 'pending'
+              ? `<button type="button" class="ghost" data-host-ok="${esc(h.id)}">확인</button>
+                 <button type="button" class="ghost" data-host-no="${esc(h.id)}">거절</button>`
+              : h.status === 'active' && agent && !h.verified
+                ? `<button type="button" class="ghost" data-host-ok="${esc(h.id)}">확인 표시</button>`
+                : '<span class="muted">—</span>'}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>`;
+  }
+
+  async function hostAction(id, op){
+    const word = op === 'verify' ? '확인' : '거절';
+    if(!confirm(`이 동행자를 ${word} 처리할까요?`)) return;
+    try{
+      await communityApi(post({ action:'admin', op, hostId: id }));
+      await loadHosts();
+    }catch(e){
+      if(authLost(e)) return;
+      alert(`${word} 처리에 실패했습니다: ` + e.message);
+    }
+  }
+
+  async function loadJob(){
+    try{ const r = await weeklyApi(); renderJob(r.job, r.lastFull); }
+    catch(e){
+      if(authLost(e)) return;
+      $('jobBox').innerHTML = `<span class="muted">작업 상태를 불러오지 못했습니다: ${esc(e.message)}</span>`;
+    }
+  }
+  async function startWeekly(mode){
+    const msg = mode === 'full'
+      ? '이번 주 보고서를 새로 만들고, 이번 주 보고서를 아직 받지 않은 구독자 전원에게 발송합니다. 진행할까요?'
+      : '보고서를 만들어 보내는 메일 계정(본인)에게만 시험 발송합니다. 5~15분 걸립니다. 진행할까요?';
+    if(!confirm(msg)) return;
+    try{
+      await weeklyApi(post({ action:'start', mode }));
+      $('status').textContent = mode === 'full' ? '전체 발송 작업을 시작했습니다.' : '시험 실행을 시작했습니다.';
+    }catch(e){
+      if(authLost(e)) return;
+      alert('시작하지 못했습니다: ' + e.message);
+    }
+    loadJob();
+  }
+
+  // ── 로그인 · 로그아웃 · 비밀번호 변경 ──
+  function lock(msg = ''){
+    clearTimeout(jobTimer);
+    subs = [];
+    $('rows').innerHTML = ''; $('stats').innerHTML = '';
+    $('pwCard').hidden = true;
+    $('app').hidden = true; $('gate').hidden = false;
+    $('gateMsg').textContent = msg;
+    $('pwInput').value = '';
+    $('pwInput').focus();
+  }
+  function showGate(passwordSet, msg = ''){
+    $('setupNote').hidden = passwordSet;
+    $('pwInput').disabled = !passwordSet;
+    $('loginBtn').disabled = !passwordSet;
+    $('gateMsg').textContent = msg;
+    $('gate').hidden = false;
+    if(passwordSet) $('pwInput').focus();
+  }
+
+  $('gateForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const password = $('pwInput').value;
+    if(!password) return;
+    $('loginBtn').disabled = true;
+    $('gateMsg').textContent = '확인 중…';
+    try{
+      await loginApi(post({ action:'login', password }));
+      $('pwInput').value = '';
+      $('gateMsg').textContent = '';
+      await load();
+    }catch(err){
+      $('gateMsg').textContent = err.message;
+      $('pwInput').select();
+    }finally{
+      $('loginBtn').disabled = false;
+    }
+  });
+  $('logoutBtn').addEventListener('click', async () => {
+    await loginApi(post({ action:'logout' })).catch(() => {});
+    lock('로그아웃했습니다.');
+  });
+  $('pwToggleBtn').addEventListener('click', () => { $('pwCard').hidden = !$('pwCard').hidden; $('pwMsg').textContent = ''; if(!$('pwCard').hidden) $('pwCurrent').focus(); });
+  $('pwCancelBtn').addEventListener('click', () => { $('pwForm').reset(); $('pwCard').hidden = true; });
+  $('pwForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = $('pwMsg');
+    const next = $('pwNext').value;
+    msg.style.color = 'var(--red)';
+    if(next.length < 8){ msg.textContent = '새 비밀번호는 8자 이상으로 정해 주세요.'; return; }
+    if(next !== $('pwNext2').value){ msg.textContent = '새 비밀번호 두 칸이 서로 다릅니다.'; return; }
+    $('pwSaveBtn').disabled = true;
+    try{
+      await loginApi(post({ action:'change', current: $('pwCurrent').value, next }));
+      $('pwForm').reset();
+      msg.style.color = 'var(--green)';
+      msg.textContent = '비밀번호를 바꿨습니다. 다른 기기의 로그인은 풀렸습니다.';
+    }catch(err){
+      if(authLost(err)) return;
+      msg.textContent = err.message;
+    }finally{
+      $('pwSaveBtn').disabled = false;
+    }
+  });
+
+  $('refreshBtn').addEventListener('click', load);
+  $('bdRefreshBtn').addEventListener('click', loadBoard);
+  $('stRefreshBtn').addEventListener('click', loadStats);
+  $('bdAdminBox').addEventListener('change', e => {
+    const sel = e.target.closest('[data-bd-st]');
+    if(sel) boardOp({ op:'postStatus', postId: sel.dataset.bdSt, status: sel.value }, '상태 변경');
+  });
+  $('bdAdminBox').addEventListener('click', e => {
+    const reply = e.target.closest('[data-bd-reply]');
+    if(reply){
+      const body = prompt('운영자 답글 — 어떻게 처리했는지 적어 주세요');
+      if(body && body.trim()) boardOp({ op:'postReply', postId: reply.dataset.bdReply, body }, '답글');
+      return;
+    }
+    const hide = e.target.closest('[data-bd-hide]');
+    if(hide){ boardOp({ op:'postHide', postId: hide.dataset.bdHide }, '감추기'); return; }
+    const show = e.target.closest('[data-bd-show]');
+    if(show){ boardOp({ op:'postShow', postId: show.dataset.bdShow }, '되살리기'); return; }
+    const rm = e.target.closest('[data-bd-remove]');
+    if(rm && confirm('이 글을 완전히 지울까요? 되돌릴 수 없습니다.')) boardOp({ op:'postRemove', postId: rm.dataset.bdRemove }, '지우기');
+  });
+  $('hostRefreshBtn').addEventListener('click', loadHosts);
+  $('hostAllChk').addEventListener('change', renderHosts);
+  $('hostBox').addEventListener('click', e => {
+    const ok = e.target.closest('[data-host-ok]'), no = e.target.closest('[data-host-no]');
+    if(ok) hostAction(ok.dataset.hostOk, 'verify');
+    else if(no) hostAction(no.dataset.hostNo, 'reject');
+  });
+  $('q').addEventListener('input', renderRows);
+  $('fStatus').addEventListener('change', renderRows);
+  $('csvBtn').addEventListener('click', () => {
+    const d = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([toCsv()], { type:'text/csv;charset=utf-8' }));
+    a.download = `진가_구독자_${d}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $('rows').addEventListener('click', async e => {
+    const b = e.target.closest('[data-del]');
+    if(!b) return;
+    if(!confirm(`${b.dataset.email} 구독을 삭제할까요?\n수신 거부와 같으며 되돌릴 수 없습니다.`)) return;
+    b.disabled = true;
+    try{
+      await api(post({ action:'delete', id: b.dataset.del }));
+      subs = subs.filter(s => s.id !== b.dataset.del);
+      render();
+      $('status').textContent = `${b.dataset.email} 삭제함`;
+    }catch(err){
+      if(authLost(err)) return;
+      b.disabled = false;
+      alert('삭제하지 못했습니다: ' + err.message);
+    }
+  });
+  $('jobRefreshBtn').addEventListener('click', loadJob);
+  $('jobTestBtn').addEventListener('click', () => startWeekly('test'));
+  $('jobFullBtn').addEventListener('click', () => startWeekly('full'));
+
+  // 처음 열 때: 이미 로그인돼 있으면 바로 목록, 아니면 비밀번호 칸(비밀번호를 아직 안 정했으면 안내)
+  (async () => {
+    try{
+      const s = await loginApi();
+      if(s.loggedIn) await load(); else showGate(s.passwordSet);
+    }catch(e){
+      showGate(true, '로그인 상태를 확인하지 못했습니다: ' + e.message);
+    }
+  })();
+})();
+</script>
+</body>
+</html>

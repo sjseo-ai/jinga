@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box }
+  html,body{ overflow:hidden }
+  ::-webkit-scrollbar{ width:0; height:0; display:none }
+  body{ width:1200px; height:630px; overflow:hidden;
+        font-family:Pretendard,-apple-system,"맑은 고딕",sans-serif;
+        background:#0E1C2B; color:#fff; position:relative }
+  /* 왼쪽 위에서 번지는 푸른 빛 — 사이트 헤더와 같은 느낌 */
+  body::before{ content:""; position:absolute; inset:0;
+    background:radial-gradient(900px 560px at 8% -10%, rgba(30,95,204,.42), transparent 62%),
+               radial-gradient(700px 500px at 108% 112%, rgba(30,95,204,.20), transparent 60%) }
+  .wrap{ position:relative; height:100%; padding:58px 74px; display:flex; flex-direction:column }
+
+  .brand{ display:flex; align-items:center; gap:16px }
+  .pin{ width:52px; height:52px; border-radius:50%; border:3px solid #5B8FE3;
+        display:flex; align-items:center; justify-content:center }
+  .pin i{ width:15px; height:15px; border-radius:50%; background:#5B8FE3; display:block }
+  .bn{ font-size:40px; font-weight:800; letter-spacing:-1px }
+  .be{ font-size:19px; font-weight:600; color:#8FB4EA; letter-spacing:2.5px; margin-left:3px }
+
+  h1{ margin-top:44px; font-size:64px; line-height:1.24; font-weight:800; letter-spacing:-2.4px }
+  h1 b{ color:#7FB0FF }
+  .sub{ margin-top:22px; font-size:26px; line-height:1.55; color:#AFC2D4; font-weight:500; letter-spacing:-.6px }
+
+  .tags{ margin-top:auto; display:flex; gap:12px; flex-wrap:wrap }
+  .tag{ font-size:21px; font-weight:700; letter-spacing:-.5px; padding:12px 22px; border-radius:999px;
+        background:rgba(255,255,255,.08); border:1px solid rgba(143,180,234,.38); color:#D7E4F4 }
+
+  .foot{ margin-top:30px; display:flex; align-items:baseline; justify-content:space-between }
+  .url{ font-size:27px; font-weight:800; color:#fff; letter-spacing:-.3px }
+  .free{ font-size:21px; font-weight:600; color:#8FB4EA; letter-spacing:-.4px }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <span class="pin"><i></i></span>
+    <span class="bn">진가</span><span class="be">JINGA</span>
+  </div>
+
+  <h1>같은 돈이면,<br><b>어디가 나을까</b></h1>
+  <p class="sub">KB시세로 예산에 맞는 아파트를 찾고<br>진가 점수로 줄 세워 봅니다 — 산식까지 전부 공개</p>
+
+  <div class="tags">
+    <span class="tag">매매 · 전세 · 재건축</span>
+    <span class="tag">국토부 공식 자료</span>
+    <span class="tag">전수 데이터 엑셀</span>
+    <span class="tag">주간 보고서 메일</span>
+  </div>
+
+  <div class="foot">
+    <span class="url">jinga-retech.vercel.app</span>
+    <span class="free">무료 · 로그인 없음</span>
+  </div>
+
+</div>
+</body>
+</html>

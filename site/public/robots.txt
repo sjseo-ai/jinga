@@ -1,0 +1,13 @@
+# 진가(JINGA) — 검색엔진 안내
+# 관리자 화면·보고서·API 는 색인하지 않습니다(개인 조회 결과와 운영 화면이라서).
+# 데이터 파일은 서비스 화면을 통해 보시기 바랍니다.
+
+User-agent: *
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /api/
+Disallow: /r/
+Disallow: /*.json$
+Allow: /
+
+Sitemap: https://jinga-retech.vercel.app/sitemap.xml

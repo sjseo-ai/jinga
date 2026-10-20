@@ -1,0 +1,10 @@
+# 진가(JINGA) 메인 사이트 — Cloudflare Workers + Static Assets
+# 배포:  npx wrangler deploy --config site/wrangler.toml
+name = "jinga-retech-site"
+account_id = "79548fed0e1b787693d6b6d6dee56f2a"
+compatibility_date = "2026-09-01"
+
+# public/ 폴더 전체가 정적 파일로 배포됩니다(현재는 index.html 하나).
+# 대시보드의 "Upload static files"와 같은 결과이며, 이쪽이 훨씬 안정적입니다.
+[assets]
+directory = "./public"

@@ -1,0 +1,11 @@
+{
+  "name": "jinga-retech-site",
+  "private": true,
+  "description": "진가 사이트(정적 파일) + 주간 보고서 구독 API · 서버 주간 발송 작업(Vercel 함수, api/)",
+  "type": "module",
+  "dependencies": {
+    "@vercel/blob": "^2.8.0",
+    "@vercel/functions": "^3.9.7",
+    "nodemailer": "^10.0.9"
+  }
+}

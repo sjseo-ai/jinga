@@ -1,0 +1,19 @@
+{
+  "budgetMinEok": 0,
+  "budgetEok": 13,
+  "gus": [
+    "강동구",
+    "송파구",
+    "광진구",
+    "성동구",
+    "동작구"
+  ],
+  "minArea": 59,
+  "maxArea": 0,
+  "priceBasis": "ask",
+  "minHouseholds": 300,
+  "maxRentPct": 30,
+  "skipSmall": true,
+  "concurrency": 4,
+  "newsPerGu": 6
+}

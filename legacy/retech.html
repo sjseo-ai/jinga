@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>재테크 바로알기</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0E1C2B" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="재테크 바로알기" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+
+<!-- 폰트: Pretendard (한글+라틴) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<!-- 지도: Leaflet -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<!-- 차트: Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+  :root{
+    --ink:#0E1C2B; --ink-2:#15293D;
+    --canvas:#EBEEF2; --surface:#FFFFFF; --surface-2:#F6F8FA;
+    --line:#D7DEE6; --line-strong:#C0CAD6;
+    --text:#13212F; --muted:#5E6E7E; --muted-2:#8696A6;
+    --blue:#1E5FCC; --cyan:#0F7C8C;
+    --up:#E5484D;   /* 상승(한국 관례: 빨강) */
+    --down:#2D6FE0; /* 하락(파랑) */
+    --pin:#E0673A;  /* 측량 핀 액센트 */
+    --gold:#B98A2E;
+    --r:14px;
+    --mono:"Pretendard",ui-monospace,"SF Mono","Menlo",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:var(--canvas); color:var(--text); line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+  .wrap{max-width:1280px; margin:0 auto; padding:0 22px}
+
+  /* ── 헤더: 블루프린트 그리드 ── */
+  header{
+    background:var(--ink);
+    background-image:
+      linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+    background-size:26px 26px;
+    color:#EAF1F8; border-bottom:1px solid #0A1622;
+  }
+  .head-inner{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:26px 0 24px; flex-wrap:wrap}
+  .brand{display:flex; align-items:center; gap:14px}
+  .mark{
+    width:42px; height:42px; flex:0 0 42px; border-radius:9px;
+    border:1.5px solid rgba(255,255,255,.35);
+    display:grid; place-items:center; position:relative; background:rgba(255,255,255,.04);
+  }
+  .mark::before{content:""; width:18px; height:18px; border:1.5px solid var(--pin); border-radius:50% 50% 50% 0; transform:rotate(-45deg); margin-top:-4px}
+  .brand h1{font-size:21px; font-weight:800; letter-spacing:-.02em; line-height:1.15}
+  .brand .sub{font-size:12.5px; color:#9DB2C6; font-weight:500; margin-top:2px}
+  .head-meta{text-align:right; display:flex; flex-direction:column; gap:9px; align-items:flex-end}
+  .stamp{font-size:11.5px; color:#8FA6BC; letter-spacing:.02em}
+  .stamp b{color:#D7E5F2; font-weight:600}
+  .refresh{
+    appearance:none; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.06);
+    color:#EAF1F8; font-family:inherit; font-size:12.5px; font-weight:600; padding:7px 13px;
+    border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:.15s;
+  }
+  .refresh:hover{background:rgba(255,255,255,.13); border-color:rgba(255,255,255,.5)}
+  .refresh svg{width:13px; height:13px}
+
+  /* ── 시장 펄스 밴드 ── */
+  .pulse{
+    background:var(--ink-2); color:#EAF1F8; border-bottom:1px solid #0A1622;
+  }
+  .pulse-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,.08)}
+  .pcell{background:var(--ink-2); padding:16px 18px}
+  .pcell .lab{font-size:11.5px; color:#93A8BD; font-weight:600; letter-spacing:.02em; display:flex; gap:6px; align-items:center}
+  .pcell .big{font-size:24px; font-weight:800; margin-top:5px; letter-spacing:-.02em}
+  .pcell .delta{font-size:12.5px; font-weight:700; margin-top:3px}
+  .delta.up{color:#FF8A8E} .delta.down{color:#86B0FF}
+  .dot{width:7px; height:7px; border-radius:50%; display:inline-block}
+  .dot.live{background:#43D17A; box-shadow:0 0 0 0 rgba(67,209,122,.6); animation:pp 1.8s infinite}
+  @keyframes pp{0%{box-shadow:0 0 0 0 rgba(67,209,122,.55)}70%{box-shadow:0 0 0 7px rgba(67,209,122,0)}100%{box-shadow:0 0 0 0 rgba(67,209,122,0)}}
+
+  /* ── 섹션 공통 ── */
+  main{padding:30px 0 60px}
+  .eyebrow{font-size:11.5px; font-weight:700; letter-spacing:.08em; color:var(--blue); text-transform:uppercase; display:flex; align-items:center; gap:9px}
+  .eyebrow::before{content:""; width:18px; height:2px; background:var(--blue); display:inline-block}
+  .sec-title{font-size:18px; font-weight:800; letter-spacing:-.02em; margin-top:7px}
+  .sec-note{font-size:12.5px; color:var(--muted); margin-top:3px}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:0 1px 2px rgba(16,28,43,.04)}
+
+  /* ── 상단 2열: 지수차트 + 정책 ── */
+  .top-grid{display:grid; grid-template-columns:1.62fr 1fr; gap:18px; margin-top:14px}
+  .panel-head{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:18px 20px 12px}
+  .seg{display:inline-flex; background:var(--surface-2); border:1px solid var(--line); border-radius:9px; padding:3px; gap:2px}
+  .seg button{
+    appearance:none; border:0; background:transparent; font-family:inherit; font-size:12.5px; font-weight:700;
+    color:var(--muted); padding:6px 13px; border-radius:7px; cursor:pointer; transition:.14s;
+  }
+  .seg button.on{background:var(--ink); color:#fff}
+  .chart-box{padding:4px 14px 16px; position:relative}
+  .chart-box canvas{width:100% !important}
+  .chart-foot{display:flex; gap:18px; padding:0 20px 16px; flex-wrap:wrap}
+  .legend{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted)}
+  .legend i{width:11px; height:11px; border-radius:3px; display:inline-block}
+
+  /* 정책 패널 */
+  .policy{display:flex; flex-direction:column; overflow:hidden}
+  .policy .panel-head{padding-bottom:14px; border-bottom:1px solid var(--line)}
+  .policy-list{overflow-y:auto; max-height:430px}
+  .pol{display:flex; gap:13px; padding:14px 20px; border-bottom:1px solid var(--surface-2); cursor:default; transition:.14s}
+  .pol:hover{background:var(--surface-2)}
+  .pol .tag{
+    flex:0 0 auto; align-self:flex-start; font-size:10.5px; font-weight:800; letter-spacing:.02em;
+    padding:3px 8px; border-radius:6px; margin-top:2px; white-space:nowrap;
+  }
+  .tag.reg{background:#FCE8E8; color:#C0322F}      /* 규제 */
+  .tag.sup{background:#E5F0FB; color:#1E5FCC}      /* 공급 */
+  .tag.tax{background:#FBF0DA; color:#9A6E14}      /* 세제 */
+  .tag.mkt{background:#E7F4EE; color:#16805A}      /* 시장 */
+  .pol .body h4{font-size:13.5px; font-weight:700; line-height:1.4; letter-spacing:-.01em}
+  .pol .body .meta{font-size:11.5px; color:var(--muted-2); margin-top:4px; display:flex; gap:8px}
+
+  /* ── 금리 차트 섹션 ── */
+  .rate-sec{margin-top:34px}
+  .rate-card{margin-top:14px}
+  .rate-head{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:18px 20px 8px; flex-wrap:wrap}
+  .rate-pills{display:flex; gap:8px; flex-wrap:wrap}
+  .pill{display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--muted); background:var(--surface-2); border:1px solid var(--line); border-radius:20px; padding:5px 11px}
+  .pill .sw{width:9px; height:9px; border-radius:50%}
+
+  /* ── 상세검색 ── */
+  .search-sec{margin-top:40px}
+  .filters{margin-top:16px; padding:22px 22px 8px}
+  .fgrid{display:grid; grid-template-columns:repeat(2,1fr); gap:18px 28px}
+  .field{display:flex; flex-direction:column; gap:9px}
+  .field > label{font-size:12.5px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px}
+  .field > label .idx{font-size:10.5px; font-weight:800; color:var(--blue); background:#E9F0FB; border-radius:5px; padding:1px 6px; font-variant-numeric:tabular-nums}
+  .chips{display:flex; flex-wrap:wrap; gap:7px}
+  .chip{
+    appearance:none; font-family:inherit; font-size:12.5px; font-weight:600; color:var(--muted);
+    background:var(--surface); border:1px solid var(--line-strong); border-radius:8px; padding:7px 12px; cursor:pointer; transition:.14s;
+  }
+  .chip:hover{border-color:var(--blue); color:var(--blue)}
+  .chip.on{background:var(--blue); border-color:var(--blue); color:#fff}
+  .range-row{display:flex; align-items:center; gap:12px}
+  .range-row input[type=range]{flex:1; accent-color:var(--blue)}
+  .range-val{font-size:13px; font-weight:700; color:var(--ink); min-width:108px; text-align:right; font-variant-numeric:tabular-nums}
+  select{
+    font-family:inherit; font-size:13px; font-weight:600; color:var(--text); background:var(--surface);
+    border:1px solid var(--line-strong); border-radius:9px; padding:9px 11px; cursor:pointer; width:100%;
+  }
+  .search-bar{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:18px 22px 22px; flex-wrap:wrap}
+  .reset{appearance:none; border:0; background:none; font-family:inherit; font-size:12.5px; font-weight:600; color:var(--muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px}
+  .btn-search{
+    appearance:none; border:0; background:var(--ink); color:#fff; font-family:inherit; font-size:14px; font-weight:700;
+    padding:12px 26px; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:9px; transition:.15s;
+  }
+  .btn-search:hover{background:#1B3650}
+  .btn-search svg{width:16px; height:16px}
+
+  /* ── 결과: 지도 + 카드 ── */
+  .results{margin-top:34px; display:none}
+  .results.show{display:block; animation:fade .4s ease}
+  @keyframes fade{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
+  .res-bar{display:flex; align-items:baseline; gap:12px; margin-bottom:14px; flex-wrap:wrap}
+  .res-bar .count{font-size:14px; font-weight:800}
+  .res-bar .count b{color:var(--blue); font-size:18px}
+  .map-grid{display:grid; grid-template-columns:1.4fr 1fr; gap:18px; align-items:stretch}
+  #map{height:560px; border-radius:var(--r); border:1px solid var(--line); z-index:1}
+  .leaflet-container{font-family:inherit; background:#dfe6ec}
+  .listcol{display:flex; flex-direction:column; gap:13px; max-height:560px; overflow-y:auto; padding-right:4px}
+  .prop{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:15px 16px; cursor:pointer; transition:.16s;
+  }
+  .prop:hover, .prop.active{border-color:var(--blue); box-shadow:0 4px 14px rgba(30,95,204,.12)}
+  .prop-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px}
+  .prop-top h4{font-size:15px; font-weight:800; letter-spacing:-.02em}
+  .prop-top .gu{font-size:11.5px; color:var(--muted); font-weight:600; margin-top:2px}
+  .prop-spec{font-size:11.5px; color:var(--muted); margin-top:8px; display:flex; gap:9px; flex-wrap:wrap}
+  .prop-spec span{background:var(--surface-2); border:1px solid var(--line); border-radius:6px; padding:2px 7px}
+  .price3{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; margin-top:13px; background:var(--line); border:1px solid var(--line); border-radius:9px; overflow:hidden}
+  .p3{background:var(--surface); padding:9px 10px}
+  .p3 .l{font-size:10.5px; color:var(--muted-2); font-weight:700; display:flex; align-items:center; gap:4px}
+  .p3 .v{font-size:14.5px; font-weight:800; margin-top:3px; font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+  .p3 .v small{font-size:11px; font-weight:600; color:var(--muted)}
+  .listing-src{display:flex; gap:8px; margin-top:11px; flex-wrap:wrap}
+  .lsrc{font-size:11px; font-weight:700; padding:4px 9px; border-radius:7px; display:flex; align-items:center; gap:6px; border:1px solid var(--line)}
+  .lsrc .cnt{font-variant-numeric:tabular-nums}
+  .lsrc.hg{background:#FFF3EC; color:#C75A2C; border-color:#F6D9C7}
+  .lsrc.nv{background:#EAF6EC; color:#1E7E34; border-color:#CDE9D2}
+  .empty{padding:50px 20px; text-align:center; color:var(--muted); font-size:14px; grid-column:1/-1}
+
+  /* 지도 팝업 */
+  .leaflet-popup-content{margin:13px 15px; min-width:190px}
+  .pop h4{font-size:14px; font-weight:800; margin-bottom:3px}
+  .pop .gu{font-size:11px; color:var(--muted); margin-bottom:9px}
+  .pop .row{display:flex; justify-content:space-between; font-size:12px; padding:3px 0}
+  .pop .row .k{color:var(--muted)} .pop .row .vv{font-weight:700; font-variant-numeric:tabular-nums}
+
+  /* ── 푸터 ── */
+  footer{border-top:1px solid var(--line); background:var(--surface); margin-top:50px}
+  .foot-inner{padding:24px 0 40px; display:flex; gap:30px; justify-content:space-between; flex-wrap:wrap}
+  .foot-inner h5{font-size:12px; font-weight:800; color:var(--text); margin-bottom:9px; letter-spacing:.02em}
+  .foot-inner ul{list-style:none; font-size:12px; color:var(--muted); line-height:1.9}
+  .foot-inner a{color:var(--blue); text-decoration:none}
+  .foot-inner a:hover{text-decoration:underline}
+  .disc{font-size:11.5px; color:var(--muted-2); max-width:430px; line-height:1.7}
+
+  .demo-flag{font-size:10px; font-weight:800; color:var(--gold); background:#FBF4E2; border:1px solid #ECDCB0; border-radius:5px; padding:1px 6px; letter-spacing:.02em; vertical-align:middle}
+
+  /* ── 자치구 전체선택 ── */
+  .field.full{grid-column:1/-1}
+  .gu-head{display:flex; align-items:center; justify-content:space-between; gap:12px}
+  .selall{appearance:none; border:0; background:none; font-family:inherit; font-size:11.5px; font-weight:700; color:var(--blue); cursor:pointer}
+  .selall:hover{text-decoration:underline; text-underline-offset:3px}
+
+  /* ── 추가비용 계산기 ── */
+  .calc-card{margin-top:16px; overflow:hidden}
+  .calc-grid{display:grid; grid-template-columns:1fr 1.05fr; gap:0}
+  .calc-inputs{padding:24px; border-right:1px solid var(--line)}
+  .calc-out{padding:24px; background:var(--surface-2)}
+  .calc-field{margin-bottom:17px}
+  .calc-field:last-child{margin-bottom:0}
+  .calc-field > label{font-size:12.5px; font-weight:700; display:block; margin-bottom:8px; color:var(--text)}
+  .calc-field input[type=number]{width:100%; font-family:inherit; font-size:15px; font-weight:700; padding:11px 13px; border:1px solid var(--line-strong); border-radius:9px; font-variant-numeric:tabular-nums; color:var(--text)}
+  .calc-field input:focus, select:focus{outline:2px solid var(--blue); outline-offset:1px; border-color:var(--blue)}
+  .suffix{position:relative}
+  .suffix span{position:absolute; right:13px; top:50%; transform:translateY(-50%); font-size:13px; color:var(--muted); font-weight:600; pointer-events:none}
+  .chk{display:flex; align-items:center; gap:9px; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text); line-height:1.4}
+  .chk input{width:17px; height:17px; flex:0 0 17px; accent-color:var(--blue)}
+  .out-row{display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:11px 0; border-bottom:1px solid var(--line)}
+  .out-row .k{font-size:13px; color:var(--muted); display:flex; gap:7px; align-items:baseline; flex-wrap:wrap}
+  .out-row .k em{font-style:normal; font-size:11px; color:var(--muted-2)}
+  .out-row .v{font-size:14.5px; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .out-row.total{border-bottom:2px solid var(--ink); margin-top:6px}
+  .out-row.total .k{font-size:14px; font-weight:800; color:var(--text)}
+  .out-row.total .v{font-size:18px; font-weight:800; color:var(--blue)}
+  .out-row.grand{border-bottom:0}
+  .out-row.grand .k{font-weight:800; color:var(--text)}
+  .out-row.grand .v{font-size:16px; font-weight:800}
+  .disc-tag{font-size:10.5px; font-weight:700; color:#16805A; background:#E7F4EE; border-radius:5px; padding:1px 6px}
+  .calc-note{font-size:11.5px; color:var(--muted-2); line-height:1.7; margin-top:16px; padding-top:14px; border-top:1px solid var(--line)}
+
+  @media (max-width:980px){
+    .top-grid{grid-template-columns:1fr}
+    .map-grid{grid-template-columns:1fr}
+    .pulse-grid{grid-template-columns:repeat(2,1fr)}
+    #map{height:400px}
+    .listcol{max-height:none}
+    .calc-grid{grid-template-columns:1fr}
+    .calc-inputs{border-right:0; border-bottom:1px solid var(--line)}
+  }
+  @media (max-width:600px){
+    .fgrid{grid-template-columns:1fr}
+    .pulse-grid{grid-template-columns:1fr}
+    .price3{grid-template-columns:1fr 1fr}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+
+  /* ══════════ 탭 ══════════ */
+  .tabs{display:flex; gap:4px; margin-top:16px}
+  .tab{
+    appearance:none; border:0; background:transparent; color:#9DB2C6; font-family:inherit;
+    font-size:14px; font-weight:700; padding:11px 22px; border-radius:10px 10px 0 0; cursor:pointer; transition:.15s;
+  }
+  .tab:hover{color:#D7E5F2}
+  .tab.on{background:var(--canvas); color:var(--ink)}
+  .view[hidden]{display:none}
+
+  /* ══════════ 주식: 벤치마크 밴드 ══════════ */
+  .idxband{
+    background:var(--ink-2); color:#EAF1F8; border-bottom:1px solid #0A1622; padding:22px 0 24px;
+    background-image:
+      linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+    background-size:26px 26px;
+  }
+  .band-eyebrow{color:#7FA8D8 !important; margin-bottom:14px}
+  .band-eyebrow::before{background:#7FA8D8 !important}
+  .band-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.10); border-radius:13px; overflow:hidden}
+  .bcell{background:var(--ink-2); padding:16px 18px; display:flex; flex-direction:column; gap:10px}
+  .bcell .blab{font-size:12px; color:#93A8BD; font-weight:700; letter-spacing:.01em; display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+  .bcell .brow{display:flex; align-items:flex-end; justify-content:space-between; gap:12px}
+  .bcell .bval{font-size:23px; font-weight:800; letter-spacing:-.02em; line-height:1}
+  .bcell .bchg{font-size:12.5px; font-weight:800; white-space:nowrap}
+  .bchg.up{color:#FF8A8E} .bchg.down{color:#86B0FF}
+  .bchg.asof{color:#7FD8B0; font-weight:700; white-space:normal}
+  .bcell .bspark{width:100px; height:38px; flex:0 0 100px}
+  .band-note{font-size:11.5px; line-height:1.6; color:#8FA6BC; margin-top:14px; max-width:920px}
+  .band-note a{color:#9FC2EE}
+  .band-note code{background:rgba(255,255,255,.08); border-radius:4px; padding:1px 5px}
+
+  /* ══════════ 주식: 섹터 & 카드 ══════════ */
+  .stock-intro{margin-bottom:18px}
+  /* ══════════ 주식: 섹터 히트맵 ══════════ */
+  .heatmap-grid{
+    display:grid; grid-template-columns:repeat(6,1fr); grid-auto-rows:96px;
+    gap:6px; margin-bottom:8px;
+  }
+  .heat-tile{
+    border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;
+    cursor:pointer; border:1px solid rgba(0,0,0,.06); transition:.14s; overflow:hidden;
+  }
+  .heat-tile:hover{ transform:translateY(-2px); box-shadow:0 6px 18px rgba(15,25,40,.16); z-index:2 }
+  .heat-tile .ht-tag{ font-size:10.5px; font-weight:700; letter-spacing:.01em; opacity:.85 }
+  .heat-tile .ht-title{ font-size:13.5px; font-weight:800; letter-spacing:-.01em; line-height:1.25 }
+  .heat-tile .ht-chg{ font-size:15px; font-weight:800; font-variant-numeric:tabular-nums }
+  .heat-tile .ht-top{ font-size:10px; font-weight:600; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .heat-legend{ display:flex; align-items:center; gap:10px; font-size:11px; color:var(--muted); margin-bottom:26px; flex-wrap:wrap }
+  .heat-legend .grad{ width:140px; height:9px; border-radius:5px; background:linear-gradient(90deg, var(--down), #EEF1F5 50%, var(--up)); }
+  .theme-bar{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px}
+  .live-flag{font-size:10px; font-weight:800; color:#16805A; background:#E7F4EE; border:1px solid #BFE3CF; border-radius:5px; padding:1px 6px; letter-spacing:.02em; vertical-align:middle}
+  .sector{margin-top:40px; border-radius:14px; transition:background 1.4s ease}
+  .sector:first-of-type{margin-top:30px}
+  .sector.sector-flash{background:#EAF1FB}
+  .sector-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; border-bottom:2px solid var(--ink); padding-bottom:13px; margin-bottom:18px}
+  .sector-title{font-size:22px; font-weight:800; letter-spacing:-.025em; margin-top:6px}
+  .sector-desc{font-size:13px; color:var(--muted); margin-top:6px; max-width:660px; line-height:1.6}
+  .sector-rank{font-size:11.5px; font-weight:700; color:var(--muted-2); white-space:nowrap}
+  .stock-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:13px}
+  .stock{
+    background:var(--surface); border:1px solid var(--line); border-radius:13px; padding:15px 15px 13px;
+    display:flex; flex-direction:column; gap:11px; transition:.16s;
+  }
+  .stock:hover{border-color:var(--blue); box-shadow:0 5px 16px rgba(30,95,204,.10); transform:translateY(-2px)}
+  .stock-top{display:flex; align-items:flex-start; justify-content:space-between; gap:8px}
+  .stock-top .tk{font-size:15px; font-weight:800; letter-spacing:-.01em; display:flex; align-items:center; gap:0}
+  .stock-top .mkt{font-size:9px; font-weight:700; color:var(--muted-2); border:1px solid var(--line); border-radius:4px; padding:1px 4px; margin-left:6px; letter-spacing:.02em}
+  .stock-top .rb{font-size:10.5px; font-weight:800; color:var(--blue); background:#E9F0FB; border-radius:6px; padding:2px 7px; font-variant-numeric:tabular-nums}
+  .stock .nm{font-size:12px; color:var(--muted); font-weight:600; margin-top:-5px}
+  .stock .spark{width:100%; height:42px; display:block}
+  .stock-bot{display:flex; align-items:baseline; justify-content:space-between; gap:8px}
+  .stock-bot .price{font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+  .stock-bot .chg{font-size:12.5px; font-weight:800; white-space:nowrap}
+  .chg.up{color:var(--up)} .chg.down{color:var(--down)}
+  .stock .ytd{font-size:10.5px; color:var(--muted-2); font-weight:600; border-top:1px solid var(--surface-2); padding-top:8px; line-height:1.4}
+
+  /* ══════════ 주식: 경제전망 시나리오 ══════════ */
+  .forecast{ margin-top:56px; border-top:1px solid var(--line); padding-top:8px }
+  .forecast-chart-row{ display:grid; grid-template-columns:1.6fr 1fr; gap:24px; margin-top:10px }
+  .forecast-chart-box{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px }
+  .forecast-chart-fallback{ height:260px; display:flex; align-items:center; justify-content:center; text-align:center; color:var(--muted-2); font-size:12.5px; padding:20px; line-height:1.6 }
+  .forecast-side{ display:flex; flex-direction:column; gap:12px }
+  .fscenario{ display:flex; gap:10px; align-items:flex-start; background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:12px 14px }
+  .fscenario .dot{ width:11px; height:11px; border-radius:50%; margin-top:4px; flex:0 0 11px }
+  .fscenario .dot.bull{ background:var(--up) }
+  .fscenario .dot.base{ background:var(--blue) }
+  .fscenario .dot.bear{ background:var(--down) }
+  .fscenario b{ font-size:13px; display:block; margin-bottom:2px }
+  .fscenario p{ font-size:11.5px; color:var(--muted); line-height:1.5 }
+  .fmeta{ background:var(--ink); color:#EAF1F8; border-radius:11px; padding:14px 16px; display:flex; flex-direction:column; gap:8px }
+  .fmeta-row{ display:flex; justify-content:space-between; align-items:baseline; font-size:12px; color:#9FB2C4 }
+  .fmeta-row b{ font-size:14px; color:#EAF1F8; font-weight:800 }
+  .fmeta-row b.up{ color:#FF8A8E } .fmeta-row b.down{ color:#86B0FF }
+  .forecast-method{ display:flex; flex-direction:column; gap:12px; margin-top:26px }
+  .fmethod-step{ display:flex; gap:12px; align-items:flex-start }
+  .fmethod-step .fnum{
+    flex:0 0 24px; height:24px; border-radius:50%; background:var(--ink); color:#fff;
+    font-size:11.5px; font-weight:800; display:flex; align-items:center; justify-content:center;
+  }
+  .fmethod-step p{ font-size:13px; color:var(--muted); line-height:1.6 }
+  .factor-disclaimer{ font-size:11.5px; color:var(--muted-2); line-height:1.6; margin-top:18px; max-width:900px }
+
+  @media (max-width:980px){
+    .stock-grid{grid-template-columns:repeat(2,1fr)}
+    .band-grid{grid-template-columns:repeat(2,1fr)}
+    .bcell .brow{align-items:center}
+    .heatmap-grid{grid-template-columns:repeat(2,1fr) !important}
+  }
+  @media (max-width:600px){
+    .stock-grid{grid-template-columns:1fr}
+    .tab{padding:10px 16px; font-size:13px}
+    .band-grid{grid-template-columns:1fr}
+    .heatmap-grid{grid-template-columns:1fr !important}
+    .forecast-chart-row{grid-template-columns:1fr !important}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ 헤더 ══════════ -->
+<header>
+  <div class="wrap head-inner">
+    <div class="brand">
+      <div class="mark"></div>
+      <div>
+        <h1>재테크 바로알기</h1>
+        <div class="sub">부동산과 주식을 한 곳에서 — 시장 · 금리 · 정책 · 종목 인텔리전스</div>
+      </div>
+    </div>
+    <div class="head-meta">
+      <div class="stamp">기준 시점 <b id="asof">2026-06-22</b> · 데이터 갱신 <b id="updated">방금 전</b></div>
+      <button class="refresh" id="refreshBtn" title="데이터 갱신">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>
+        최신화
+      </button>
+    </div>
+  </div>
+  <div class="wrap">
+    <nav class="tabs">
+      <button class="tab on" data-view="realestate">부동산</button>
+      <button class="tab" data-view="stocks">주식</button>
+    </nav>
+  </div>
+</header>
+
+<div id="view-realestate" class="view">
+
+<!-- ══════════ 시장 펄스 ══════════ -->
+<section class="pulse">
+  <div class="wrap">
+    <div class="pulse-grid">
+      <div class="pcell">
+        <div class="lab"><span class="dot live"></span>서울 주간 매매가격지수</div>
+        <div class="big num" id="pulseIdx">—</div>
+        <div class="delta up" id="pulseIdxD">—</div>
+      </div>
+      <div class="pcell">
+        <div class="lab">송파 · 강동 주간 변동률</div>
+        <div class="big num" id="pulseGu">—</div>
+        <div class="delta up" id="pulseGuD">전주 대비</div>
+      </div>
+      <div class="pcell">
+        <div class="lab">4대 은행 주담대 (혼합형)</div>
+        <div class="big num" id="pulseRate">—</div>
+        <div class="delta" id="pulseRateD" style="color:#A9BED2">최저~최고</div>
+      </div>
+      <div class="pcell">
+        <div class="lab">기준금리 · COFIX(신규)</div>
+        <div class="big num" id="pulseBase">—</div>
+        <div class="delta" id="pulseBaseD" style="color:#A9BED2">한국은행 · 은행연합회</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main class="wrap">
+
+  <!-- ── 상단: 지수 차트 + 정책 ── -->
+  <section>
+    <div class="eyebrow">시장 흐름</div>
+    <div class="top-grid">
+
+      <!-- 지수 차트 -->
+      <div class="card">
+        <div class="panel-head">
+          <div>
+            <div class="sec-title">주간 주택매매가격지수 <span class="demo-flag">참고추세</span></div>
+            <div class="sec-note">서울 아파트 종합 · 한국부동산원 주간 동향 기준</div>
+          </div>
+          <div class="seg" id="rangeSeg">
+            <button data-range="1m">1개월</button>
+            <button data-range="3m">3개월</button>
+            <button data-range="1y" class="on">1년</button>
+          </div>
+        </div>
+        <div class="chart-box"><canvas id="idxChart" height="240"></canvas></div>
+        <div class="chart-foot">
+          <span class="legend"><i style="background:var(--blue)"></i>매매가격지수</span>
+          <span class="legend"><i style="background:#E6533A55"></i>10·15 대책 시행(2025.10)</span>
+        </div>
+      </div>
+
+      <!-- 정책 패널 -->
+      <aside class="card policy">
+        <div class="panel-head">
+          <div>
+            <div class="sec-title">부동산 정책 모니터</div>
+            <div class="sec-note">최근 규제·공급·세제 헤드라인</div>
+          </div>
+        </div>
+        <div class="policy-list" id="policyList"></div>
+      </aside>
+
+    </div>
+  </section>
+
+  <!-- ── 금리 차트 ── -->
+  <section class="rate-sec">
+    <div class="eyebrow">금융 환경</div>
+    <div class="sec-title">주택담보대출 금리 — 4대 은행 공시</div>
+    <div class="sec-note">KB국민·신한·하나·우리 · 혼합형(5년 고정) 대표금리 · 최근 12개월 <span class="demo-flag">참고추세</span></div>
+    <div class="card rate-card">
+      <div class="rate-head">
+        <div class="rate-pills" id="ratePills"></div>
+        <div class="pill" style="border-color:var(--line-strong)">은행연합회 소비자포털 공시 기준</div>
+      </div>
+      <div class="chart-box"><canvas id="rateChart" height="200"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ── 상세검색 ── -->
+  <section class="search-sec">
+    <div class="eyebrow">상세 검색</div>
+    <div class="sec-title">주택 선택 10대 요인으로 좁혀보기</div>
+    <div class="sec-note">조건을 설정하고 검색하면 하단 지도에 매물 위치와 실거래가·KB시세·매물 정보가 표시됩니다.</div>
+
+    <div class="card filters">
+      <div class="fgrid">
+
+        <!-- 1 지역 -->
+        <div class="field full">
+          <div class="gu-head">
+            <label><span class="idx">01</span> 지역 (자치구 · 서울 25개)</label>
+            <button class="selall" id="guAll" type="button">전체 선택 / 해제</button>
+          </div>
+          <div class="chips" id="f-gu" data-multi style="margin-top:9px">
+            <button class="chip" data-v="강남구">강남구</button>
+            <button class="chip" data-v="강동구">강동구</button>
+            <button class="chip" data-v="강북구">강북구</button>
+            <button class="chip" data-v="강서구">강서구</button>
+            <button class="chip" data-v="관악구">관악구</button>
+            <button class="chip" data-v="광진구">광진구</button>
+            <button class="chip" data-v="구로구">구로구</button>
+            <button class="chip" data-v="금천구">금천구</button>
+            <button class="chip" data-v="노원구">노원구</button>
+            <button class="chip" data-v="도봉구">도봉구</button>
+            <button class="chip" data-v="동대문구">동대문구</button>
+            <button class="chip" data-v="동작구">동작구</button>
+            <button class="chip" data-v="마포구">마포구</button>
+            <button class="chip" data-v="서대문구">서대문구</button>
+            <button class="chip" data-v="서초구">서초구</button>
+            <button class="chip" data-v="성동구">성동구</button>
+            <button class="chip" data-v="성북구">성북구</button>
+            <button class="chip" data-v="송파구">송파구</button>
+            <button class="chip" data-v="양천구">양천구</button>
+            <button class="chip" data-v="영등포구">영등포구</button>
+            <button class="chip" data-v="용산구">용산구</button>
+            <button class="chip" data-v="은평구">은평구</button>
+            <button class="chip" data-v="종로구">종로구</button>
+            <button class="chip" data-v="중구">중구</button>
+            <button class="chip" data-v="중랑구">중랑구</button>
+          </div>
+        </div>
+
+        <!-- 2 예산 -->
+        <div class="field">
+          <label><span class="idx">02</span> 예산 (매매 상한)</label>
+          <div class="range-row">
+            <input type="range" id="f-budget" min="6" max="40" step="0.5" value="13">
+            <span class="range-val"><span id="budgetVal">13</span>억원 이하</span>
+          </div>
+        </div>
+
+        <!-- 3 전용면적 -->
+        <div class="field">
+          <label><span class="idx">03</span> 전용면적</label>
+          <div class="range-row">
+            <input type="range" id="f-area" min="40" max="135" step="1" value="59">
+            <span class="range-val"><span id="areaVal">59</span>㎡ 이상</span>
+          </div>
+        </div>
+
+        <!-- 4 연식 -->
+        <div class="field">
+          <label><span class="idx">04</span> 준공 연식</label>
+          <div class="range-row">
+            <input type="range" id="f-age" min="0" max="40" step="1" value="40">
+            <span class="range-val"><span id="ageVal">40</span>년 이내</span>
+          </div>
+        </div>
+
+        <!-- 5 교통 -->
+        <div class="field">
+          <label><span class="idx">05</span> 교통 (역세권)</label>
+          <div class="chips" id="f-transit">
+            <button class="chip" data-v="any">상관없음</button>
+            <button class="chip on" data-v="5">도보 5분</button>
+            <button class="chip" data-v="10">도보 10분</button>
+            <button class="chip" data-v="15">도보 15분</button>
+          </div>
+        </div>
+
+        <!-- 6 학군 -->
+        <div class="field">
+          <label><span class="idx">06</span> 학군</label>
+          <div class="chips" id="f-school">
+            <button class="chip on" data-v="any">상관없음</button>
+            <button class="chip" data-v="우수">우수 학군</button>
+          </div>
+        </div>
+
+        <!-- 7 단지 규모 -->
+        <div class="field">
+          <label><span class="idx">07</span> 단지 규모 (세대수)</label>
+          <select id="f-scale">
+            <option value="0">상관없음</option>
+            <option value="500">500세대 이상</option>
+            <option value="1500">1,500세대 이상 (대단지)</option>
+          </select>
+        </div>
+
+        <!-- 8 브랜드 -->
+        <div class="field">
+          <label><span class="idx">08</span> 브랜드 (시공사)</label>
+          <div class="chips" id="f-brand" data-multi>
+            <button class="chip" data-v="래미안">래미안</button>
+            <button class="chip" data-v="자이">자이</button>
+            <button class="chip" data-v="아이파크">아이파크</button>
+            <button class="chip" data-v="기타">기타</button>
+          </div>
+        </div>
+
+        <!-- 9 향/층 -->
+        <div class="field">
+          <label><span class="idx">09</span> 향 · 층</label>
+          <div class="chips" id="f-aspect">
+            <button class="chip on" data-v="any">상관없음</button>
+            <button class="chip" data-v="남향">남향 선호</button>
+            <button class="chip" data-v="고층">고층 선호</button>
+          </div>
+        </div>
+
+        <!-- 10 편의시설 -->
+        <div class="field">
+          <label><span class="idx">10</span> 생활 편의시설</label>
+          <div class="chips" id="f-amenity" data-multi>
+            <button class="chip" data-v="공원">공원</button>
+            <button class="chip" data-v="대형마트">대형마트</button>
+            <button class="chip" data-v="병원">병원</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="search-bar">
+        <button class="reset" id="resetBtn">조건 초기화</button>
+        <button class="btn-search" id="searchBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          상세검색
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 결과: 지도 + 매물 ── -->
+  <section class="results" id="results">
+    <div class="eyebrow">검색 결과</div>
+    <div class="res-bar">
+      <span class="count">조건에 맞는 단지 <b id="resCount">0</b>건</span>
+      <span class="sec-note">마커 또는 카드를 선택하면 상세 정보를 볼 수 있습니다.</span>
+    </div>
+    <div class="map-grid">
+      <div id="map"></div>
+      <div class="listcol" id="propList"></div>
+    </div>
+  </section>
+
+  <!-- ── 추가비용 계산기 ── -->
+  <section class="search-sec">
+    <div class="eyebrow">비용 계산</div>
+    <div class="sec-title">취득세 · 중개보수 추가비용 계산기</div>
+    <div class="sec-note">매매가와 조건을 입력하면 취득 관련 세금과 중개보수를 합산합니다. 위 지도에서 단지를 선택하면 실거래가가 자동으로 입력됩니다.</div>
+    <div class="card calc-card">
+      <div class="calc-grid">
+        <div class="calc-inputs">
+          <div class="calc-field">
+            <label>매매가액</label>
+            <div class="suffix"><input type="number" id="c-price" min="1" step="0.1" value="13"><span>억원</span></div>
+          </div>
+          <div class="calc-field">
+            <label>전용면적</label>
+            <div class="suffix"><input type="number" id="c-area" min="10" step="1" value="84"><span>㎡</span></div>
+          </div>
+          <div class="calc-field">
+            <label>취득 유형</label>
+            <select id="c-type">
+              <option value="one">1주택 (일반 · 1~3% 차등)</option>
+              <option value="m2">2주택 (조정대상지역 · 8%)</option>
+              <option value="m3">3주택 이상 · 법인 (12%)</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label class="chk"><input type="checkbox" id="c-first"> 생애최초 취득세 감면 (12억 이하 · 최대 200만원)</label>
+          </div>
+        </div>
+        <div class="calc-out">
+          <div id="calcOut"></div>
+          <div class="calc-note">
+            취득세는 1주택 기준 6억 이하 1.0% · 6~9억 1~3% 차등 · 9억 초과 3.0%이며, 지방교육세(취득세의 10%)와 농어촌특별세(전용 85㎡ 초과 시 0.2%)가 가산됩니다.
+            중개보수는 서울시 매매 상한요율(9~12억 0.5% · 12~15억 0.6% · 15억 이상 0.7%) 기준이며 부가세 별도·협의 가능합니다.
+            다주택 중과율·조정대상지역 여부·일시적 2주택 등은 실제 적용 시 달라질 수 있어 참고용입니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══════════ 푸터 ══════════ -->
+<footer>
+  <div class="wrap foot-inner">
+    <div>
+      <h5>데이터 출처 / 연동 지점</h5>
+      <ul>
+        <li>매매가격지수 — <a href="https://www.reb.or.kr/r-one/" target="_blank">한국부동산원 R-ONE OpenAPI</a> / KB부동산 데이터허브</li>
+        <li>주담대 금리 — <a href="https://portal.kfb.or.kr/compare/loan_household_new.php" target="_blank">은행연합회 소비자포털</a> / 각 은행 공시</li>
+        <li>실거래가 — 국토교통부 실거래가 공개시스템 OpenAPI</li>
+        <li>KB시세 — KB부동산 데이터허브</li>
+        <li>매물 — 호갱노노 / 네이버부동산 (공식 공개 API 부재, 연동 검토 필요)</li>
+      </ul>
+    </div>
+    <div class="disc">
+      <h5 style="color:var(--gold)">표시 안내</h5>
+      현재 가격지수·금리·매물·실거래 수치 중 <b>참고추세</b> 표시 항목과 지도 매물 데이터는 구조 시연용 샘플입니다.
+      코드 내 <code>DATA</code> 객체와 <code>fetch*()</code> 스텁 함수에 위 공식 API를 연결하면 실데이터로 동작합니다.
+      정책 모니터는 ‘최신화’ 버튼으로 갱신되며, 실서비스에서는 뉴스 RSS/API + 서버를 연동해 자동 갱신할 수 있습니다.
+    </div>
+  </div>
+</footer>
+</div><!-- /view-realestate -->
+
+<div id="view-stocks" class="view" hidden>
+  <!-- 벤치마크 · 환율 밴드 -->
+  <section class="idxband">
+    <div class="wrap">
+      <div class="eyebrow band-eyebrow">글로벌 벤치마크 · 환율</div>
+      <div class="band-grid" id="benchGrid"></div>
+      <p class="band-note">환율(USD·JPY/KRW)은 European Central Bank 공식 기준환율을 <a href="https://www.frankfurter.app" target="_blank" rel="noopener">Frankfurter.app</a>(무료·키 불필요)으로 직접 갱신을 시도합니다 — 성공하면 <span class="live-flag">● LIVE</span> 배지가 붙지만, ECB 환율은 영업일 1회 갱신이라 초 단위 실시간은 아닙니다. 코스피·나스닥·VIX 등 지수는 대부분의 무료 API가 브라우저 직접 호출을 막아둬(CORS) 별도 증권사 프록시(<code>QUOTE_API.base</code>)를 연결하기 전까지는 <span class="demo-flag">종가</span> 참고 데이터로 표시됩니다.</p>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <div class="stock-intro">
+      <div class="eyebrow">섹터 히트맵</div>
+      <h2 class="sec-title" style="font-size:21px">섹터별 등락 히트맵</h2>
+      <p class="sec-note">타일 크기는 섹터 내 평균 등락폭(변동성)이 클수록 커지고, 색은 상승(빨강)·하락(파랑)의 세기를 나타냅니다. 타일을 클릭하면 아래 해당 섹터의 주도주 Top 5로 이동합니다.</p>
+    </div>
+    <div class="heatmap-grid" id="heatmapGrid"></div>
+    <div class="heat-legend"><span>하락</span><span class="grad"></span><span>상승</span><span style="margin-left:10px;">· 타일 크기 = 섹터 평균 |등락률|</span></div>
+
+    <div class="stock-intro" style="margin-top:44px;">
+      <div class="eyebrow">섹터 인텔리전스</div>
+      <h2 class="sec-title" style="font-size:21px">섹터별 주도주 Top 5</h2>
+      <p class="sec-note">AI 밸류체인부터 우주·항공·방산, 소비재, 보험, 2차전지, 바이오까지. 카드의 시세·등락률·추세선은 구조 시연용 참고 데이터이며, 실시간 시세는 증권 API 연동이 필요합니다.</p>
+    </div>
+    <div class="theme-bar" id="themeBar">
+      <button class="chip on" data-group="all">전체</button>
+      <button class="chip" data-group="ai">AI 밸류체인</button>
+      <button class="chip" data-group="defense">우주·항공·방산</button>
+      <button class="chip" data-group="consumer">소비재</button>
+      <button class="chip" data-group="insurance">보험</button>
+      <button class="chip" data-group="battery">2차전지·에너지</button>
+      <button class="chip" data-group="bio">바이오·헬스케어</button>
+    </div>
+    <div id="sectorWrap"></div>
+
+    <section class="forecast">
+      <div class="stock-intro" style="margin-top:56px;">
+        <div class="eyebrow">향후 전망 · 참고용</div>
+        <h2 class="sec-title" style="font-size:21px">빅데이터 시나리오 전망</h2>
+        <p class="sec-note">실제 머신러닝 예측 모델이 아니라, 위 섹터들의 최근 추세를 단순한 규칙으로 12개월 앞까지 연장한 <b>낙관·중립·비관 3가지 참고 시나리오</b>입니다. 투자 판단의 근거로 사용하지 마세요.</p>
+      </div>
+      <div class="forecast-chart-row">
+        <div class="forecast-chart-box">
+          <canvas id="forecastChart" height="260"></canvas>
+        </div>
+        <div class="forecast-side">
+          <div class="fscenario">
+            <span class="dot bull"></span>
+            <div><b>낙관</b><p>최근 6개월 평균 추세가 1.5배로 강화된다고 가정</p></div>
+          </div>
+          <div class="fscenario">
+            <span class="dot base"></span>
+            <div><b>중립</b><p>최근 6개월 평균 추세가 그대로 12개월 이어진다고 가정</p></div>
+          </div>
+          <div class="fscenario">
+            <span class="dot bear"></span>
+            <div><b>비관</b><p>추세가 절반으로 꺾이고 초반 조정 국면을 가정</p></div>
+          </div>
+          <div class="fmeta">
+            <div class="fmeta-row"><span>기준 지수</span><b class="num" id="fBaseVal">—</b></div>
+            <div class="fmeta-row"><span>12개월 후 · 낙관</span><b class="num up" id="fBullVal">—</b></div>
+            <div class="fmeta-row"><span>12개월 후 · 중립</span><b class="num" id="fBaseFutVal">—</b></div>
+            <div class="fmeta-row"><span>12개월 후 · 비관</span><b class="num down" id="fBearVal">—</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="forecast-method">
+        <div class="fmethod-step"><span class="fnum">1</span><p><b>합성 기준지수 생성</b> — 섹터 히트맵에 쓰인 55개 종목의 추세값(trend)을 평균해, 지난 24개월치 결정적(같은 입력 → 항상 같은 결과) 합성 지수를 만듭니다. 실제 지수가 아닌 위 구조 시연용 참고 데이터를 바탕으로 합니다.</p></div>
+        <div class="fmethod-step"><span class="fnum">2</span><p><b>최근 추세 추출</b> — 합성 지수의 최근 6개월 평균 월간 변화량을 계산합니다.</p></div>
+        <div class="fmethod-step"><span class="fnum">3</span><p><b>3가지 규칙으로 12개월 연장</b> — 이 변화량에 낙관(×1.5) · 중립(×1.0) · 비관(×0.5, 초반 조정 반영) 배수를 곱해 앞으로 12개월을 단순 연장합니다. 회귀분석이나 머신러닝 모델이 아닙니다.</p></div>
+      </div>
+      <p class="factor-disclaimer">※ 실제 서비스에서는 다수 거시지표(금리, 환율, 수급, 실적 컨센서스 등)를 반영한 시계열 모델로 대체될 예정입니다. 현재 화면은 그 자리에 무엇이 표시될지 보여주는 구조 시연용 참고 자료이며, 투자 자문이 아닙니다.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap foot-inner">
+      <div>
+        <h5>데이터 출처 / 연동 지점</h5>
+        <ul>
+          <li>지수(코스피·코스닥·S&amp;P·나스닥·다우·VIX) — 현재 참고 데이터. S&amp;P Dow Jones · Nasdaq · KRX 등 벤더 API를 <code>QUOTE_API.base</code> 프록시에 연결하면 실시간 전환</li>
+          <li>환율(USD·JPY/KRW) — <a href="https://www.frankfurter.app" target="_blank" rel="noopener">Frankfurter.app</a>(European Central Bank 기준환율, 무료·키 불필요)로 브라우저에서 직접 실시간 연동 시도</li>
+          <li>해외 시세 — 증권사 OpenAPI (예: 한국투자·키움) / 글로벌 시세 벤더</li>
+          <li>국내 시세 — KRX 정보데이터시스템 / 증권사 API</li>
+        </ul>
+      </div>
+      <div class="disc">
+        <h5 style="color:var(--gold)">표시 안내</h5>
+        지수는 2026-06-18~19 종가 기준 참고 데이터이며, 종목 카드의 가격·등락률·추세선도 구조 시연용입니다.
+        환율만 Frankfurter.app(ECB 기준환율, 영업일 1회 갱신) 연동을 시도하며 실패 시 참고 데이터로 자동 전환됩니다.
+        섹터 히트맵은 위 참고 데이터의 평균 등락률을 시각화한 것이고, 하단 &lsquo;빅데이터 시나리오 전망&rsquo;은 실제 머신러닝 예측이 아니라 최근 추세를 단순 규칙으로 연장한 참고용 그래프입니다.
+        코드의 <code>BENCH</code>·<code>SECTORS</code> 객체와 <code>fetchQuotes()</code> 스텁에 증권 API를 연결하면 지수도 실시간으로 동작합니다.
+        어느 항목도 투자 판단의 근거가 아니며, 투자의 책임은 본인에게 있습니다.
+      </div>
+    </div>
+  </footer>
+</div><!-- /view-stocks -->
+
+<script>
+/* PWA: 서비스워커 등록 (HTTPS 또는 localhost에서만 동작) */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(err=>console.warn('SW 등록 실패:', err));
+  });
+}
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   DATA  —  공식 API 연동 시 이 객체와 fetch* 스텁을 교체하세요.
+   ═══════════════════════════════════════════════════════════ */
+
+/* (1) 주간 매매가격지수: 결정적 생성기로 1년치 주간 시계열 생성
+   실제 값은 한국부동산원 R-ONE / KB 데이터허브 연동 필요 */
+function buildWeeklyIndex(){
+  const weeks = 53, out = [], start = new Date('2025-06-23');
+  let v = 91.8;                          // 1년 전 기준 지수(참고)
+  // 주차별 변동 시나리오(%): 상승 → 10·15 둔화 → 재가속
+  for(let i=0;i<weeks;i++){
+    let d;
+    if(i<10)        d = 0.16 + (i%3)*0.03;          // 초여름 상승
+    else if(i<16)   d = 0.05 + (i%2)*0.02;          // 6·27 후 둔화
+    else if(i===16) d = 0.02;                       // 10·15 대책 시행 주
+    else if(i<20)   d = 0.04 + (i%2)*0.02;          // 급랭
+    else if(i<28)   d = 0.10 + (i%3)*0.04;          // 선호지역 재가속
+    else if(i<40)   d = 0.13 + (i%4)*0.03;          // 강남·송파 강세
+    else            d = 0.11 + (i%3)*0.03;          // 최근 선택적 강세
+    v = +(v * (1 + d/100)).toFixed(2);
+    const dt = new Date(start); dt.setDate(dt.getDate() + i*7);
+    out.push({ t: dt, v, d:+d.toFixed(2) });
+  }
+  return out;
+}
+
+/* (2) 4대 은행 주담대 혼합형(5년 고정) 대표금리 — 최근 12개월(%)
+   anchor: '25.11 4.0~6.1 · '25.12 4.1~6.2 · '26.03 상단 7.01 돌파 · '26.05 4.53~6.45 */
+const RATE = {
+  labels:['25.07','25.08','25.09','25.10','25.11','25.12','26.01','26.02','26.03','26.04','26.05','26.06'],
+  banks:{
+    'KB국민':{ color:'#FBC02D', data:[4.92,4.88,4.95,5.02,4.98,5.05,5.10,5.18,5.42,5.30,5.22,5.18] },
+    '신한'  :{ color:'#1E5FCC', data:[5.01,4.97,5.03,5.10,5.06,5.14,5.19,5.27,5.51,5.39,5.31,5.27] },
+    '하나'  :{ color:'#16805A', data:[5.08,5.04,5.11,5.18,5.13,5.21,5.27,5.35,5.60,5.47,5.39,5.34] },
+    '우리'  :{ color:'#E0673A', data:[5.04,5.00,5.07,5.14,5.10,5.18,5.23,5.31,5.55,5.43,5.35,5.30] }
+  },
+  baseRate:2.50, cofix:2.82, spread:'4.53 ~ 6.45'
+};
+
+/* (3) 정책 모니터 — 최근 헤드라인(실제 사건 기반) */
+const POLICY = [
+  { type:'reg', tag:'규제', title:'10·15 대책 시행 — 시가별 차등 대출한도(15억 초과 4억·25억 초과 2억)', date:'2025.10.15', src:'금융위·국토부' },
+  { type:'reg', tag:'규제', title:'수도권·규제지역 스트레스 DSR 하한 1.5%→3.0% 상향', date:'2025.10.15', src:'금융위' },
+  { type:'reg', tag:'규제', title:'주담대 위험가중치 하한 15%→20%, 4월→1월 조기 시행', date:'2026.01', src:'금융위' },
+  { type:'sup', tag:'공급', title:'1·29 수도권 공급 — 용산·과천·노원 태릉 등 약 5.97만호', date:'2026.01.29', src:'국토부' },
+  { type:'mkt', tag:'시장', title:'서울 아파트값 송파·용산·강남 선호단지 중심 재가속', date:'2026.06', src:'한국부동산원' },
+  { type:'reg', tag:'규제', title:'공인중개사 매매 신고 시 계약서·계약금 증빙 제출 의무화', date:'2026.01', src:'국토부' },
+  { type:'tax', tag:'세제', title:'비수도권 준공후 미분양 양도세·종부세 1주택 특례 1년 연장', date:'2026.01', src:'기재부' },
+  { type:'mkt', tag:'시장', title:'6·3 지방선거 전후 추가 대출·세제 규제 변수 부각', date:'2026.06', src:'시장 전망' }
+];
+
+/* (4) 매물/단지 — 지도 마커 + 실거래가·KB시세·매물 (구조 시연용 샘플)
+   실데이터: 국토부 실거래가 API · KB데이터허브 · 호갱노노/네이버부동산 */
+const PROPS = [
+  { id:1, name:'고덕그라시움', gu:'강동구', lat:37.5566, lng:127.1545, area:84, year:2019, transit:5, school:'우수', scale:4932, brand:'래미안', aspect:'남향', floorHi:true, amenity:['공원','대형마트'], real:14.8, kb:15.2, hg:38, nv:52 },
+  { id:2, name:'고덕아르테온', gu:'강동구', lat:37.5556, lng:127.1583, area:59, year:2020, transit:8, school:'우수', scale:4066, brand:'기타', aspect:'남향', floorHi:false, amenity:['공원','병원'], real:12.6, kb:12.9, hg:27, nv:34 },
+  { id:3, name:'래미안솔베뉴', gu:'강동구', lat:37.5410, lng:127.1490, area:59, year:2019, transit:5, school:'우수', scale:1900, brand:'래미안', aspect:'남향', floorHi:true, amenity:['대형마트','병원'], real:12.9, kb:13.3, hg:19, nv:25 },
+  { id:4, name:'올림픽파크포레온', gu:'강동구', lat:37.5285, lng:127.1430, area:84, year:2025, transit:8, school:'우수', scale:12032, brand:'기타', aspect:'남향', floorHi:true, amenity:['공원','대형마트','병원'], real:24.5, kb:25.1, hg:120, nv:180 },
+  { id:5, name:'잠실엘스', gu:'송파구', lat:37.5133, lng:127.0855, area:84, year:2008, transit:5, school:'우수', scale:5678, brand:'기타', aspect:'남향', floorHi:true, amenity:['공원','대형마트','병원'], real:28.9, kb:29.5, hg:64, nv:88 },
+  { id:6, name:'리센츠', gu:'송파구', lat:37.5113, lng:127.0805, area:84, year:2008, transit:5, school:'우수', scale:5563, brand:'기타', aspect:'남향', floorHi:false, amenity:['공원','대형마트'], real:28.2, kb:28.8, hg:55, nv:71 },
+  { id:7, name:'헬리오시티', gu:'송파구', lat:37.4995, lng:127.1110, area:84, year:2018, transit:8, school:'우수', scale:9510, brand:'기타', aspect:'남향', floorHi:true, amenity:['공원','대형마트','병원'], real:26.5, kb:27.0, hg:96, nv:142 },
+  { id:8, name:'올림픽훼밀리타운', gu:'송파구', lat:37.4855, lng:127.1218, area:84, year:1988, transit:10, school:'우수', scale:4494, brand:'기타', aspect:'남향', floorHi:false, amenity:['공원','병원'], real:18.4, kb:18.9, hg:41, nv:58 },
+  { id:9, name:'디에이치아너힐즈', gu:'강남구', lat:37.4786, lng:127.0667, area:84, year:2019, transit:5, school:'우수', scale:1320, brand:'기타', aspect:'남향', floorHi:true, amenity:['공원','병원'], real:34.0, kb:34.8, hg:22, nv:31 },
+  { id:10, name:'목동신시가지7', gu:'양천구', lat:37.5302, lng:126.8748, area:66, year:1986, transit:10, school:'우수', scale:2550, brand:'기타', aspect:'남향', floorHi:false, amenity:['공원','대형마트','병원'], real:23.8, kb:24.3, hg:48, nv:66 }
+];
+
+/* ───── 가상 fetch 스텁 (실연동 시 내부만 교체) ─────
+   async function fetchIndex(){ const r=await fetch(R_ONE_API_URL); ... return series; }
+   async function fetchRates(){ ... }  async function fetchPolicy(){ ... }
+   async function fetchDeals(lawdCd){ ... 국토부 실거래가 ... }                       */
+
+/* ═══════════════════════════════════════════════════════════
+   렌더링
+   ═══════════════════════════════════════════════════════════ */
+const won = n => n.toLocaleString('ko-KR');
+const eok = n => `${n.toFixed(1)}억`;
+let IDX = buildWeeklyIndex();
+let idxChart, rateChart, map, markerLayer, propMarkers = {};
+
+/* 펄스 밴드 */
+function renderPulse(){
+  const last = IDX[IDX.length-1], prev = IDX[IDX.length-2];
+  const diff = +(last.v - prev.v).toFixed(2);
+  document.getElementById('pulseIdx').textContent = last.v.toFixed(2);
+  const d = document.getElementById('pulseIdxD');
+  d.textContent = `${diff>=0?'▲':'▼'} ${Math.abs(diff).toFixed(2)} (${last.d>=0?'+':''}${last.d}%) 전주`;
+  d.className = 'delta ' + (diff>=0?'up':'down');
+  document.getElementById('pulseGu').textContent = '+0.42 / +0.21%';
+  document.getElementById('pulseRate').textContent = RATE.spread + '%';
+  document.getElementById('pulseBase').textContent = RATE.baseRate.toFixed(2) + ' / ' + RATE.cofix.toFixed(2) + '%';
+}
+
+/* 정책 리스트 */
+function renderPolicy(){
+  const el = document.getElementById('policyList');
+  el.innerHTML = POLICY.map(p => `
+    <div class="pol">
+      <span class="tag ${p.type}">${p.tag}</span>
+      <div class="body">
+        <h4>${p.title}</h4>
+        <div class="meta"><span>${p.date}</span><span>·</span><span>${p.src}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+/* 지수 차트 */
+function sliceRange(r){
+  const map = { '1y':53, '3m':14, '1m':6 };
+  return IDX.slice(-map[r]);
+}
+function fmtDate(d, r){
+  const m = d.getMonth()+1, day = d.getDate();
+  return r==='1y' ? `${String(d.getFullYear()).slice(2)}.${m}` : `${m}/${day}`;
+}
+function drawIndex(range='1y'){
+  const data = sliceRange(range);
+  const labels = data.map(p => fmtDate(p.t, range));
+  const vals = data.map(p => p.v);
+  const ctx = document.getElementById('idxChart');
+  // 10·15 시행 위치(1년 보기에서만 표시)
+  const markerIdx = range==='1y' ? data.findIndex(p => p.t >= new Date('2025-10-13') && p.t <= new Date('2025-10-20')) : -1;
+
+  const cfg = {
+    type:'line',
+    data:{ labels, datasets:[{
+      label:'매매가격지수', data:vals, borderColor:'#1E5FCC', borderWidth:2.4,
+      pointRadius:range==='1y'?0:3, pointHoverRadius:5, pointBackgroundColor:'#1E5FCC',
+      tension:.32, fill:true,
+      backgroundColor:(c)=>{ const g=c.chart.ctx.createLinearGradient(0,0,0,260); g.addColorStop(0,'rgba(30,95,204,.18)'); g.addColorStop(1,'rgba(30,95,204,0)'); return g; }
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{ backgroundColor:'#0E1C2B', padding:11, titleFont:{family:'Pretendard',weight:'700'}, bodyFont:{family:'Pretendard'},
+          callbacks:{ label:c=>`지수 ${c.parsed.y.toFixed(2)}` } },
+        annotation:false
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#8696A6', font:{family:'Pretendard',size:11}, maxRotation:0, autoSkip:true, maxTicksLimit:range==='1y'?13:8} },
+        y:{ position:'right', grid:{color:'#EEF1F4'}, ticks:{color:'#8696A6', font:{family:'Pretendard',size:11}} }
+      }
+    }
+  };
+  if(idxChart) idxChart.destroy();
+  idxChart = new Chart(ctx, cfg);
+
+  // 10·15 시행 세로 마커 (커스텀 플러그인 대신 간단 표시)
+  if(markerIdx>=0){
+    const plugin = {
+      id:'vline',
+      afterDraw(chart){
+        const x = chart.scales.x.getPixelForValue(markerIdx);
+        const {top,bottom} = chart.chartArea, c = chart.ctx;
+        c.save(); c.strokeStyle='rgba(224,103,58,.55)'; c.lineWidth=1.5; c.setLineDash([4,4]);
+        c.beginPath(); c.moveTo(x,top); c.lineTo(x,bottom); c.stroke(); c.restore();
+      }
+    };
+    idxChart.config.plugins = [plugin]; idxChart.update();
+  }
+}
+
+/* 금리 차트 */
+function drawRates(){
+  const ctx = document.getElementById('rateChart');
+  const datasets = Object.entries(RATE.banks).map(([name,b])=>({
+    label:name, data:b.data, borderColor:b.color, backgroundColor:b.color,
+    borderWidth:2.2, pointRadius:0, pointHoverRadius:5, tension:.3
+  }));
+  rateChart = new Chart(ctx,{
+    type:'line',
+    data:{ labels:RATE.labels, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{ backgroundColor:'#0E1C2B', padding:11, titleFont:{family:'Pretendard',weight:'700'}, bodyFont:{family:'Pretendard'},
+          callbacks:{ label:c=>`${c.dataset.label}  ${c.parsed.y.toFixed(2)}%` } }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#8696A6', font:{family:'Pretendard',size:11}} },
+        y:{ position:'right', grid:{color:'#EEF1F4'}, ticks:{color:'#8696A6', font:{family:'Pretendard',size:11}, callback:v=>v+'%'} }
+      }
+    }
+  });
+  document.getElementById('ratePills').innerHTML = Object.entries(RATE.banks).map(([n,b])=>
+    `<span class="pill"><span class="sw" style="background:${b.color}"></span>${n} ${b.data[b.data.length-1].toFixed(2)}%</span>`).join('');
+}
+
+/* ═══════════════ 필터 / 검색 ═══════════════ */
+function readFilters(){
+  const getChips = (id) => [...document.querySelectorAll('#'+id+' .chip.on')].map(c=>c.dataset.v);
+  return {
+    gu: getChips('f-gu'),
+    budget: +document.getElementById('f-budget').value,
+    area: +document.getElementById('f-area').value,
+    age: +document.getElementById('f-age').value,
+    transit: (getChips('f-transit')[0]||'any'),
+    school: (getChips('f-school')[0]||'any'),
+    scale: +document.getElementById('f-scale').value,
+    brand: getChips('f-brand'),
+    aspect: (getChips('f-aspect')[0]||'any'),
+    amenity: getChips('f-amenity')
+  };
+}
+function applyFilters(f){
+  const thisYear = 2026;
+  return PROPS.filter(p=>{
+    if(f.gu.length && !f.gu.includes(p.gu)) return false;
+    if(p.real > f.budget) return false;
+    if(p.area < f.area) return false;
+    if((thisYear - p.year) > f.age) return false;
+    if(f.transit!=='any' && p.transit > +f.transit) return false;
+    if(f.school==='우수' && p.school!=='우수') return false;
+    if(f.scale && p.scale < f.scale) return false;
+    if(f.brand.length && !f.brand.includes(p.brand)) return false;
+    if(f.aspect==='남향' && p.aspect!=='남향') return false;
+    if(f.aspect==='고층' && !p.floorHi) return false;
+    if(f.amenity.length && !f.amenity.every(a=>p.amenity.includes(a))) return false;
+    return true;
+  });
+}
+
+/* 매물 카드 */
+function propCard(p){
+  const gap = +(p.kb - p.real).toFixed(1);
+  return `
+  <div class="prop" data-id="${p.id}">
+    <div class="prop-top">
+      <div>
+        <h4>${p.name}</h4>
+        <div class="gu">${p.gu} · ${p.brand!=='기타'?p.brand+' · ':''}${p.scale.toLocaleString()}세대</div>
+      </div>
+    </div>
+    <div class="prop-spec">
+      <span>전용 ${p.area}㎡</span><span>준공 ${p.year}</span>
+      <span>역세권 ${p.transit}분</span><span>${p.aspect}</span>
+    </div>
+    <div class="price3">
+      <div class="p3"><div class="l">실거래가</div><div class="v">${eok(p.real)}</div></div>
+      <div class="p3"><div class="l">KB시세</div><div class="v">${eok(p.kb)} <small>${gap>=0?'+':''}${gap}</small></div></div>
+      <div class="p3"><div class="l">총 매물</div><div class="v">${p.hg+p.nv}<small>건</small></div></div>
+    </div>
+    <div class="listing-src">
+      <span class="lsrc hg">호갱노노 <span class="cnt">${p.hg}</span></span>
+      <span class="lsrc nv">네이버 <span class="cnt">${p.nv}</span></span>
+    </div>
+  </div>`;
+}
+
+/* 지도 */
+function initMap(){
+  map = L.map('map',{ scrollWheelZoom:false, zoomControl:true }).setView([37.525,127.10], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19, attribution:'&copy; OpenStreetMap'
+  }).addTo(map);
+  markerLayer = L.layerGroup().addTo(map);
+}
+function pinIcon(active){
+  return L.divIcon({
+    className:'', iconSize:[26,26], iconAnchor:[13,26],
+    html:`<div style="width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+      background:${active?'#1E5FCC':'#E0673A'};border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.3)"></div>`
+  });
+}
+function renderResults(list){
+  // 카드
+  const lc = document.getElementById('propList');
+  lc.innerHTML = list.length ? list.map(propCard).join('')
+    : `<div class="empty">조건에 맞는 단지가 없습니다.<br>예산·면적·연식 조건을 완화해 보세요.</div>`;
+  document.getElementById('resCount').textContent = list.length;
+
+  // 마커
+  markerLayer.clearLayers(); propMarkers = {};
+  const pts = [];
+  list.forEach(p=>{
+    const m = L.marker([p.lat,p.lng],{icon:pinIcon(false)}).addTo(markerLayer);
+    m.bindPopup(`<div class="pop"><h4>${p.name}</h4><div class="gu">${p.gu} · 전용 ${p.area}㎡ · 준공 ${p.year}</div>
+      <div class="row"><span class="k">실거래가</span><span class="vv">${eok(p.real)}</span></div>
+      <div class="row"><span class="k">KB시세</span><span class="vv">${eok(p.kb)}</span></div>
+      <div class="row"><span class="k">호갱노노 / 네이버</span><span class="vv">${p.hg} / ${p.nv}건</span></div></div>`);
+    m.on('click',()=>focusProp(p.id));
+    propMarkers[p.id] = m; pts.push([p.lat,p.lng]);
+  });
+  if(pts.length) map.fitBounds(pts,{padding:[45,45], maxZoom:14});
+
+  // 카드 클릭 → 마커 포커스
+  lc.querySelectorAll('.prop').forEach(card=>{
+    card.addEventListener('click',()=>focusProp(+card.dataset.id));
+  });
+}
+function focusProp(id){
+  document.querySelectorAll('.prop').forEach(c=>c.classList.toggle('active', +c.dataset.id===id));
+  const active = document.querySelector(`.prop[data-id="${id}"]`);
+  if(active) active.scrollIntoView({behavior:'smooth', block:'nearest'});
+  Object.entries(propMarkers).forEach(([pid,m])=> m.setIcon(pinIcon(+pid===id)));
+  const m = propMarkers[id];
+  if(m){ map.panTo(m.getLatLng()); m.openPopup(); }
+  const p = PROPS.find(x=>x.id===id);
+  if(p){ const cp=document.getElementById('c-price'); if(cp){ cp.value=p.real; calcAll(); } }
+}
+
+function doSearch(){
+  const list = applyFilters(readFilters());
+  const res = document.getElementById('results');
+  res.classList.add('show');
+  if(!map) initMap();
+  setTimeout(()=>{ map.invalidateSize(); renderResults(list); }, 60);
+  res.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ═══════════════ 이벤트 바인딩 ═══════════════ */
+// 칩 토글
+document.querySelectorAll('.chips').forEach(group=>{
+  const multi = group.hasAttribute('data-multi');
+  group.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      if(multi){ chip.classList.toggle('on'); }
+      else { group.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); chip.classList.add('on'); }
+    });
+  });
+});
+// 슬라이더
+const bind = (id,out,fmt)=>{ const s=document.getElementById(id), o=document.getElementById(out);
+  s.addEventListener('input',()=>o.textContent = fmt?fmt(s.value):s.value); };
+bind('f-budget','budgetVal');
+bind('f-area','areaVal');
+bind('f-age','ageVal');
+// 지수 범위 탭
+document.querySelectorAll('#rangeSeg button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); drawIndex(b.dataset.range);
+  });
+});
+// 검색 / 초기화 / 최신화
+document.getElementById('searchBtn').addEventListener('click', doSearch);
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
+  document.querySelectorAll('#f-transit .chip[data-v="5"],#f-school .chip[data-v="any"],#f-aspect .chip[data-v="any"]').forEach(c=>c.classList.add('on'));
+  document.getElementById('f-budget').value=13; document.getElementById('budgetVal').textContent='13';
+  document.getElementById('f-area').value=59; document.getElementById('areaVal').textContent='59';
+  document.getElementById('f-age').value=40; document.getElementById('ageVal').textContent='40';
+  document.getElementById('f-scale').value='0';
+});
+document.getElementById('refreshBtn').addEventListener('click',function(){
+  const ic=this.querySelector('svg'); ic.style.transition='transform .6s'; ic.style.transform='rotate(360deg)';
+  setTimeout(()=>ic.style.transform='none',650);
+  // 실서비스: await fetchIndex(); await fetchRates(); await fetchPolicy();
+  IDX = buildWeeklyIndex(); renderPulse();
+  fetchQuotes();                                  // 주식 탭 지수·종목 갱신(증권 프록시 연동 시)
+  fetchFX().then(()=>{ renderBench(); renderHeatmap(); });   // 환율은 Frankfurter.app으로 직접 갱신 시도
+  document.getElementById('updated').textContent = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+});
+
+/* 자치구 전체 선택 / 해제 */
+document.getElementById('guAll').addEventListener('click',()=>{
+  const chips=[...document.querySelectorAll('#f-gu .chip')];
+  const anyOn=chips.some(c=>c.classList.contains('on'));
+  chips.forEach(c=>c.classList.toggle('on', !anyOn));
+});
+
+/* ═══════════════ 추가비용 계산기 ═══════════════ */
+function stampTax(price){            // 인지세 (주택 매매계약서)
+  if(price <= 1e8) return 0;         // 1억 이하 비과세
+  if(price <= 1e9) return 150000;    // 1억 초과 ~ 10억 이하
+  return 350000;                     // 10억 초과
+}
+function brokerFee(price){           // 서울시 매매 상한요율
+  let rate, cap = Infinity;
+  if(price < 5e6){ rate=.006; cap=250000; }
+  else if(price < 2e8){ rate=.005; cap=800000; }
+  else if(price < 9e8){ rate=.004; }
+  else if(price < 12e8){ rate=.005; }
+  else if(price < 15e8){ rate=.006; }
+  else { rate=.007; }
+  return { fee:Math.min(price*rate, cap), rate };
+}
+function calcAll(){
+  const eok  = parseFloat(document.getElementById('c-price').value)||0;
+  const area = parseFloat(document.getElementById('c-area').value)||0;
+  const type = document.getElementById('c-type').value;
+  const first= document.getElementById('c-first').checked;
+  const price = eok*1e8, over85 = area>85;
+
+  let r, edu, farm;                  // r: 취득세율(%)
+  if(type==='m2'){ r=8;  edu=price*0.004; farm=over85?price*0.006:0; }
+  else if(type==='m3'){ r=12; edu=price*0.004; farm=over85?price*0.010:0; }
+  else {                             // 1주택 1~3% 차등
+    if(eok<=6) r=1.0; else if(eok<=9) r=(eok*2/3)-3; else r=3.0;
+    edu = price*(r/100)*0.1;         // 지방교육세 = 취득세 ×10%
+    farm = over85 ? price*0.002 : 0; // 농특세 0.2% (85㎡ 초과)
+  }
+  const acq = price*(r/100);
+  let disc = 0;
+  if(first && type==='one' && eok<=12) disc = Math.min(acq, 2000000);
+  const acqNet = acq - disc;
+  const stamp  = stampTax(price);
+  const bk     = brokerFee(price);
+  const vat    = bk.fee*0.1;
+  const extra  = acqNet + edu + farm + stamp + bk.fee + vat;
+
+  const w = n => Math.round(n).toLocaleString('ko-KR')+'원';
+  document.getElementById('calcOut').innerHTML = `
+    <div class="out-row"><span class="k">취득세 본세 <em>(${r.toFixed(2)}%)</em>${disc?` <span class="disc-tag">−생애최초 ${(disc/10000).toLocaleString()}만</span>`:''}</span><span class="v">${w(acqNet)}</span></div>
+    <div class="out-row"><span class="k">지방교육세</span><span class="v">${w(edu)}</span></div>
+    <div class="out-row"><span class="k">농어촌특별세 <em>(${over85?'85㎡ 초과':'85㎡ 이하 · 비과세'})</em></span><span class="v">${w(farm)}</span></div>
+    <div class="out-row"><span class="k">인지세</span><span class="v">${w(stamp)}</span></div>
+    <div class="out-row"><span class="k">중개보수 <em>(상한 ${(bk.rate*100).toFixed(1)}%)</em></span><span class="v">${w(bk.fee)}</span></div>
+    <div class="out-row"><span class="k">중개보수 부가세 <em>(10%)</em></span><span class="v">${w(vat)}</span></div>
+    <div class="out-row total"><span class="k">추가비용 합계</span><span class="v">${w(extra)}</span></div>
+    <div class="out-row grand"><span class="k">총 매입자금 <em>(매매가 + 추가비용)</em></span><span class="v">${w(price+extra)}</span></div>`;
+}
+['c-price','c-area','c-type','c-first'].forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener('input', calcAll);
+  el.addEventListener('change', calcAll);
+});
+
+/* ═══════════════════════════════════════════════════════════
+   주식 탭  —  BENCH / SECTORS  (증권 API 연동 시 교체)
+   ═══════════════════════════════════════════════════════════ */
+/* 벤치마크·환율 (2026-06-18~19 종가 기준 참고 데이터. kind:'fx' 항목은 프랑크푸르터(ECB) API로 실시간 갱신을 시도합니다) */
+const BENCH = [
+  { name:'코스피',       code:'KS11',   kind:'index', val:'3,850.20',  chg:+0.62, abs:'+23.71',  trend:0.66 },
+  { name:'코스닥',       code:'KQ11',   kind:'index', val:'950.44',    chg:+0.85, abs:'+8.02',   trend:0.70 },
+  { name:'S&P 500',      code:'GSPC',   kind:'index', val:'7,500.58',  chg:+1.08, abs:'+80.04',  trend:0.72 },
+  { name:'NASDAQ 100',   code:'NDX',    kind:'index', val:'30,406.19', chg:+2.48, abs:'+735.25', trend:0.86 },
+  { name:'다우존스',     code:'DJI',    kind:'index', val:'46,820.30', chg:+0.34, abs:'+159.10', trend:0.55 },
+  { name:'VIX (공포지수)', code:'VIX',  kind:'index', val:'14.85',     chg:-3.20, abs:'-0.49',   trend:0.22 },
+  { name:'USD / KRW',    code:'USDKRW', kind:'fx', from:'USD', to:'KRW', mult:1,   val:'1,529.20원', chg:-0.59, abs:'-9.07', trend:0.40 },
+  { name:'JPY(100) / KRW', code:'JPYKRW', kind:'fx', from:'JPY', to:'KRW', mult:100, val:'963.40원',  chg:+0.22, abs:'+2.10', trend:0.55 }
+];
+
+/* AI 밸류체인 섹터별 주도주 Top 5 (가격·등락률은 참고용) */
+const SECTORS = [
+  { tag:'메모리 · HBM', title:'메모리 (HBM)',
+    desc:'AI 메모리 슈퍼사이클. HBM 공급부족이 2028년까지 이어질 전망으로 3사 생산능력 매진. SK하이닉스가 HBM 점유율 1위(약 58%).',
+    stocks:[
+      { tk:'000660', mkt:'KOSPI',  nm:'SK하이닉스',   price:'1,920,000원', chg:+3.1, ytd:'YTD +210% · HBM 1위·사상최고', trend:0.92 },
+      { tk:'005930', mkt:'KOSPI',  nm:'삼성전자',     price:'492,000원',   chg:+2.4, ytd:'YTD +150% · HBM4 엔비디아 진입', trend:0.74 },
+      { tk:'MU',     mkt:'NASDAQ', nm:'마이크론',     price:'$1,021',      chg:+2.8, ytd:'YTD +210% · 2026 물량 매진',   trend:0.88 },
+      { tk:'SNDK',   mkt:'NASDAQ', nm:'샌디스크',     price:'$332',        chg:+1.9, ytd:'YTD +600%대 · NAND 초강세',    trend:0.95 },
+      { tk:'WDC',    mkt:'NASDAQ', nm:'웨스턴디지털', price:'$148',        chg:+1.2, ytd:'YTD +120% · 스토리지 수요',    trend:0.62 }
+    ]},
+  { tag:'비메모리 · 연산', title:'비메모리 (GPU · 로직 · 파운드리)',
+    desc:'AI 연산의 핵심. GPU·가속기·커스텀 실리콘과 이를 생산하는 파운드리. 엔비디아 독주 속 브로드컴·마벨의 커스텀 ASIC이 부상.',
+    stocks:[
+      { tk:'NVDA', mkt:'NASDAQ', nm:'엔비디아',  price:'$185',  chg:+3.1, ytd:'FY26 매출 +65% · 데이터센터 $194B', trend:0.80 },
+      { tk:'AVGO', mkt:'NASDAQ', nm:'브로드컴',  price:'$362',  chg:+1.4, ytd:'커스텀 ASIC · Q3 가이던스 변동',    trend:0.70 },
+      { tk:'TSM',  mkt:'NYSE',   nm:'TSMC',      price:'$292',  chg:+2.0, ytd:'AI 가속기 파운드리 독점 · A13',     trend:0.74 },
+      { tk:'AMD',  mkt:'NASDAQ', nm:'AMD',       price:'$258',  chg:+2.2, ytd:'YTD +130% · MI450 · 2nd source',    trend:0.82 },
+      { tk:'MRVL', mkt:'NASDAQ', nm:'마벨',      price:'$162',  chg:+4.6, ytd:'YTD +141% · "차기 1조달러" 거론',   trend:0.90 }
+    ]},
+  { tag:'광통신 · 트랜시버', title:'광통신 (Optical Interconnect)',
+    desc:'데이터센터 내 구리 한계 → 광(光) 전환. 트랜시버·OCS·CPO 수요 급증으로 2026년 AI 트레이드 최강 섹터 중 하나. 엔비디아가 LITE·COHR에 투자.',
+    stocks:[
+      { tk:'LITE', mkt:'NASDAQ', nm:'루멘텀',          price:'$978',  chg:-1.2, ytd:'YTD +160%대 · 1년 +1,200%대',  trend:0.96 },
+      { tk:'COHR', mkt:'NYSE',   nm:'코히런트',        price:'$363',  chg:+0.9, ytd:'데이터센터 매출 비중 72%',      trend:0.86 },
+      { tk:'CIEN', mkt:'NYSE',   nm:'시에나',          price:'$345',  chg:+2.1, ytd:'네트워킹 장비 · AI 백본',      trend:0.78 },
+      { tk:'AAOI', mkt:'NASDAQ', nm:'어플라이드옵토',  price:'$184',  chg:+3.4, ytd:'YTD +440%대 · 변동성 큼',       trend:0.98 },
+      { tk:'GLW',  mkt:'NYSE',   nm:'코닝',            price:'$95',   chg:+1.0, ytd:'광섬유 · 데이터센터 케이블',    trend:0.66 }
+    ]},
+  { tag:'소프트웨어 · 플랫폼', title:'소프트웨어 (AI SW · 클라우드)',
+    desc:'AI를 수익으로 전환하는 플랫폼·애플리케이션 레이어. 멀티플이 높아 금리·실적에 민감. 밸류에이션 부담이 가장 큰 구간.',
+    stocks:[
+      { tk:'MSFT', mkt:'NASDAQ', nm:'마이크로소프트', price:'$520',   chg:+0.6, ytd:'Copilot · Azure AI 인프라',     trend:0.58 },
+      { tk:'PLTR', mkt:'NASDAQ', nm:'팔란티어',       price:'$182',   chg:+1.8, ytd:'가장 순수한 AI SW · 고밸류',    trend:0.72 },
+      { tk:'ORCL', mkt:'NYSE',   nm:'오라클',         price:'$248',   chg:+1.1, ytd:'AI 클라우드 캐파 · OCI',        trend:0.68 },
+      { tk:'NOW',  mkt:'NYSE',   nm:'서비스나우',     price:'$1,040', chg:+0.4, ytd:'엔터프라이즈 AI 워크플로우',    trend:0.55 },
+      { tk:'CRWD', mkt:'NASDAQ', nm:'크라우드스트라이크', price:'$480', chg:+0.9, ytd:'AI 보안 · 플랫폼 확장',       trend:0.60 }
+    ]},
+  { tag:'데이터센터 · 인프라', title:'데이터센터 (전력 · 냉각 · 클라우드)',
+    desc:'AI 데이터센터의 물리적 토대. 전력관리·냉각·서버·AI 전용 클라우드. 하이퍼스케일러 capex 수혜의 "곡괭이와 삽".',
+    stocks:[
+      { tk:'VRT',  mkt:'NYSE',   nm:'버티브',         price:'$165',  chg:+2.6, ytd:'전력·냉각 · FY26 EPS +45%',     trend:0.84 },
+      { tk:'CRWV', mkt:'NASDAQ', nm:'코어위브',       price:'$112',  chg:+3.0, ytd:'AI 클라우드 · NDX 신규 편입',   trend:0.88 },
+      { tk:'ETN',  mkt:'NYSE',   nm:'이튼',           price:'$392',  chg:+1.3, ytd:'전력관리 · 데이터센터 전기',    trend:0.64 },
+      { tk:'DELL', mkt:'NYSE',   nm:'델',             price:'$142',  chg:+2.0, ytd:'AI 서버 · 백로그 확대',         trend:0.70 },
+      { tk:'GEV',  mkt:'NYSE',   nm:'GE버노바',       price:'$640',  chg:+1.6, ytd:'전력설비 · S&P100 편입',        trend:0.78 }
+    ]},
+
+  /* ═══ 우주·항공·방산 ═══ */
+  { group:'defense', tag:'K-방산', title:'우주·항공·방산 (K-방산)',
+    desc:'유럽 재무장·중동 수출로 K-방산 수주가 퀀텀점프. 공급 제한된 시장에서 공급자 우위 구조 지속. 한화에어로 최선호.',
+    stocks:[
+      { tk:'012450', mkt:'KOSPI', nm:'한화에어로스페이스', price:'1,122,000원', chg:-2.1, ytd:'K9·레드백·천무 수출 · 수주 23조', trend:0.86 },
+      { tk:'079550', mkt:'KOSPI', nm:'LIG넥스원',          price:'542,000원',   chg:+1.4, ytd:'천궁II 정밀유도 · 중동 수출',    trend:0.84 },
+      { tk:'064350', mkt:'KOSPI', nm:'현대로템',            price:'219,000원',   chg:+0.9, ytd:'K2 전차 · 폴란드·중동',         trend:0.80 },
+      { tk:'047810', mkt:'KOSPI', nm:'한국항공우주',        price:'149,000원',   chg:+1.1, ytd:'KF-21·FA-50 · 수출 모멘텀',    trend:0.78 },
+      { tk:'272210', mkt:'KOSPI', nm:'한화시스템',          price:'76,900원',    chg:+1.8, ytd:'AESA 레이다 · 위성·UAM',        trend:0.82 }
+    ]},
+  { group:'defense', tag:'우주·eVTOL · 글로벌', title:'우주 · eVTOL (글로벌)',
+    desc:'발사체·위성통신·도심항공(UAM). 변동성은 크지만 AI·국방 인프라와 맞물린 장기 성장 테마.',
+    stocks:[
+      { tk:'RKLB', mkt:'NASDAQ', nm:'로켓랩',           price:'$58',  chg:+4.2, ytd:'NDX 신규 편입 · Neutron 발사체', trend:0.92 },
+      { tk:'JOBY', mkt:'NYSE',   nm:'조비에비에이션',   price:'$14',  chg:+3.0, ytd:'eVTOL 상용화 · FAA 인증',        trend:0.74 },
+      { tk:'ASTS', mkt:'NASDAQ', nm:'AST스페이스모바일', price:'$48', chg:+5.1, ytd:'위성-스마트폰 직접통신',          trend:0.95 },
+      { tk:'LMT',  mkt:'NYSE',   nm:'록히드마틴',       price:'$498', chg:+0.6, ytd:'F-35 · 미사일 방어',             trend:0.52 },
+      { tk:'RTX',  mkt:'NYSE',   nm:'RTX',             price:'$172', chg:+0.8, ytd:'패트리어트 · 항공엔진',          trend:0.58 }
+    ]},
+
+  /* ═══ 소비재 ═══ */
+  { group:'consumer', tag:'K-푸드 · 뷰티', title:'소비재 (K-푸드 · 뷰티)',
+    desc:'해외 매출 비중 높은 K-소비재가 핵심. 라면·가공식품·화장품 수출 성장이 실적 트리거이자 환율 수혜.',
+    stocks:[
+      { tk:'003230', mkt:'KOSPI', nm:'삼양식품',     price:'1,180,000원', chg:+2.2, ytd:'불닭 글로벌 · 음식료 최선호',   trend:0.88 },
+      { tk:'271560', mkt:'KOSPI', nm:'오리온',       price:'152,000원',   chg:+0.7, ytd:'중국·베트남 제과 · 저평가',     trend:0.58 },
+      { tk:'051900', mkt:'KOSPI', nm:'LG생활건강',   price:'358,000원',   chg:+1.0, ytd:'뷰티·생활용품 · 중국 회복',    trend:0.55 },
+      { tk:'090430', mkt:'KOSPI', nm:'아모레퍼시픽', price:'132,000원',   chg:+1.3, ytd:'K-뷰티 · 미주·일본 확장',      trend:0.62 },
+      { tk:'097950', mkt:'KOSPI', nm:'CJ제일제당',   price:'285,000원',   chg:+0.5, ytd:'비비고 · 글로벌 식품',         trend:0.50 }
+    ]},
+
+  /* ═══ 보험 ═══ */
+  { group:'insurance', tag:'보험', title:'보험 (손해 · 생명)',
+    desc:'금리·IFRS17 환경에서 자본력·주주환원 매력 부각. 손해보험 중심으로 이익 체력이 견조.',
+    stocks:[
+      { tk:'000810', mkt:'KOSPI', nm:'삼성화재',       price:'700,000원', chg:+0.4, ytd:'손보 1위 · 자본력·배당',     trend:0.56 },
+      { tk:'005830', mkt:'KOSPI', nm:'DB손해보험',     price:'128,000원', chg:+0.9, ytd:'고ROE · 주주환원',          trend:0.62 },
+      { tk:'138040', mkt:'KOSPI', nm:'메리츠금융지주', price:'182,000원', chg:+1.2, ytd:'적극적 자사주 소각',        trend:0.70 },
+      { tk:'032830', mkt:'KOSPI', nm:'삼성생명',       price:'135,000원', chg:+0.6, ytd:'생보 1위 · 밸류업',         trend:0.54 },
+      { tk:'001450', mkt:'KOSPI', nm:'현대해상',       price:'44,000원',  chg:+0.7, ytd:'손보 · 실손 정상화',        trend:0.52 }
+    ]},
+
+  /* ═══ 2차전지·에너지 ═══ */
+  { group:'battery', tag:'2차전지 · 에너지', title:'2차전지 · 에너지 (ESS · 배터리)',
+    desc:'AI 데이터센터 전력수요와 ESS 확대가 새 모멘텀. 셀·소재 밸류체인이 사이클 회복 국면.',
+    stocks:[
+      { tk:'373220', mkt:'KOSPI',  nm:'LG에너지솔루션', price:'412,000원', chg:+1.5, ytd:'ESS·전기차 셀 · 北美',      trend:0.66 },
+      { tk:'006400', mkt:'KOSPI',  nm:'삼성SDI',        price:'318,000원', chg:+1.9, ytd:'ESS·각형 배터리 · 수주',    trend:0.70 },
+      { tk:'247540', mkt:'KOSDAQ', nm:'에코프로비엠',   price:'168,000원', chg:+2.4, ytd:'양극재 · 소재 사이클',      trend:0.74 },
+      { tk:'003670', mkt:'KOSPI',  nm:'포스코퓨처엠',   price:'242,000원', chg:+1.6, ytd:'양극재·음극재 통합',       trend:0.64 },
+      { tk:'096770', mkt:'KOSPI',  nm:'SK이노베이션',   price:'135,000원', chg:+1.1, ytd:'SK온 · 통합 시너지',       trend:0.60 }
+    ]},
+
+  /* ═══ 바이오·헬스케어 ═══ */
+  { group:'bio', tag:'바이오 · 헬스케어', title:'바이오 · 헬스케어',
+    desc:'CDMO·바이오시밀러·신약 기술수출. 환율 수혜와 글로벌 임상 모멘텀이 결합.',
+    stocks:[
+      { tk:'207940', mkt:'KOSPI',  nm:'삼성바이오로직스', price:'1,050,000원', chg:+0.8, ytd:'CDMO 1위 · 4공장 가동',  trend:0.62 },
+      { tk:'068270', mkt:'KOSPI',  nm:'셀트리온',         price:'192,000원',   chg:+1.0, ytd:'바이오시밀러 · 짐펜트라', trend:0.56 },
+      { tk:'000100', mkt:'KOSPI',  nm:'유한양행',         price:'168,000원',   chg:+1.4, ytd:'렉라자 · 글로벌 로열티',  trend:0.66 },
+      { tk:'196170', mkt:'KOSDAQ', nm:'알테오젠',         price:'420,000원',   chg:+2.1, ytd:'SC제형 · 기술수출',      trend:0.78 },
+      { tk:'302440', mkt:'KOSPI',  nm:'SK바이오사이언스', price:'62,000원',    chg:+0.5, ytd:'백신 · CDMO',           trend:0.46 }
+    ]}
+];
+SECTORS.forEach((s,i)=>{ if(!s.group) s.group='ai'; s._id=i; });
+
+/* ───────────────────────────────────────────────
+   증권사 API 연동 (한국투자증권 KIS 기준)
+   ───────────────────────────────────────────────
+   브라우저에서 증권사 API를 직접 호출하면 CORS 차단 + App Secret 노출 문제가 있어,
+   별도 프록시 서버(kis-proxy.js)를 두고 그 엔드포인트만 호출합니다.
+   base를 채우면 실시간 시세로 동작하고, 비워두면 위 참고 데이터를 그대로 표시합니다. */
+const QUOTE_API = {
+  base: '',          // 예: 'https://your-proxy.onrender.com'  (비우면 시드 데이터)
+  refreshMs: 0       // 0=수동, 예: 30000=30초마다 자동 갱신
+};
+
+function fmtPrice(price, mkt){
+  if(mkt==='KOSPI' || mkt==='KOSDAQ') return Math.round(price).toLocaleString('ko-KR')+'원';
+  return '$' + Number(price).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function setLive(on){
+  // 지수(QUOTE_API 프록시 연동) 전체가 라이브로 전환됐을 때만 배너를 바꿉니다.
+  // 환율은 fetchFX()가 종목별로 개별 배지를 붙이므로 여기서 건드리지 않습니다.
+  const e = document.querySelector('.band-eyebrow');
+  if(!e || !on) return;
+  e.innerHTML = '글로벌 벤치마크 · 환율 <span class="live-flag">● 지수 API 연동됨</span>';
+}
+
+/* ───────────────────────────────────────────────
+   환율 실시간 연동 (Frankfurter.app — ECB 공식 기준환율, 무료·API 키 불필요, CORS 허용)
+   증권 지수(코스피·나스닥·VIX 등)는 대부분의 무료 API가 브라우저 직접 호출을 막아둬서(CORS)
+   위 QUOTE_API 프록시가 없으면 계속 참고 데이터로 남습니다. 환율만 이 함수로 실제 갱신을 시도합니다.
+   단, ECB 기준환율은 영업일 1회(한국시간 밤 늦게) 갱신되는 '일 1회' 데이터이지 초단위 시세는 아닙니다.
+   ─────────────────────────────────────────────── */
+const FX_ENDPOINT = 'https://api.frankfurter.app/latest';
+async function fetchFX(){
+  const items = BENCH.filter(b=>b.kind==='fx');
+  if(!items.length) return false;
+  let anyLive = false;
+  await Promise.all(items.map(async b=>{
+    try{
+      const url = `${FX_ENDPOINT}?amount=${b.mult||1}&from=${b.from}&to=${b.to}`;
+      const res = await fetch(url, { cache:'no-store' });
+      if(!res.ok) throw new Error('fx http '+res.status);
+      const data = await res.json();
+      const rate = data && data.rates && data.rates[b.to];
+      if(typeof rate !== 'number') throw new Error('환율 응답에 rate 없음');
+      b.val = rate.toLocaleString('ko-KR', {maximumFractionDigits:2}) + '원';
+      b._live = true;
+      b._asOf = data.date;
+      anyLive = true;
+    }catch(e){
+      b._live = false;
+      console.warn('환율 연동 실패('+b.name+') — 참고 데이터로 표시합니다:', e);
+    }
+  }));
+  return anyLive;
+}
+function applyQuotes(map){
+  BENCH.forEach(b=>{
+    if(b.kind==='fx') return;                        // 환율은 fetchFX()가 별도로 갱신
+    const q = map[b.code]; if(!q) return;
+    b.val = Number(q.price).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+    b.chg = q.changePct;
+    b.abs = (q.change>=0?'+':'') + Number(q.change).toLocaleString();
+    b._indexLive = true;
+  });
+  SECTORS.forEach(s=>s.stocks.forEach(st=>{
+    const q = map[st.tk]; if(!q) return;
+    st.price = fmtPrice(q.price, st.mkt);
+    st.chg = q.changePct;
+  }));
+  renderBench();
+  renderSectors();
+  renderHeatmap();
+}
+async function fetchQuotes(){
+  if(!QUOTE_API.base) return false;                 // 미설정 → 시드 데이터 유지
+  try{
+    const symbols = [];
+    BENCH.forEach(b => symbols.push({ type:'index', code:b.code }));
+    SECTORS.forEach(s => s.stocks.forEach(st => symbols.push({
+      type: (st.mkt==='KOSPI'||st.mkt==='KOSDAQ') ? 'kr' : 'us',
+      code: st.tk, market: st.mkt
+    })));
+    const res = await fetch(QUOTE_API.base + '/quotes', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ symbols })
+    });
+    if(!res.ok) throw new Error('quote api ' + res.status);
+    const data = await res.json();                  // { 'AAPL':{price,change,changePct}, '005930':{...}, ... }
+    applyQuotes(data);
+    setLive(true);
+    document.getElementById('updated').textContent =
+      new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    return true;
+  }catch(e){
+    console.warn('시세 연동 실패 — 참고 데이터로 표시합니다:', e);
+    setLive(false);
+    return false;
+  }
+}
+
+/* 문자열 → 안정적 시드(필터해도 스파크라인 동일 유지) */
+function hashCode(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31 + s.charCodeAt(i))|0; return Math.abs(h)%1000; }
+
+/* 결정적 추세선 생성 + SVG 스파크라인 */
+function genSeries(seed, trend){
+  let v = 50, out = [];
+  for(let i=0;i<30;i++){
+    const n = Math.sin(seed*1.3 + i*0.7) + Math.cos(seed*0.55 + i*1.1);
+    v += (trend - 0.45)*3.2 + n*1.6;
+    out.push(v);
+  }
+  return out;
+}
+function spark(series, up){
+  const w=120, h=40, min=Math.min(...series), max=Math.max(...series), rng=(max-min)||1;
+  const pts = series.map((v,i)=>[ (i/(series.length-1))*w, h-3 - ((v-min)/rng)*(h-7) ]);
+  const d = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const col = up ? 'var(--up)' : 'var(--down)';
+  const id = 'sg' + Math.random().toString(36).slice(2,7);
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${col}" stop-opacity=".20"/><stop offset="1" stop-color="${col}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${d} L ${w} ${h} L 0 ${h} Z" fill="url(#${id})"/>
+    <path d="${d}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function renderBench(){
+  document.getElementById('benchGrid').innerHTML = BENCH.map((b,i)=>{
+    const up = b.chg>=0, s = spark(genSeries(i+11, b.trend), up);
+    const badge = b.kind==='fx'
+      ? (b._live ? `<span class="live-flag">● LIVE</span>` : `<span class="demo-flag">참고</span>`)
+      : (b._indexLive ? `<span class="live-flag">● LIVE</span>` : `<span class="demo-flag">종가</span>`);
+    const subline = (b.kind==='fx' && b._live)
+      ? `<div class="bchg asof">ECB 기준환율 · ${b._asOf} 갱신</div>`
+      : `<div class="bchg ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(b.chg).toFixed(2)}% <span style="opacity:.8">(${b.abs})</span></div>`;
+    return `<div class="bcell">
+      <div class="blab">${b.name} ${badge}</div>
+      <div class="brow">
+        <div>
+          <div class="bval num">${b.val}</div>
+          ${subline}
+        </div>
+        <div class="bspark">${s}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* 섹터 히트맵: 타일 색 = 섹터 평균 등락률(±4%를 최대 강도로 정규화), 타일 크기 = |평균 등락률| 순위 */
+function heatColor(chg){
+  const t = Math.max(-1, Math.min(1, chg/4));
+  return t >= 0
+    ? `color-mix(in srgb, var(--up) ${Math.round(t*78)}%, #F1F4F8)`
+    : `color-mix(in srgb, var(--down) ${Math.round(-t*78)}%, #F1F4F8)`;
+}
+function renderHeatmap(){
+  const grid = document.getElementById('heatmapGrid');
+  if(!grid) return;
+  const rows = SECTORS.map(s=>{
+    const chgs = s.stocks.map(st=>st.chg);
+    const avg = chgs.reduce((a,b)=>a+b,0)/chgs.length;
+    const top = s.stocks.slice().sort((a,b)=>b.chg-a.chg)[0];
+    return { sec:s, avg, top };
+  });
+  const maxAbs = Math.max(...rows.map(r=>Math.abs(r.avg)), 0.01);
+  const ranked = rows.slice().sort((a,b)=>Math.abs(b.avg)-Math.abs(a.avg));
+  const sizeOf = {};
+  ranked.forEach((r,i)=>{
+    sizeOf[r.sec._id] = i===0 ? 'big' : (i<=2 ? 'wide' : 'reg');
+  });
+  grid.innerHTML = rows.map(r=>{
+    const up = r.avg>=0;
+    const size = sizeOf[r.sec._id];
+    const spanStyle = size==='big' ? 'grid-column:span 2; grid-row:span 2;' : (size==='wide' ? 'grid-column:span 2;' : '');
+    const bg = heatColor(r.avg);
+    const textDark = Math.abs(r.avg)/maxAbs < 0.45;
+    const shortTitle = r.sec.title.replace(/\s*\([^)]*\)\s*/g,'');
+    return `<div class="heat-tile" style="${spanStyle} background:${bg}; color:${textDark?'#16222E':'#fff'};" data-sector="${r.sec._id}" role="button" tabindex="0" aria-label="${r.sec.title} 섹터, ${up?'상승':'하락'} ${Math.abs(r.avg).toFixed(2)}%">
+      <div>
+        <div class="ht-tag">${r.sec.tag}</div>
+        <div class="ht-title">${shortTitle}</div>
+      </div>
+      <div>
+        <div class="ht-chg">${up?'▲':'▼'} ${Math.abs(r.avg).toFixed(2)}%</div>
+        <div class="ht-top">${r.top.nm} ${r.top.chg>=0?'+':''}${r.top.chg.toFixed(1)}%</div>
+      </div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.heat-tile').forEach(t=>{
+    const go = ()=>goToSector(Number(t.dataset.sector));
+    t.addEventListener('click', go);
+    t.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+  });
+}
+
+let currentGroup = 'all';
+function renderSectors(group){
+  if(group) currentGroup = group;
+  const list = SECTORS.filter(s => currentGroup==='all' || s.group===currentGroup);
+  document.getElementById('sectorWrap').innerHTML = list.map(sec=>{
+    const cards = sec.stocks.map((st,ri)=>{
+      const up = st.chg>=0, s = spark(genSeries(hashCode(st.tk), st.trend), up);
+      return `<article class="stock">
+        <div class="stock-top">
+          <div class="tk">${st.tk}<span class="mkt">${st.mkt}</span></div>
+          <span class="rb">${String(ri+1).padStart(2,'0')}</span>
+        </div>
+        <div class="nm">${st.nm}</div>
+        ${s}
+        <div class="stock-bot">
+          <span class="price">${st.price}</span>
+          <span class="chg ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(st.chg).toFixed(1)}%</span>
+        </div>
+        <div class="ytd">${st.ytd}</div>
+      </article>`;
+    }).join('');
+    return `<section class="sector" id="sector-${sec._id}">
+      <div class="sector-head">
+        <div>
+          <div class="eyebrow">밸류체인 · ${sec.tag}</div>
+          <h3 class="sector-title">${sec.title}</h3>
+          <p class="sector-desc">${sec.desc}</p>
+        </div>
+        <div class="sector-rank">주도주 Top 5</div>
+      </div>
+      <div class="stock-grid">${cards}</div>
+    </section>`;
+  }).join('');
+}
+
+/* 히트맵 타일 클릭 → 테마 필터 전환 + 해당 섹터로 스크롤·하이라이트 */
+function goToSector(sectorId){
+  const sec = SECTORS.find(s=>s._id===sectorId);
+  if(!sec) return;
+  document.querySelectorAll('#themeBar .chip').forEach(c=>c.classList.toggle('on', c.dataset.group===sec.group));
+  renderSectors(sec.group);
+  requestAnimationFrame(()=>{
+    const el = document.getElementById('sector-'+sectorId);
+    if(!el) return;
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+    el.classList.add('sector-flash');
+    setTimeout(()=>el.classList.remove('sector-flash'), 1600);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   경제전망 시나리오 (참고용) — 실제 ML 예측이 아니라 최근 추세를
+   3가지 배수 규칙으로 단순 연장한 시연용 그래프입니다.
+   ═══════════════════════════════════════════════════════════ */
+function buildForecastSeries(){
+  const allStocks = SECTORS.flatMap(s=>s.stocks);
+  const avgTrend = allStocks.reduce((a,st)=>a+st.trend,0) / allStocks.length;
+  let v = 100, hist = [];
+  for(let i=0;i<25;i++){                          // 과거 24개월 + 현재(M0) = 25포인트
+    const n = Math.sin(i*0.6) + Math.cos(i*0.35);
+    v += (avgTrend-0.45)*2.2 + n*1.0;
+    hist.push(Math.round(v*100)/100);
+  }
+  const recentGrowth = (hist[24]-hist[18]) / 6;   // 최근 6개월 평균 월간 변화량
+  const months = 12;
+  const bull=[], base=[], bear=[];
+  let vb=hist[24], vn=hist[24], vw=hist[24];
+  for(let i=1;i<=months;i++){
+    vb += recentGrowth*1.5;
+    vn += recentGrowth;
+    vw += recentGrowth*0.5 - (i<=3 ? Math.abs(recentGrowth)*0.55 : 0);
+    bull.push(Math.round(vb*100)/100);
+    base.push(Math.round(vn*100)/100);
+    bear.push(Math.round(vw*100)/100);
+  }
+  return { hist, bull, base, bear, baseVal:hist[24] };
+}
+let forecastChart;
+function renderForecast(){
+  const canvas = document.getElementById('forecastChart');
+  if(!canvas) return;
+  const { hist, bull, base, bear, baseVal } = buildForecastSeries();
+  const labels = [];
+  for(let i=24;i>=1;i--) labels.push('M-'+i);
+  labels.push('M0');
+  for(let i=1;i<=12;i++) labels.push('M+'+i);
+
+  const pad = arr => new Array(25).fill(null).concat(arr);
+  const histPadded = hist.concat(new Array(12).fill(null));
+  const bullPadded = pad(bull);  bullPadded[24] = baseVal;
+  const basePadded = pad(base);  basePadded[24] = baseVal;
+  const bearPadded = pad(bear);  bearPadded[24] = baseVal;
+
+  // 차트 라이브러리 로딩 여부와 무관하게 우측 요약 수치는 먼저 채웁니다.
+  const setTxt = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent = val.toFixed(2); };
+  setTxt('fBaseVal', baseVal);
+  setTxt('fBullVal', bull[bull.length-1]);
+  setTxt('fBaseFutVal', base[base.length-1]);
+  setTxt('fBearVal', bear[bear.length-1]);
+
+  if(typeof Chart === 'undefined'){
+    canvas.replaceWith(Object.assign(document.createElement('div'), {
+      className:'forecast-chart-fallback',
+      textContent:'차트 라이브러리(Chart.js)를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요 — 우측 요약 수치는 정상 계산되어 있습니다.'
+    }));
+    return;
+  }
+
+  const ctx = canvas.getContext('2d');
+  const cfg = {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'합성 기준지수(과거)', data:histPadded, borderColor:'#0E1C2B', borderWidth:2.2, pointRadius:0, tension:.3, fill:false },
+      { label:'낙관', data:bullPadded, borderColor:'#E5484D', borderWidth:2, borderDash:[5,4], pointRadius:0, tension:.3, fill:false },
+      { label:'중립', data:basePadded, borderColor:'#1E5FCC', borderWidth:2, borderDash:[5,4], pointRadius:0, tension:.3, fill:false },
+      { label:'비관', data:bearPadded, borderColor:'#2D6FE0', borderWidth:2, borderDash:[2,3], pointRadius:0, tension:.3, fill:false }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{ backgroundColor:'#0E1C2B', padding:11, titleFont:{family:'Pretendard',weight:'700'}, bodyFont:{family:'Pretendard'} }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#8696A6', font:{family:'Pretendard',size:10}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
+        y:{ position:'right', grid:{color:'#EEF1F4'}, ticks:{color:'#8696A6', font:{family:'Pretendard',size:11}} }
+      }
+    }
+  };
+  if(forecastChart) forecastChart.destroy();
+  forecastChart = new Chart(ctx, cfg);
+}
+
+/* 탭 전환 */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    const v = t.dataset.view;
+    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on', x===t));
+    document.getElementById('view-realestate').hidden = (v!=='realestate');
+    document.getElementById('view-stocks').hidden = (v!=='stocks');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+});
+
+/* 섹터 테마 필터 */
+document.querySelectorAll('#themeBar .chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('#themeBar .chip').forEach(x=>x.classList.remove('on'));
+    c.classList.add('on');
+    renderSectors(c.dataset.group);
+  });
+});
+
+/* ═══════════════ 초기 실행 ═══════════════
+   각 단계를 개별 try/catch로 감싸, CDN(Chart.js 등) 로딩이 막히거나 실패해도
+   나머지 화면(히트맵·벤치마크·섹터 카드 등)은 계속 정상 렌더링되도록 합니다. */
+function safeInit(name, fn){
+  try{ fn(); }catch(e){ console.warn('[초기화 실패] '+name+':', e); }
+}
+safeInit('renderPulse', renderPulse);
+safeInit('renderPolicy', renderPolicy);
+safeInit('drawIndex', ()=>drawIndex('1y'));
+safeInit('drawRates', drawRates);
+safeInit('calcAll', calcAll);
+safeInit('renderBench', renderBench);
+safeInit('renderSectors', ()=>renderSectors());
+safeInit('renderHeatmap', renderHeatmap);
+safeInit('renderForecast', renderForecast);
+fetchQuotes();                                            // base 설정 시 실시간 시세로 갱신
+fetchFX().then(renderBench).catch(()=>{});                 // Frankfurter.app 환율 실시간 시도(실패 시 참고 데이터 유지)
+if(QUOTE_API.refreshMs > 0) setInterval(fetchQuotes, QUOTE_API.refreshMs);
+</script>
+</body>
+</html>

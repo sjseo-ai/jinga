@@ -1,0 +1,18 @@
+# 배포:  npx wrangler deploy --config workers/jinga-korea-macro/wrangler.toml
+name = "jinga-korea-macro"
+account_id = "79548fed0e1b787693d6b6d6dee56f2a"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# 방문자가 없어도 주기적으로 원천을 조회해 "마지막 성공값"을 갱신합니다(src/index.js 의 CRON_* 상수와 값이 같아야 함).
+[triggers]
+crons = ["*/30 * * * *", "20 */6 * * *"]
+
+# (권장) 마지막 성공값을 전 세계 엣지에서 공유·영구 보관하려면 KV를 연결하세요. 없으면 엣지 캐시(14일)로 동작합니다.
+#   npx wrangler kv namespace create JINGA_KV   → 출력된 id 를 아래에 넣고 주석 해제
+# [[kv_namespaces]]
+# binding = "JINGA_KV"
+# id = "<출력된 id>"
+
+# ⚠️ API 키는 이 파일에 절대 쓰지 마세요. 아래 명령으로 등록합니다(값은 프롬프트로 입력):
+#   npx wrangler secret put <KEY_NAME> --config workers/jinga-korea-macro/wrangler.toml

@@ -1,0 +1,29 @@
+node_modules/
+.wrangler/
+.dev.vars
+.vercel
+*.log
+.DS_Store
+
+# 주간 보고서 산출물(개인 조회 결과·스냅샷) — 조건 파일만 보관
+reports/*
+!reports/config.json
+.env*
+
+# 카카오맵 JavaScript 키(도메인 잠금 공개키지만 깃에는 올리지 않음)
+site/public/map-key.json
+
+# 메일 발송 설정(Gmail 앱 비밀번호·관리 키) — 이 PC에만
+.secrets/
+
+# 단지·자치구 정적 페이지(scripts/build-pages.mjs 가 찍어냅니다 — 1,000장이 넘어 저장소에는 두지 않습니다)
+# 배포할 때 build-site.mjs 가 다시 만들므로 없어도 사이트에는 항상 올라갑니다.
+site/public/apt/
+site/public/gu/
+site/public/pages.css
+
+# 배포용 사본(build-site.mjs 가 만듭니다 — 20MB 중복)
+site/.build/
+
+# sitemap 도 build-pages.mjs 가 만듭니다
+site/public/sitemap.xml

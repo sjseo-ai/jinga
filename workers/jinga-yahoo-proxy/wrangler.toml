@@ -1,0 +1,8 @@
+# 배포:  npx wrangler deploy --config workers/jinga-yahoo-proxy/wrangler.toml
+name = "jinga-yahoo-proxy"
+account_id = "79548fed0e1b787693d6b6d6dee56f2a"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# ⚠️ API 키는 이 파일에 절대 쓰지 마세요. 아래 명령으로 등록합니다(값은 프롬프트로 입력):
+#   npx wrangler secret put <KEY_NAME> --config workers/jinga-yahoo-proxy/wrangler.toml

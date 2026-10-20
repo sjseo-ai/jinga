@@ -1,0 +1,7 @@
+{
+  "files.eol": "\n",
+  "files.encoding": "utf8",
+  "editor.tabSize": 2,
+  "[html]": { "editor.tabSize": 2 },
+  "search.exclude": { "legacy/**": true, "node_modules/**": true }
+}

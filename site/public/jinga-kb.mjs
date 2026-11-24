@@ -34,6 +34,16 @@ export function compactKbTypes(rows) {
   return [...map.values()];
 }
 
+/**
+ * complex/main → KB 주차 { total, per }.
+ * **모르는 값을 0으로 만들지 않습니다** — 0대와 「KB에 없음」은 다른 말이고,
+ * 섞으면 주차장 없는 단지가 되어 버립니다.
+ */
+export function compactKbParking(d) {
+  const n = v => { const x = Number(v); return v == null || v === '' || !Number.isFinite(x) ? null : x; };
+  return { total: n(d && d.총주차대수), per: n(d && d.세대당주차대수비율) };
+}
+
 /** complex/brif → 점수에 쓰는 단지 정보 */
 export function compactBrief(d) {
   if (!d) return { built: null, builtYm: '', households: 0, rebuild: false, interest: 0, forSale: 0 };
@@ -79,6 +89,15 @@ export function createKbClient({ fetchImpl = (...a) => fetch(...a), headers = {}
         jeonseAskAvg: Number(d && d.매물전세평균가) || 0,
         recentDeal: rt.거래금액 ? { amount: Number(rt.거래금액), date: String(rt.계약년월일 || ''), floor: rt.거래층 || '' } : null,
       };
+    }),
+    /**
+     * KB가 보는 주차 — 총 주차대수와 세대당 대수.
+     * 국토부 K-apt 신고값과 **자주 다릅니다**(강동구 56곳 중 30곳). 어느 쪽이 맞다고 고르지 않고
+     * 두 숫자를 나란히 보여 주려고 받아 옵니다 — 명일 신동아는 K-apt 355대, KB 600대입니다.
+     */
+    parking: id => cached('p:' + id, async () => {
+      const d = await get('/land-complex/complex/main', { 단지기본일련번호: id });
+      return compactKbParking(d);
     }),
     /** KB시세 기준일(YYYY.MM.DD) — 주택형 하나의 상세 시세에서 읽음 */
     asOf: async (id, areaId) => {

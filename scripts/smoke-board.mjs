@@ -184,3 +184,83 @@ test('한눈에 보기와 보관 상한', () => {
   assert.equal(many[0].title, `글 ${POST_MAX + 4}`, '가장 새 글이 남음');
   assert.deepEqual(TARGETS.map(t => t.key), ['kb', 'reco', 'port', 'trades', 'stock', 'none']);
 });
+
+// ── 본인 글 지우기 (T014, 2026-11-23) ───────────────────────────────────────
+// 개인정보 파기 요청을 메일로만 받던 것을 쓴 사람이 직접 하게 만든 것입니다.
+import { removeOwn, removeAllBy } from '../site/public/api/_board.mjs';
+
+const mkPost = (id, uid, extra = {}) => ({ id, uid, body: '내용', name: '아무개', at: '2026-11-01T00:00:00Z', replies: [], reports: [], hidden: false, status: 'open', ...extra });
+
+test('자기 글만 지울 수 있다', () => {
+  const posts = [mkPost('p1', 'me'), mkPost('p2', 'other')];
+  assert.equal(removeOwn(posts, { postId: 'p2', uid: 'me' }).ok, false, '남의 글은 못 지웁니다');
+  assert.match(removeOwn(posts, { postId: 'p2', uid: 'me' }).error, /자기 글만/);
+  assert.equal(removeOwn(posts, { postId: '없음', uid: 'me' }).ok, false);
+
+  const r = removeOwn(posts, { postId: 'p1', uid: 'me' });
+  assert.equal(r.ok, true);
+  const gone = r.value[0];
+  assert.equal(gone.deleted, true);
+  assert.equal(gone.body, undefined, '내용이 남으면 지운 것이 아닙니다');
+  assert.equal(gone.name, undefined, '이름도 지웁니다');
+  assert.equal(gone.uid, undefined, '누가 썼는지도 남기지 않습니다');
+  assert.equal(gone.id, 'p1', '자리는 남습니다');
+  assert.equal(r.value[1].body, '내용', '남의 글은 그대로');
+});
+
+// 답글이 달린 글을 배열에서 빼면 남의 답글까지 사라집니다. 자리만 남겨야 합니다.
+test('답글이 달린 글을 지워도 답글은 살아 있다', () => {
+  const posts = [mkPost('p1', 'me', { replies: [
+    { id: 'r1', uid: 'other', body: '남의 답글', at: '2026-11-02T00:00:00Z' },
+    { id: 'r2', uid: 'me', body: '내 답글', at: '2026-11-03T00:00:00Z' },
+  ] })];
+  const r = removeOwn(posts, { postId: 'p1', uid: 'me' });
+  assert.equal(r.value[0].deleted, true);
+  assert.equal(r.value[0].replies.length, 2, '답글은 그대로 있어야');
+  assert.equal(r.value[0].replies[0].body, '남의 답글');
+
+  const r2 = removeOwn(r.value, { postId: 'p1', replyId: 'r1', uid: 'me' });
+  assert.equal(r2.ok, false, '남의 답글은 못 지웁니다');
+  const r3 = removeOwn(r.value, { postId: 'p1', replyId: 'r2', uid: 'me' });
+  assert.equal(r3.value[0].replies[1].deleted, true);
+  assert.equal(r3.value[0].replies[1].body, undefined);
+});
+
+test('전부 지우기 — 글과 답글 양쪽에서 내 것만', () => {
+  const posts = [
+    mkPost('p1', 'me'),
+    mkPost('p2', 'other', { replies: [{ id: 'r1', uid: 'me', body: '내 답글', at: '2026-11-02T00:00:00Z' }] }),
+    mkPost('p3', 'other'),
+  ];
+  const { value, removed } = removeAllBy(posts, 'me');
+  assert.equal(removed, 2, '글 1 + 답글 1');
+  assert.equal(value[0].deleted, true);
+  assert.equal(value[1].body, '내용', '남의 글은 그대로');
+  assert.equal(value[1].replies[0].deleted, true);
+  assert.equal(JSON.stringify(value).includes('"uid":"me"'), false, '내 흔적이 남으면 안 됩니다');
+  assert.equal(removeAllBy(value, 'me').removed, 0, '두 번 돌려도 같은 것을 다시 세지 않습니다');
+});
+
+test('지운 글은 화면으로 나갈 때도 쓴 사람을 드러내지 않는다', () => {
+  const posts = [mkPost('p1', 'me', { title: '제목', replies: [{ id: 'r1', uid: 'other', body: '남의 답글', name: '남', at: '2026-11-02T00:00:00Z' }] })];
+  const gone = removeOwn(posts, { postId: 'p1', uid: 'me' }).value[0];
+  const out = publicPost(gone, 'me');
+  assert.equal(out.deleted, true);
+  assert.equal(out.body, '');
+  assert.equal(out.title, '');
+  assert.equal(out.name, '', '가린 이름조차 내보내지 않습니다');
+  assert.equal(out.mine, false, '지운 뒤에는 내 글 표시도 하지 않습니다');
+  assert.equal(out.replies.length, 1, '답글은 그대로 보입니다');
+  assert.equal(out.replies[0].body, '남의 답글');
+  assert.equal(out.replyCount, 1);
+
+  // 살아 있는 글에 지운 답글이 섞인 경우
+  const withDeadReply = removeOwn([mkPost('p2', 'other', { replies: [{ id: 'r9', uid: 'me', body: '내 답글', name: '나', at: '2026-11-03T00:00:00Z' }] })],
+    { postId: 'p2', replyId: 'r9', uid: 'me' }).value[0];
+  const out2 = publicPost(withDeadReply, 'me');
+  assert.equal(out2.deleted, undefined, '글 자체는 살아 있습니다');
+  assert.equal(out2.replies[0].deleted, true);
+  assert.equal(out2.replies[0].body, '');
+  assert.equal(out2.replies[0].name, '');
+  assert.equal(out2.replyCount, 0, '지운 답글은 세지 않습니다');
+});

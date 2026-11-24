@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  isBot, dayKey, refHost, utmSource, deviceKind, emptyMonth, bump, summarize,
+  isBot, dayKey, refHost, utmSource, deviceKind, areaKind, emptyMonth, bump, summarize,
   statsPath, recentMonths, MAX_REFS,
 } from '../site/public/api/_stats.mjs';
 
@@ -97,7 +97,7 @@ test('운영자 화면용 묶기 — 날짜는 순서대로, 유입처는 많은
   assert.deepEqual(s.refs[0], { key: 'blog.naver.com', n: 5 }, '많은 것이 앞');
   assert.deepEqual(s.refs[1], { key: 'google.com', n: 2 }, '두 달치가 합쳐집니다');
   assert.deepEqual(s.device, [{ key: 'mobile', n: 5 }, { key: 'desktop', n: 2 }]);
-  assert.deepEqual(summarize([]), { total: 0, months: [], days: [], refs: [], utm: [], device: [] });
+  assert.deepEqual(summarize([]), { total: 0, months: [], days: [], refs: [], utm: [], device: [], areas: [] });
   assert.deepEqual(summarize(null).days, []);
 });
 
@@ -107,4 +107,28 @@ test('파일 이름과 최근 달 목록', () => {
   assert.deepEqual(recentMonths(3, new Date('2026-01-15T05:00:00Z')), ['2026-01', '2025-12', '2025-11'], '해를 넘길 때');
   // 한국 시간으로 달이 바뀌는 경계 — 10-31 20:00 UTC = 한국 11-01
   assert.equal(recentMonths(1, new Date('2026-10-31T20:00:00Z'))[0], '2026-11');
+});
+
+test('어느 화면으로 들어왔나 — 검색 유입이 어디로 떨어지는지 보려고', () => {
+  assert.equal(areaKind('https://jinga-retech.vercel.app/'), '첫화면');
+  assert.equal(areaKind('https://jinga-retech.vercel.app/index.html?utm_source=naverblog'), '첫화면');
+  assert.equal(areaKind('https://jinga-retech.vercel.app/apt/'), '단지목록');
+  assert.equal(areaKind('https://jinga-retech.vercel.app/apt/12345-%EB%85%B8%EC%9B%90/'), '단지', '인코딩된 주소도');
+  assert.equal(areaKind('https://jinga-retech.vercel.app/gu/%EB%85%B8%EC%9B%90%EA%B5%AC/'), '자치구');
+  assert.equal(areaKind('https://jinga-retech.vercel.app/legal.html'), '기타');
+  assert.equal(areaKind(''), '기타');
+  assert.equal(areaKind(null), '기타');
+});
+
+test('갈래도 함께 셉니다 — 예전 달 파일에 areas 가 없어도 터지지 않게', () => {
+  // 이 칸이 생기기 전에 저장된 달
+  const old = { month: '2026-10', total: 1, days: { '2026-10-12': 1 }, refs: { '직접': 1 }, utm: {}, device: { desktop: 1 } };
+  const a = bump(old, { day: '2026-10-13', ref: 'google.com', device: 'mobile', area: '단지' });
+  assert.deepEqual(a.areas, { '단지': 1 });
+  assert.equal(a.total, 2, '예전 숫자는 그대로 이어집니다');
+
+  const b = bump(a, { day: '2026-10-13', ref: 'google.com', device: 'mobile' });
+  assert.deepEqual(b.areas, { '단지': 1, '기타': 1 }, 'area 를 안 보내면 기타');
+
+  assert.deepEqual(summarize([b]).areas, [{ key: '기타', n: 1 }, { key: '단지', n: 1 }]);
 });

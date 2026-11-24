@@ -18,14 +18,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadStations, nearestStation } from './_nearest-station.mjs';
 import { loadKey, radiusUrl } from './sangga-key.mjs';
 
 const GAP_MS = 120;                 // 개발계정 한도(보통 일 10,000회)를 생각해 부드럽게
 const MAX_ROWS = 1000;
 export const PAD_M = 150;           // 길 양 끝을 덮으려고 더하는 여유
 export const REGIONS = {
-  seoul: { label: '서울', infra: 'kb-seoul-infra.json', dir: 'kb-seoul-complexes.json', out: 'sangga-seoul.json' },
-  gyeonggi: { label: '경기', infra: 'kb-gyeonggi-infra.json', dir: 'kb-gyeonggi-complexes.json', out: 'sangga-gyeonggi.json' },
+  // 2026-11-24 — 역 좌표 원천을 KB 꿀세권에서 국가철도공단 표준데이터(station-<지역>.json)로 바꿨습니다.
+  seoul: { label: '서울', dir: 'kb-seoul-complexes.json', out: 'sangga-seoul.json' },
+  gyeonggi: { label: '경기', dir: 'kb-gyeonggi-complexes.json', out: 'sangga-gyeonggi.json' },
 };
 // 소상공인 업종 대분류(실제 값 10종) → 화면에 쓰는 짧은 이름
 export const CATEGORIES = {
@@ -102,7 +104,7 @@ export async function main(regionKey = 'seoul', { fetchImpl = (...a) => fetch(..
   if (!key) throw new Error('인증키가 없습니다 — scripts\\sangga-key.cmd 를 먼저 실행하세요');
   const t0 = Date.now();
   const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'site', 'public');
-  const infra = JSON.parse(fs.readFileSync(path.join(root, region.infra), 'utf8'));
+  const stations = loadStations(root, regionKey);
   const dir = JSON.parse(fs.readFileSync(path.join(root, region.dir), 'utf8'));
   const dest = path.join(root, region.out);
   const prev = !all && fs.existsSync(dest) ? JSON.parse(fs.readFileSync(dest, 'utf8')) : null;
@@ -111,13 +113,11 @@ export async function main(regionKey = 'seoul', { fetchImpl = (...a) => fetch(..
   const jobs = [];
   for (const c of dir.complexes) {
     const id = c[0], lat = c[7], lng = c[8];
-    const v = infra.byId && infra.byId[id];
-    if (lat == null || lng == null || !v) continue;
-    const [st, stM] = v;
-    const s = infra.stations[st];
-    if (!s || !(stM > 0)) continue;
+    if (lat == null || lng == null) continue;
     if (byId[id] && !all) continue;
-    jobs.push({ id, ...corridor(lat, lng, s[2], s[3], stM) });
+    const s = nearestStation(lat, lng, stations);
+    if (!s || !(s.m > 0)) continue;
+    jobs.push({ id, ...corridor(lat, lng, s.lat, s.lng, s.m) });
   }
   const todo = limit ? jobs.slice(0, limit) : jobs;
   log(`${region.label} — 상가를 셀 단지 ${todo.length}곳(이미 있는 ${Object.keys(byId).length}곳은 건너뜀) · 단지당 1회 호출`);
@@ -140,7 +140,7 @@ export async function main(regionKey = 'seoul', { fetchImpl = (...a) => fetch(..
   const out = {
     generatedAt: new Date().toISOString(),
     region: regionKey, regionLabel: region.label,
-    source: `소상공인시장진흥공단 상가(상권)정보(공공데이터포털) — 단지에서 가장 가까운 역까지 가는 길을 덮는 원(반경 = 거리÷2+${PAD_M}m) 안의 점포. dens 는 ㎢당 점포 수. 상권의 유무·구성이며 간판·보도 같은 정비 상태를 재는 값이 아닙니다.`,
+    source: `소상공인시장진흥공단 상가(상권)정보(공공데이터포털) — 단지에서 가장 가까운 역까지 가는 길을 덮는 원(반경 = 거리÷2+${PAD_M}m) 안의 점포. dens 는 ㎢당 점포 수. 상권의 유무·구성이며 간판·보도 같은 정비 상태를 재는 값이 아닙니다. 역 좌표는 국가철도공단 전국도시철도역사정보표준데이터.`,
     padM: PAD_M,
     fields: ['n', 'dens', 'mix', 'top'],
     count: Object.keys(byId).length,

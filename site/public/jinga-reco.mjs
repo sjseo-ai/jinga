@@ -1,13 +1,20 @@
 // jinga-reco.mjs — 진가 매물 추천: 「사고 싶은 집(단지·평형)」과 비슷한 가격대에서 비슷하거나 더 나은 아파트 TOP 5
-// 순수 계산만 담당(네트워크 없음). 페이지(index.html)가 KB시세(jinga-kb.mjs 클라이언트)·입지 파일(kb-seoul-infra.json)을 넘기고, scripts/smoke-reco.mjs 가 검사.
+// 순수 계산만 담당(네트워크 없음). 페이지(index.html)가 KB시세(jinga-kb.mjs 클라이언트)·입지 파일(kapt-seoul-infra.json·school-seoul.json)을 넘기고, scripts/smoke-reco.mjs 가 검사.
 //   1) findComplexes·parseQuery·pickType — 단지명 검색(「상도삼호 31평형」처럼 동 이름·평형을 섞어 써도 찾음)
 //   2) candidateScope — 서울 KB시세 구·동 집계(kb-seoul-gu.json)에서 평당가가 기준 집과 가까운 동부터 비교 단지를 고름
 //   3) recommend — 가격 범위(±%)·면적 범위에 드는 주택형을 같은 산식으로 점수화, 기준 집 점수 −3점 이상을 추천
-//      2026-09-15 역세권(가까운 역·환승)·학군(배정 초등·중학교·학원가) 반영 — scripts/build-kb-infra.mjs 가 만든 단지별 지표 사용
+//      2026-09-15 역세권(가까운 역·환승)·학군(배정 초등·중학교·학원가) 반영. 2026-11-24 원천을 국토교통부 K-apt·교육부 학교알리미로 교체 — scripts/build-kapt-infra.mjs·build-school-coords.mjs 가 만든 단지별 지표 사용
 
 const PY = 3.3058;
 const clamp01 = v => Math.max(0, Math.min(1, v));
 const round1 = v => Math.round(v * 10) / 10;
+/**
+ * 「숫자를 아는가」 — null·''·undefined 를 숫자로 보지 않습니다.
+ * Number.isFinite(Number(null)) 은 **true** 입니다(Number(null) === 0). 2026-11-24 에
+ * 역까지의 거리가 「모를 수 있는 값」이 되면서, 이 함정이 「모르는 거리 = 0m = 만점」을 만들었습니다.
+ * 모르는 것과 0 을 가르는 자리에서는 반드시 이 함수를 씁니다.
+ */
+const hasNum = v => v != null && v !== '' && Number.isFinite(Number(v));
 // 임대세대 비율은 단지 검색과 **같은 산식**을 써야 합니다 — 같은 단지가 한쪽에서는 빠지고
 // 한쪽에서는 남으면 그게 더 헷갈립니다. 그래서 복사하지 않고 공용 모듈에서 가져옵니다.
 // (jinga-kb.mjs 를 가져오면 화면이 ?v= 를 붙여 부르는 것과 주소가 달라 38KB 를 두 번 내려받습니다.)
@@ -174,8 +181,28 @@ function fillByDong(pool, order, max) {
 }
 
 // ── 입지(역세권·학군) ────────────────────────────────────────
+// 2026-11-24 교체 — 입지 자료의 원천이 KB 꿀세권에서 **국토교통부 K-apt 신고값**으로 바뀌었습니다.
+//   · 역까지의 거리가 **직선거리(m) → 도보시간 구간**이 되었습니다(5분이내 / 5~10 / 10~15 / 15~20 / 20분초과).
+//   · 배정 초등·중학교는 우리가 통학구역 경계로 **추정**하던 것에서 K-apt **신고 이름**으로 바뀌었습니다.
+//   · 반경 1km 학원 수는 KB 자료였고 **대체 원천이 아직 없습니다** — 0 이 아니라 null(모름)로 둡니다.
+// 그래서 inf.station.m 은 이제 **없을 수 있습니다.** m 이 없고 band 만 있는 경우를 모든 소비처가 버텨야 합니다.
+
+/** K-apt 도보시간 구간 이름 — 번호(0~4)가 작을수록 가깝습니다 */
+export const WALK_BANDS = ['5분이내', '5~10분이내', '10~15분이내', '15~20분이내', '20분초과'];
 /**
- * kb-seoul-infra.json 에서 단지 하나의 지표 → { station:{name, lines:[], m}, elem:{name, m, zone, classSize}, mid:{name, m}, academies } | null
+ * 구간별 역세권 기본점(만점 15) — 지어낸 값이 아니라 **기존 직선거리 곡선에서 유도**했습니다.
+ * 기존 규칙은 직선거리 300m 만점 → 1km 0점(15 × (1000−m)/700)이었습니다.
+ * 구간 중앙값(3·7.5·12.5·17.5·25분) × 분당 70m = 걷는 거리이고, 도시 보행망의 통상 우회계수 1.4로
+ * 직선거리로 되돌리면 기존 곡선이 15 · 13.4 · 8.0 · 2.7 · 0 을 줍니다. 그 값을 반올림해 씁니다.
+ * 덕분에 원천이 바뀌어도 **점수 수준이 이어집니다**(바뀐 것은 정밀도이지 기준이 아닙니다).
+ */
+export const BAND_STATION_SCORE = [15, 13, 8, 3, 0];
+/** 도보 구간을 분으로 환산하지 않고 **구간 이름 그대로** 보여 줍니다 — 없는 정밀도를 꾸미지 않으려는 것입니다 */
+export const bandLabel = b => (b == null || !WALK_BANDS[b] ? '' : WALK_BANDS[b]);
+
+/**
+ * 단지 하나의 입지 지표 → { station:{name, lines:[], m, band}, elem:{name, m, zone}, mid:{name, m}, academies } | null
+ * m 은 모를 수 있고(K-apt 구간만 아는 경우) academies 는 대체 원천이 없어 null 입니다.
  */
 /**
  * 경사 자료(slope-<지역>.json)를 입지 자료에 붙임 — byId[단지] = [rise, grade, up, maxGrade]
@@ -201,8 +228,64 @@ export function attachSlope(infra, ...files) {
   return { ...infra, slope };
 }
 
+/** 학교 좌표 파일(school-<지역>.json)을 붙임 — 붙어 있으면 배정 학교 이름으로 좌표를 찾아 줍니다 */
+export function attachSchools(infra, ...files) {
+  if (!infra) return infra;
+  const elems = [...(infra.schoolElems || [])], mids = [...(infra.schoolMids || [])];
+  const elemStems = { ...(infra.elemStems || {}) }, midStems = { ...(infra.midStems || {}) };
+  for (const f of files) {
+    if (!f || !f.elems) continue;
+    const eOff = elems.length, mOff = mids.length;
+    elems.push(...f.elems); mids.push(...(f.mids || []));
+    // 같은 이름(stem)이 지역마다 있으면 **먼저 붙인 쪽을 그대로 둡니다** — 서울 단지는 서울 학교를 먼저 보게 됩니다
+    for (const [k, idx] of Object.entries(f.elemStems || {})) if (!elemStems[k]) elemStems[k] = idx.map(i => i + eOff);
+    for (const [k, idx] of Object.entries(f.midStems || {})) if (!midStems[k]) midStems[k] = idx.map(i => i + mOff);
+  }
+  return { ...infra, schoolElems: elems, schoolMids: mids, elemStems, midStems };
+}
+
+/** 배정 학교 이름(K-apt 신고) → 학교알리미 좌표. 못 찾으면 좌표 없이 이름만 돌려줍니다 */
+function lookupSchool(infra, stems, names, which) {
+  const rows = which === 'elem' ? infra.schoolElems : infra.schoolMids;
+  const index = which === 'elem' ? infra.elemStems : infra.midStems;
+  const name = (names && names[0]) || '';
+  if (!name) return null;
+  if (rows && index) {
+    for (const s of stems || []) {
+      const hit = index[s];
+      if (hit && hit.length && rows[hit[0]]) {
+        const r = rows[hit[0]];
+        return { name: r[0], lat: r[1], lng: r[2], zone: true, m: null };
+      }
+    }
+  }
+  return { name, lat: null, lng: null, zone: true, m: null };
+}
+
+/** K-apt 입지 파일(kapt-<지역>-infra.json, basis 'kapt-walk-band')에서 단지 하나 */
+function infraOfKapt(infra, id) {
+  const v = infra.byComplex && infra.byComplex[id];
+  if (!v) return null;
+  const sl = infra.slope && infra.slope[id];
+  const sg = infra.sangga && infra.sangga[id];
+  const elem = lookupSchool(infra, v.elStem, v.el, 'elem');
+  const mid = lookupSchool(infra, v.midStem, v.mid, 'mid');
+  return {
+    slope: sl ? { rise: sl[0], grade: sl[1], up: sl[2], maxGrade: sl[3] } : null,
+    sangga: sg ? { n: sg[0], dens: sg[1], mix: sg[2] || {}, top: sg[3] || [] } : null,
+    // 역명은 56.5% 만 신고돼 있습니다 — 구간만 아는 단지는 이름 없이 band 로 점수가 납니다
+    station: v.sw != null || v.st ? { name: v.st || '', lines: v.lines || [], m: null, band: v.sw ?? null } : null,
+    elem, mid,
+    busBand: v.bw ?? null,
+    parking: v.pk != null ? { total: v.pk, per: v.pkPer ?? null } : null,
+    academies: null,                 // KB 자료였고 대체 원천이 아직 없습니다 — 0(없음)과 구분해 null
+  };
+}
+
 export function infraOf(infra, id) {
-  const v = infra && infra.byId && infra.byId[id];
+  if (!infra) return null;
+  if (infra.basis === 'kapt-walk-band' || (infra.byComplex && !infra.byId)) return infraOfKapt(infra, id);
+  const v = infra.byId && infra.byId[id];
   if (!v) return null;
   const [st, stM, el, elM, zone, mid, midM, academies] = v;
   const s = infra.stations[st], e = infra.elems[el], m = infra.mids[mid];
@@ -211,7 +294,7 @@ export function infraOf(infra, id) {
   return {
     slope: sl ? { rise: sl[0], grade: sl[1], up: sl[2], maxGrade: sl[3] } : null,
     sangga: sg ? { n: sg[0], dens: sg[1], mix: sg[2] || {}, top: sg[3] || [] } : null,
-    station: s && stM != null ? { name: s[0], lines: s[1] ? String(s[1]).split('|') : [], m: stM } : null,
+    station: s && stM != null ? { name: s[0], lines: s[1] ? String(s[1]).split('|') : [], m: stM, band: null } : null,
     elem: e && elM != null ? { name: e[0], m: elM, zone: !!zone, classSize: e[3] ?? null } : null,
     mid: m && midM != null ? { name: m[0], m: midM } : null,
     academies: Number(academies) || 0,
@@ -252,17 +335,21 @@ export function nearbyInfra(infra, lat, lng, { minutes = 10, limit = 4, assigned
     return [...by.values()].sort((a, b) => a.m - b.m).slice(0, limit);
   };
 
+  // 역 좌표는 KB 꿀세권에서 받던 것이어서 2026-11-24 로 빠졌습니다(공공 표준데이터로 복원 예정).
+  // 좌표가 없으면 역 핀은 **그리지 않습니다** — 추측한 위치를 지도에 찍는 것보다 비어 있는 게 낫습니다.
   const stations = near(infra.stations, {
     lat: r => r[2], lng: r => r[3],
     row: r => ({ name: r[0], lines: r[1] ? String(r[1]).split('|') : [], lat: r[2], lng: r[3], kind: 'station' }),
   });
-  const elems = near(infra.elems, {
+  // 학교 좌표는 학교알리미(school-<지역>.json) — attachSchools() 로 붙습니다
+  const elemRows = infra.elems || infra.schoolElems;
+  const elems = near(elemRows, {
     lat: r => r[1], lng: r => r[2],
     row: r => ({ name: r[0], lat: r[1], lng: r[2], classSize: r[3] ?? null, kind: 'elem' }),
   });
   // 배정 초등학교가 10분 밖이면 그것도 한 곳 붙여 줌(학군은 거리보다 통학구역이 먼저)
   if (assignedElem && !elems.some(e => e.name === assignedElem)) {
-    const r = (infra.elems || []).find(x => x[0] === assignedElem);
+    const r = (elemRows || []).find(x => x[0] === assignedElem);
     if (r) {
       const m = distM(lat, lng, r[1], r[2]);
       if (m != null) elems.push({ name: r[0], lat: r[1], lng: r[2], classSize: r[3] ?? null, kind: 'elem', m, min: walkMin(m), far: true });
@@ -277,6 +364,18 @@ export function nearbyInfra(infra, lat, lng, { minutes = 10, limit = 4, assigned
  * 파일마다 stations·elems·mids 가 따로 번호 매겨져 있어, 그냥 합치면 엉뚱한 역·학교를 가리키게 됩니다.
  */
 export function mergeInfra(...files) {
+  // K-apt 입지 파일은 단지 id 로 바로 찾으므로 번호를 밀 필요가 없습니다 — 그냥 합칩니다
+  const kapt = files.filter(f => f && f.byComplex);
+  if (kapt.length) {
+    const out = { ...kapt[0], byComplex: {}, regions: [], coverage: {} };
+    for (const f of kapt) {
+      out.regions.push(f.regionLabel || f.region || '');
+      Object.assign(out.byComplex, f.byComplex);
+      if (f.coverage) out.coverage[f.region || f.regionLabel || ''] = f.coverage;
+    }
+    out.count = Object.keys(out.byComplex).length;
+    return out;
+  }
   const list = files.filter(f => f && f.byId);
   if (list.length <= 1) return list[0] || null;
   const out = { ...list[0], stations: [], elems: [], mids: [], byId: {}, regions: [] };
@@ -302,12 +401,28 @@ export const shortName = n => shortSchool(n);
 /** 카드 한 줄: '숭실대입구(7호선) 도보 7분 · 배정 신남성초 12분 · 학원 139곳' */
 export function infraText(inf, { maxFloor = null, hall = null } = {}) {
   const parts = [];
-  if (inf && inf.station) parts.push(`${inf.station.name}역(${inf.station.lines.join('·') || '노선 미상'}) ${inf.station.m.toLocaleString('ko-KR')}m·도보 ${walkMin(inf.station.m)}분`);
+  // 거리를 아는 자료는 「420m·도보 6분」, 구간만 아는 자료는 「도보 5~10분이내」로 적습니다.
+  // 구간을 분으로 환산해 적지 않습니다 — K-apt 신고값에 그만한 정밀도가 없습니다.
+  const dist = s => (hasNum(s.m) ? `${s.m.toLocaleString('ko-KR')}m·도보 ${walkMin(s.m)}분`
+    : s.band != null ? `도보 ${bandLabel(s.band)}` : '');
+  if (inf && inf.station) {
+    const d = dist(inf.station);
+    const nm = inf.station.name ? `${inf.station.name}역(${inf.station.lines.join('·') || '노선 미상'})` : '지하철역';
+    parts.push(d ? `${nm} ${d}` : nm);
+  }
   if (inf && inf.slope && slopeText(inf.slope)) parts.push(slopeText(inf.slope));
   if (inf && inf.sangga && sanggaText(inf.sangga)) parts.push(sanggaText(inf.sangga));
-  if (inf && inf.elem) parts.push(`${inf.elem.zone ? '배정' : '가까운'} ${shortSchool(inf.elem.name)} ${walkMin(inf.elem.m)}분`);
-  if (inf && inf.mid) parts.push(`${shortSchool(inf.mid.name)} ${walkMin(inf.mid.m)}분`);
-  if (inf) parts.push(`학원 ${inf.academies.toLocaleString('ko-KR')}곳(1km)`);
+  if (inf && inf.elem) {
+    const m = hasNum(inf.elem.m) ? ` ${walkMin(inf.elem.m)}분` : '';
+    parts.push(`${inf.elem.zone ? '배정' : '가까운'} ${shortSchool(inf.elem.name)}${m}`);
+  }
+  if (inf && inf.mid) {
+    const m = hasNum(inf.mid.m) ? ` ${walkMin(inf.mid.m)}분` : '';
+    parts.push(`${shortSchool(inf.mid.name)}${m}`);
+  }
+  // 학원 수는 대체 원천이 생길 때까지 **아무 말도 하지 않습니다**(모르는 것을 0 곳으로 적지 않으려는 것)
+  if (inf && inf.academies != null) parts.push(`학원 ${inf.academies.toLocaleString('ko-KR')}곳(1km)`);
+  if (inf && inf.parking && inf.parking.per != null) parts.push(`세대당 주차 ${inf.parking.per.toFixed(2)}대`);
   if (maxFloor) parts.push(`최고 ${maxFloor}층`);
   if (hall) parts.push(hall);
   return parts.join(' · ');
@@ -337,10 +452,16 @@ export function annualNotes({ views = null, excl, prevInfra = null, inf = null }
     out.push({ key: 'yoy', text: `작년 말 대비 ${signedPct(p)}`, dir: p > 0 ? 'up' : p < 0 ? 'down' : '' });
   }
   if (prevInfra && inf) {
+    // 전년 기록은 직선거리·학원 수로 적혀 있습니다. 올해 자료가 그 둘을 모르면(K-apt 구간) **비교를 건너뜁니다** —
+    // 단위가 다른 두 값을 빼서 「가까워졌다」고 말하면 거짓이 됩니다.
     const [prevStation, , , , prevAcad] = prevInfra;
-    const dA = inf.academies - (Number(prevAcad) || 0);
-    if (Math.abs(dA) >= 5) out.push({ key: 'academy', text: `학원 전년 대비 ${dA > 0 ? '+' : ''}${dA}곳`, dir: dA > 0 ? 'up' : 'down' });
-    if (inf.station && prevStation != null && prevStation - inf.station.m >= 150) out.push({ key: 'station', text: `가까운 역 ${(prevStation - inf.station.m).toLocaleString('ko-KR')}m 가까워짐(새 역)`, dir: 'up' });
+    if (inf.academies != null) {
+      const dA = inf.academies - (Number(prevAcad) || 0);
+      if (Math.abs(dA) >= 5) out.push({ key: 'academy', text: `학원 전년 대비 ${dA > 0 ? '+' : ''}${dA}곳`, dir: dA > 0 ? 'up' : 'down' });
+    }
+    if (inf.station && hasNum(inf.station.m) && prevStation != null && prevStation - inf.station.m >= 150) {
+      out.push({ key: 'station', text: `가까운 역 ${(prevStation - inf.station.m).toLocaleString('ko-KR')}m 가까워짐(새 역)`, dir: 'up' });
+    }
   }
   return out;
 }
@@ -353,8 +474,8 @@ export const AREA_RANGES = {
 };
 
 export const RECO_RULES = [
-  { key: 'station', label: '역세권', max: 15, desc: '가장 가까운 지하철역까지 직선거리 300m 이내 만점 → 1km 이상 0점, 환승역(2개 노선 이상)이면 +2점(최대 15). 역까지 오르막이면 최대 3점 감점(평균 경사 2% 이하 0점 → 10% 이상 3점, 내리막은 감점 없음), 길에 상가가 이어지면 최대 2점 가산(역까지 가는 길 둘레의 ㎢당 점포 500곳 이하 0점 → 3,500곳 이상 만점, 로그 척도). 합계는 15점을 넘지 않습니다. 역 정보가 없으면 6점' },
-  { key: 'school', label: '학군', max: 15, desc: '배정 초등학교(단지가 통학구역 안에 드는 학교) 300m 이내 7점 → 900m 0점(통학구역 밖이면 70%) + 가까운 중학교 400m 이내 3점 → 1.2km 0점 + 반경 1km 일반교과 학원 수 20곳 이하 0점 → 300곳 이상 5점(로그 척도, 서울 단지 중앙값 86곳). 정보가 없으면 6점' },
+  { key: 'station', label: '역세권', max: 15, desc: '국토교통부 K-apt 가 신고한 지하철역 도보시간 구간 — 5분이내 15점 · 5~10분 13점 · 10~15분 8점 · 15~20분 3점 · 20분초과 0점(기존 직선거리 규칙 「300m 만점 → 1km 0점」을 보행 우회계수 1.4로 환산해 이어 붙인 값). 환승역(2개 노선 이상)이고 도보 20분 안이면 +2점(최대 15). 역까지 오르막이면 최대 3점 감점, 길에 상가가 이어지면 최대 2점 가산 — 둘 다 역 좌표가 필요해 지금은 비어 있습니다. 역 정보가 없으면 6점' },
+  { key: 'school', label: '학군', max: 15, desc: 'K-apt 가 신고한 배정 초등학교 7점 + 배정 중학교 3점 + 반경 1km 학원 수 5점. 2026-11-24 부터 배정 학교는 통학구역 추정이 아니라 **공식 신고 이름**입니다. 다만 단지 좌표가 없어 학교까지의 거리를 아직 재지 못해, 배정이 확인된 학교에 만점의 70%(초등 4.9·중학 2.1)를 줍니다. 학원 수는 대체 원천이 없어 일괄 2.5점입니다 — **이 성분은 지금 단지를 가르지 못합니다.** 정보가 없으면 6점' },
   { key: 'loc', label: '입지 시세', max: 15, desc: '단지가 속한 법정동의 KB 평균 평당가(서울 KB시세 집계)를 기준 집의 동과 비교. 같으면 7.5점, 30% 높으면 만점, 30% 낮으면 0점' },
   { key: 'value', label: '가성비', max: 15, desc: '이 주택형의 전용 평당가 ÷ 소속 동 평균 평당가. 동 평균과 같으면 7.5점, 25% 싸면 만점, 25% 비싸면 0점' },
   { key: 'newness', label: '신축도', max: 15, desc: '준공 5년 이내 만점 → 30년 이상 0점. 재건축 단지는 최소 7.5점, 준공연도를 모르면 6점' },
@@ -417,19 +538,42 @@ export function sanggaText(sangga) {
 export function stationScore(inf) {
   const s = inf && inf.station;
   if (!s) return 6;
-  const base = 15 * clamp01((1000 - s.m) / 700);
-  const withTransfer = Math.min(15, base + (s.lines.length >= 2 && s.m <= 1000 ? 2 : 0));
+  // 자료에 따라 아는 것이 다릅니다 — 도보시간 구간(K-apt)이 있으면 그것을, 직선거리(옛 자료)만 있으면 그것을 씁니다.
+  const base = s.band != null ? BAND_STATION_SCORE[s.band]
+    : hasNum(s.m) ? 15 * clamp01((1000 - s.m) / 700)
+      : null;
+  if (base == null) return 6;                       // 역명만 있고 거리·구간을 모르면 중간값
+  const near = s.band != null ? s.band <= 3 : hasNum(s.m) && s.m <= 1000;
+  const withTransfer = Math.min(15, base + (s.lines.length >= 2 && near ? 2 : 0));
   const adjusted = withTransfer - slopePenalty(inf && inf.slope) + streetBonus(inf && inf.sangga);
   return Math.max(0, Math.min(15, round1(adjusted)));
 }
-/** 학군 점수(15) = 배정 초등 7 + 중학교 3 + 학원가 5 */
+/**
+ * 학군 점수(15) = 배정 초등 7 + 중학교 3 + 학원가 5
+ *
+ * 2026-11-24 — 세 성분이 아는 양이 달라졌습니다.
+ *   · 배정 초등·중학교: KB 통학구역으로 **추정**하던 것이 K-apt **신고 이름**이 되었습니다(근거는 세졌습니다).
+ *     다만 거리는 들어 있지 않습니다. 단지 좌표가 복원되면 학교알리미 좌표로 거리가 되살아나고,
+ *     그때는 아래 거리 산식이 저절로 다시 돕니다.
+ *   · 거리를 모르는 동안은 **배정 사실만으로 만점을 주지 않습니다** — 서울 배정 초등 거리의 중앙값 수준인
+ *     70%(초등 4.9 / 중학 2.1)를 줍니다. 모르는 것을 좋게도 나쁘게도 보지 않으려는 값입니다.
+ *   · 학원 수: 대체 원천이 아직 없어 null 입니다. 0 곳으로 깎지 않고 **만점의 절반(2.5)** 을 일괄로 줍니다.
+ *     그래서 이 성분은 지금 **단지를 가르지 못합니다.** 숨기지 않고 RECO_RULES 설명에 적어 둡니다.
+ */
+export const UNKNOWN_DIST_RATIO = 0.7;      // 거리를 모를 때 배정 학교 성분에 주는 비율
 export function schoolScore(inf) {
   if (!inf || (!inf.elem && !inf.mid)) return 6;
-  const elem = inf.elem ? 7 * clamp01((900 - inf.elem.m) / 600) * (inf.elem.zone ? 1 : 0.7) : 3;
-  const mid = inf.mid ? 3 * clamp01((1200 - inf.mid.m) / 800) : 1.5;
+  const part = (s, max, full, zero) => {
+    if (!s) return max * 0.5;                                     // 그 학교 자체를 모름
+    if (!hasNum(s.m)) return round1(max * UNKNOWN_DIST_RATIO * (s.zone ? 1 : 0.7));
+    return max * clamp01((zero - s.m) / (zero - full)) * (s.zone ? 1 : 0.7);
+  };
+  const elem = part(inf.elem, 7, 300, 900);
+  const mid = part(inf.mid, 3, 400, 1200);
   // 서울 단지 반경 1km 학원 수 중앙값 86 · 상위 10% 185 · 대치 은마 972(2026-09-15) — 20곳 이하 0점 → 300곳 이상 만점
-  const acad = 5 * clamp01(Math.log(Math.max(inf.academies, 1) / 20) / Math.log(15));
-  return elem + mid + acad;
+  const acad = inf.academies == null ? 2.5
+    : 5 * clamp01(Math.log(Math.max(inf.academies, 1) / 20) / Math.log(15));
+  return round1(elem + mid + acad);
 }
 
 /** e: { c, t, hh, locPP, inf } · ref: { excl, locPP } */
@@ -467,18 +611,34 @@ export function compareHomes(e, base) {
   else add('space', da > 0 ? 'better' : 'worse', `전용 ${da > 0 ? '+' : '−'}${Math.abs(da).toFixed(1)}㎡`);
   const es = e.inf && e.inf.station, bs = base.inf && base.inf.station;
   if (es && bs) {
-    const d = es.m - bs.m;
-    if (Math.abs(d) <= 150) add('station', 'same', '역 거리 비슷');
-    else add('station', d < 0 ? 'better' : 'worse', `역 ${Math.abs(d).toLocaleString('ko-KR')}m 더 ${d < 0 ? '가까움' : '멂'}`);
-    if (es.lines.length >= 2 && bs.lines.length < 2 && es.m <= 1000) add('transfer', 'better', `환승역(${es.lines.join('·')})`);
+    const bothM = hasNum(es.m) && hasNum(bs.m);
+    const bothBand = es.band != null && bs.band != null;
+    if (bothM) {
+      const d = es.m - bs.m;
+      if (Math.abs(d) <= 150) add('station', 'same', '역 거리 비슷');
+      else add('station', d < 0 ? 'better' : 'worse', `역 ${Math.abs(d).toLocaleString('ko-KR')}m 더 ${d < 0 ? '가까움' : '멂'}`);
+    } else if (bothBand) {
+      // 구간끼리는 「몇 m 더 가깝다」고 말할 수 없습니다 — 구간 이름으로만 비교합니다
+      if (es.band === bs.band) add('station', 'same', `역 도보 ${bandLabel(es.band)} 비슷`);
+      else add('station', es.band < bs.band ? 'better' : 'worse', `역 도보 ${bandLabel(es.band)}`);
+    }
+    const near = s => (s.band != null ? s.band <= 3 : hasNum(s.m) && Number(s.m) <= 1000);
+    if (es.lines.length >= 2 && bs.lines.length < 2 && near(es)) add('transfer', 'better', `환승역(${es.lines.join('·')})`);
   }
   const ee = e.inf && e.inf.elem, be = base.inf && base.inf.elem;
-  if (ee && be) {
+  if (ee && be && hasNum(ee.m) && hasNum(be.m)) {
     const near = x => x.zone && x.m <= 400;
     if (near(ee) && !near(be)) add('elem', 'better', '초품아(배정 초등 400m 이내)');
     else if (!near(ee) && near(be)) add('elem', 'worse', `배정 초등 ${walkMin(ee.m)}분`);
   }
-  if (e.inf && base.inf) {
+  // 세대당 주차는 K-apt 신고값이라 둘 다 있을 때가 많습니다 — 0.3대 이상 벌어지면 말해 줍니다
+  const ep = e.inf && e.inf.parking, bp = base.inf && base.inf.parking;
+  if (ep && bp && ep.per != null && bp.per != null) {
+    const d = ep.per - bp.per;
+    if (d >= 0.3) add('parking', 'better', `세대당 주차 ${ep.per.toFixed(2)}대(+${d.toFixed(2)})`);
+    else if (d <= -0.3) add('parking', 'worse', `세대당 주차 ${ep.per.toFixed(2)}대(${d.toFixed(2)})`);
+  }
+  if (e.inf && base.inf && e.inf.academies != null && base.inf.academies != null) {
     const r = (e.inf.academies + 1) / (base.inf.academies + 1);
     if (r >= 1.5) add('academy', 'better', `학원 ${e.inf.academies.toLocaleString('ko-KR')}곳(${r.toFixed(1)}배)`);
     else if (r <= 0.67) add('academy', 'worse', `학원 ${e.inf.academies.toLocaleString('ko-KR')}곳(${Math.round(r * 100)}%)`);

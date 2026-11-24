@@ -4,7 +4,15 @@
 //   구독자마다 보고서 조건(자치구·예산·면적·규모·예산 기준)을 저장 — 운영 PC가 조건별로 보고서를 만들어 보냄
 //   이미 구독 중인 주소로 다시 신청하면 조건 변경 확인 메일을 보내고, 링크를 눌러야 바뀜(남이 조건을 바꾸지 못하게)
 //   모든 메일에 수신 거부 링크, 7일 동안 확인하지 않은 신청은 운영 PC가 삭제
-import { createLimiter, clientIp, mailRules } from './_ratelimit.mjs';   // 구독 신청도 로그인 없이 메일을 보내는 길목
+import { createLimiter, clientIp, mailRules } from './_ratelimit.mjs';
+
+/**
+ * 로그에 찍기 전에 **메일 주소를 가립니다.**
+ * 우리가 직접 주소를 찍지는 않지만, 메일 서버가 돌려주는 오류 메시지에 받는 주소가 그대로 들어옵니다
+ * (예: "550 5.1.1 <someone@example.com> User unknown"). 그걸 그대로 console.error 에 넘기면
+ * Vercel 함수 로그에 남의 주소가 남습니다. 오류를 남기는 것은 필요하니, 주소만 지우고 남깁니다.
+ */
+export const scrub = s => String(s == null ? '' : s).replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, '<메일 주소 가림>');
 
 const EMAIL_RE = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[A-Za-z]{2,}$/;
 export const PENDING_RESEND_MS = 10 * 60 * 1000;   // 같은 주소 재신청 시 10분 안이면 새 토큰·새 메일을 만들지 않음

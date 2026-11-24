@@ -29,6 +29,27 @@ export function accountFrom(out) {
   return lines.pop() || '(계정 확인 불가)';
 }
 
+/**
+ * 올리기 전에 **운영 의존성 취약점**을 한 번 봅니다(2026-11-20).
+ * 손으로 `npm audit` 을 돌리기로 해 두었더니 두 달 동안 한 번도 안 돌렸고,
+ * 그사이 nodemailer 에 「헤더에 없는 도메인으로 메일이 가는」 결함이 들어와 있었습니다.
+ * 개발 도구(wrangler 등)는 배포물에 들어가지 않으므로 `--omit=dev` 로 운영 쪽만 봅니다.
+ * 막지는 않고 **눈에 띄게 알리기만** 합니다 — 급히 올려야 할 때 배포를 세우면 이 검사부터 지워지기 때문입니다.
+ */
+function auditProd() {
+  const r = spawnSync('npm', ['audit', '--omit=dev', '--json'], { cwd: ROOT, encoding: 'utf8', shell: true, timeout: 180000 });
+  try {
+    const j = JSON.parse(r.stdout || '{}');
+    const v = (j.metadata && j.metadata.vulnerabilities) || {};
+    const bad = (v.critical || 0) + (v.high || 0) + (v.moderate || 0);
+    if (!bad) { log('운영 의존성 취약점 0건'); return; }
+    const names = Object.keys(j.vulnerabilities || {}).slice(0, 5).join(', ');
+    log(`⚠ 운영 의존성 취약점 ${bad}건(치명 ${v.critical || 0}·높음 ${v.high || 0}·보통 ${v.moderate || 0}) — ${names}`);
+    log('  올리기는 계속합니다. 끝나면 `npm audit fix` 로 정리하세요(--omit=dev 는 쓰지 마세요, 개발 도구가 지워집니다).');
+  } catch { log('취약점 점검을 건너뜁니다(npm audit 응답을 읽지 못함)'); }
+}
+auditProd();
+
 const who = run(['whoami'], 120000);
 const whoOut = `${who.stdout || ''}${who.stderr || ''}`;
 if (isLoggedOut(whoOut, who.status, who.error)) {

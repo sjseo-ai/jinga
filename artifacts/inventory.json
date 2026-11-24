@@ -1,0 +1,303 @@
+{
+  "generatedAt": "2026-11-20T07:14:15.269Z",
+  "note": "코드에서 뽑은 현황. 비밀값은 담지 않으며 환경변수는 이름만 모읍니다.",
+  "deploy": {
+    "site": "Vercel — site/.build (scripts/deploy-vercel.mjs)",
+    "url": "https://jinga-retech.vercel.app",
+    "repo": "https://github.com/sjseo-ai/jinga",
+    "regions": [
+      "icn1"
+    ],
+    "vercelCrons": [
+      {
+        "path": "/api/weekly",
+        "schedule": "30 23 * * *"
+      }
+    ],
+    "functions": [
+      "/api/admin-login",
+      "/api/admin",
+      "/api/annual",
+      "/api/community",
+      "/api/market-flow",
+      "/api/market-map",
+      "/api/report",
+      "/api/stock-analysis",
+      "/api/subscribe",
+      "/api/weekly"
+    ],
+    "functionCount": 10,
+    "sharedModules": 25,
+    "workers": [
+      {
+        "name": "jinga-korea-macro",
+        "crons": [
+          "*/30 * * * *",
+          "20 */6 * * *"
+        ]
+      },
+      {
+        "name": "jinga-policy-proxy",
+        "crons": [
+          "7 * * * *"
+        ]
+      },
+      {
+        "name": "jinga-realestate-proxy",
+        "crons": []
+      },
+      {
+        "name": "jinga-yahoo-proxy",
+        "crons": []
+      }
+    ]
+  },
+  "storage": {
+    "server": [
+      "Vercel Blob(비공개) — subs/<id>.json 구독자, weekly/… 주간 작업·보고서·KB 조각"
+    ],
+    "client": [
+      "jinga:cm:last",
+      "jinga_hit",
+      "kb2:"
+    ],
+    "repoDataFiles": [
+      {
+        "file": "kapt-gyeonggi.json",
+        "kb": false,
+        "kbytes": 692
+      },
+      {
+        "file": "kapt-list-gyeonggi.json",
+        "kb": false,
+        "kbytes": 598
+      },
+      {
+        "file": "kapt-list-seoul.json",
+        "kb": false,
+        "kbytes": 340
+      },
+      {
+        "file": "kapt-seoul.json",
+        "kb": false,
+        "kbytes": 789
+      },
+      {
+        "file": "kb-gyeonggi-complexes.json",
+        "kb": true,
+        "kbytes": 278
+      },
+      {
+        "file": "kb-gyeonggi-infra.json",
+        "kb": true,
+        "kbytes": 148
+      },
+      {
+        "file": "kb-gyeonggi-parking.json",
+        "kb": true,
+        "kbytes": 30
+      },
+      {
+        "file": "kb-seoul-complexes.json",
+        "kb": true,
+        "kbytes": 657
+      },
+      {
+        "file": "kb-seoul-infra.json",
+        "kb": true,
+        "kbytes": 334
+      },
+      {
+        "file": "kb-seoul-parking.json",
+        "kb": true,
+        "kbytes": 34
+      },
+      {
+        "file": "manifest.json",
+        "kb": false,
+        "kbytes": 1
+      },
+      {
+        "file": "package.json",
+        "kb": false,
+        "kbytes": 0
+      },
+      {
+        "file": "sangga-gyeonggi.json",
+        "kb": false,
+        "kbytes": 497
+      },
+      {
+        "file": "sangga-seoul.json",
+        "kb": false,
+        "kbytes": 1306
+      },
+      {
+        "file": "seoul-union.json",
+        "kb": false,
+        "kbytes": 107
+      },
+      {
+        "file": "slope-gyeonggi.json",
+        "kb": false,
+        "kbytes": 54
+      },
+      {
+        "file": "slope-seoul.json",
+        "kb": false,
+        "kbytes": 137
+      },
+      {
+        "file": "trade-gu-seoul.json",
+        "kb": false,
+        "kbytes": 10
+      },
+      {
+        "file": "trade-price-seoul.json",
+        "kb": false,
+        "kbytes": 254
+      },
+      {
+        "file": "vercel.json",
+        "kb": false,
+        "kbytes": 3
+      }
+    ]
+  },
+  "staticPages": {
+    "apt": 1951,
+    "gu": 33,
+    "note": "단지·자치구 페이지(입구 index 제외)"
+  },
+  "externalHosts": [
+    "api.frankfurter.dev",
+    "api.kbland.kr",
+    "api.nasdaq.com",
+    "api.opentopodata.org",
+    "api.stock.naver.com",
+    "apis.data.go.kr",
+    "blog.naver.com",
+    "cafe.naver.com",
+    "cdn.jsdelivr.net",
+    "cdnjs.cloudflare.com",
+    "cleanup.seoul.go.kr",
+    "dapi.kakao.com",
+    "dash.cloudflare.com",
+    "data-api.kbland.kr",
+    "data.kbland.kr",
+    "data.sec.gov",
+    "ecos.bok.or.kr",
+    "en.wikipedia.org",
+    "evil.example",
+    "finance.yahoo.com",
+    "finlife.fss.or.kr",
+    "fonts.googleapis.com",
+    "fonts.gstatic.com",
+    "frankfurter.dev",
+    "github.com",
+    "hogangnono.com",
+    "jinga-korea-macro.tjtlswns95.workers.dev",
+    "jinga-policy-proxy.tjtlswns95.workers.dev",
+    "jinga-retech.vercel.app",
+    "jinga-yahoo-proxy.tjtlswns95.workers.dev",
+    "kbland.kr",
+    "m.stock.naver.com",
+    "map.kakao.com",
+    "new.land.naver.com",
+    "news.example",
+    "news.google.com",
+    "query1.finance.yahoo.com",
+    "raw.githubusercontent.com",
+    "search.naver.com",
+    "tile.openstreetmap.org",
+    "w.example",
+    "www.bing.com",
+    "www.data.go.kr",
+    "www.example.com",
+    "www.google.com",
+    "www.hogangnono.com",
+    "www.nasdaq.com",
+    "www.openstreetmap.org",
+    "www.reb.or.kr",
+    "www.schoolinfo.go.kr",
+    "www.sec.gov"
+  ],
+  "envVarNames": [
+    "CRON_SECRET",
+    "ECOS_API_KEY",
+    "FSS_API_KEY",
+    "JINGA_ADMIN_SECRET",
+    "JINGA_KV",
+    "JINGA_MAIL_AUTH_USER",
+    "JINGA_MAIL_PASS",
+    "JINGA_MAIL_PROVIDER",
+    "JINGA_MAIL_USER",
+    "JINGA_SITE_URL",
+    "MOLIT_API_KEY",
+    "REB_API_KEY"
+  ],
+  "npmScripts": [
+    "deploy:site",
+    "deploy:vercel",
+    "deploy:vercel:auto",
+    "deploy:quotes",
+    "deploy:macro",
+    "deploy:policy",
+    "deploy:all",
+    "dev:site",
+    "dev:macro",
+    "check",
+    "test",
+    "build:site",
+    "vercel:env",
+    "admin:password",
+    "report:weekly",
+    "kv:create",
+    "map:key",
+    "kb:union",
+    "kb:complexes:gyeonggi",
+    "kb:complexes",
+    "sangga:key",
+    "kb:sangga",
+    "kb:sangga:gyeonggi",
+    "kb:slope",
+    "kb:slope:gyeonggi",
+    "kb:infra:gyeonggi",
+    "kb:infra",
+    "kb:gu",
+    "mail:setup",
+    "mail:confirm",
+    "mail:weekly",
+    "mail:test",
+    "mail:preview",
+    "build:pages",
+    "molit:key",
+    "trades:seoul",
+    "trades:match",
+    "avm",
+    "avm:backtest",
+    "trades:prices",
+    "kapt:list"
+  ],
+  "tests": {
+    "files": 31,
+    "command": "npm test"
+  },
+  "localSchedulers": [
+    {
+      "name": "진가 블로그 연재 알림",
+      "what": "화·금 17:00 — 연재 일정 알림창(KB 호출 없음)",
+      "state": "켜짐"
+    },
+    {
+      "name": "진가 주간보고서",
+      "what": "scripts/weekly-report.bat",
+      "state": "꺼짐"
+    },
+    {
+      "name": "scripts/serial-refresh.bat",
+      "what": "연재 회차 자료 최신화(수동)",
+      "state": "예약 없음"
+    }
+  ]
+}

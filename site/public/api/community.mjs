@@ -34,20 +34,23 @@ import { blobStore } from './_blob.mjs';
 import { adminAuth } from './_auth.mjs';
 import { createLimiter, clientIp, mailRules } from './_ratelimit.mjs';   // 확인 메일은 로그인 없이 보내는 길목이라 횟수를 셉니다
 import { mailConfigFromEnv, canSend, createTransport, fromHeader } from './_mail.mjs';
+import { scrub } from './_core.mjs';   // 메일 서버 오류 메시지에 섞여 오는 받는 사람 주소를 로그에서 가립니다
 import {
   parseRating, parseVisit, aggregate, aggregateChecks, upsert, applyReport,
   memberId, displayName, publicRow, ASPECTS, CHECKLIST, digest, outsideLinks,
+  purgeMember, PURGE_PHRASE,
 } from './_community.mjs';
 import {
   parseHost, parseRequest, matchHosts, applyTo, accept, publicHost, publicRequest, HOST_RULES, KINDS,
 } from './_companion.mjs';
 import {
   parsePost, parseReply, addPost, addReply, report as boardReport, adminOp as boardAdmin,
+  removeOwn as boardRemoveOwn, removeAllBy as boardRemoveAllBy,
   publicPost, listPosts, counts as boardCounts,
   KINDS as BOARD_KINDS, TARGETS as BOARD_TARGETS, STATUSES as BOARD_STATUSES,
 } from './_board.mjs';
 import { hubEntry, putEntry, searchHub, cleanMeta, idFromPath, INDEX_PATH, HUB_KINDS, HUB_SORTS } from './_hub.mjs';
-import { isBot, dayKey, refHost, utmSource, deviceKind, bump, summarize, statsPath, recentMonths } from './_stats.mjs';
+import { isBot, dayKey, refHost, utmSource, deviceKind, areaKind, bump, summarize, statsPath, recentMonths } from './_stats.mjs';
 import {
   parseOutside, addOutside, reportOutside, publicOutside, outsideDigest,
   RULES as OUTSIDE_RULES, SOURCES as OUTSIDE_SOURCES, SUMMARY_MAX as OUTSIDE_MAX,
@@ -332,7 +335,7 @@ export async function POST(request) {
     const self = (() => { try { return new URL(originOf(request)).hostname; } catch { return null; } })();
     const ref = refHost(body.ref, self);
     if (ref === null) return json({ ok: true });            // 사이트 안에서 넘어온 것
-    const hit = { day: dayKey(), ref, utm: utmSource(body.url), device: deviceKind(body.w) };
+    const hit = { day: dayKey(), ref, utm: utmSource(body.url), device: deviceKind(body.w), area: areaKind(body.url) };
     waitUntil((async () => {
       try {
         const path = statsPath(hit.day.slice(0, 7));
@@ -361,7 +364,7 @@ export async function POST(request) {
         try {
           const tx = await createTransport(cfg);
           await tx.sendMail({ from: fromHeader(cfg), to: email, ...loginMail(cfg.siteUrl, token) });
-        } catch (e) { console.error('[community] 확인 메일 실패:', e.message); }
+        } catch (e) { console.error('[community] 확인 메일 실패:', scrub(e.message)); }
       })());
     }
     return json({ ok: true, sent: canSend(cfg), note: canSend(cfg) ? null : '메일 설정이 없어 보내지 못했습니다(관리자 확인 필요)' });
@@ -452,6 +455,32 @@ export async function POST(request) {
     if (!r.ok) return bad(r.error, 404);
     await store.put(P.posts, r.value);
     return json({ ok: true });
+  }
+
+  // ── 내가 쓴 것 지우기 (2026-11-23) ─────────────────────────────────────────
+  // 그동안 지우려면 메일을 보내야 했습니다. 쓴 사람이 직접 지울 수 있어야 맞습니다.
+  // 지울 수 있는 사람은 **쓴 사람 본인뿐**이고, 답글이 달린 글은 자리만 남기고 내용을 지웁니다.
+  if (action === 'boardDelete') {
+    const posts = (await store.get(P.posts).catch(() => null)) || [];
+    const r = boardRemoveOwn(posts, { postId: String(body.postId || ''), replyId: body.replyId ? String(body.replyId) : null, uid: me.uid });
+    if (!r.ok) return bad(r.error, r.error.includes('자기') ? 403 : 404);
+    await store.put(P.posts, r.value);
+    return json({ ok: true });
+  }
+
+  // ── 내 자료 전부 지우기 ────────────────────────────────────────────────────
+  // 개인정보 파기 요청을 메일로만 받던 것을 화면에서 바로 받습니다.
+  // 지우는 것: 게시판 글·답글, 임장 동행 등록·신청, 단지 평가·방문 기록, 회원 기록.
+  // **되돌릴 수 없습니다.** 그래서 확인 문구를 그대로 받아 적게 합니다.
+  if (action === 'purgeMe') {
+    if (String(body.confirm || '').trim() !== PURGE_PHRASE) return bad(`확인 문구를 그대로 적어 주세요: ${PURGE_PHRASE}`);
+    const removed = await purgeMember({
+      store, uid: me.uid, removeAllBy: boardRemoveAllBy,
+      paths: { posts: P.posts, hosts: P.hosts, requests: P.requests, member: P.member,
+        ratingsPrefix: 'community/ratings/', visitsPrefix: 'community/visits/' },
+    });
+    return json({ ok: true, removed }, 200, 'no-store',
+      { 'Set-Cookie': `${COOKIE}=; Path=/api; HttpOnly; Secure; SameSite=Lax; Max-Age=0` });
   }
 
   // ── 단지 사진·현장 정보 — 가 봐야 아는 것(베이·지하주차장 연결 등) ──

@@ -208,3 +208,66 @@ test('한눈에 보기 요약과 바깥 바로가기 — 남의 글은 옮기지
   assert.ok(links.every(l => /^https:\/\//.test(l.url)), '모두 바깥으로 나가는 링크');
   assert.equal(m.outsideLinks({ name: '이름만' }).some(l => l.site === '네이버 부동산'), false, '좌표가 없으면 좌표 링크는 빼기');
 });
+
+// ── 내 자료 전부 지우기 (T014, 2026-11-23) ──────────────────────────────────
+// 「지웠습니다」라고 말해 놓고 어딘가 남아 있으면, 그 사람은 지워진 줄 알고 있습니다.
+// 그래서 **정말 안 남았는지**를 저장소 전체를 들여다보며 확인합니다.
+import { purgeMember, PURGE_PHRASE } from '../site/public/api/_community.mjs';
+import { removeAllBy } from '../site/public/api/_board.mjs';
+
+function memStore(seed = {}) {
+  const m = new Map(Object.entries(seed));
+  return {
+    map: m,
+    async get(p) { return m.has(p) ? structuredClone(m.get(p)) : null; },
+    async put(p, v) { m.set(p, structuredClone(v)); },
+    async del(p) { m.delete(p); },
+    async list(prefix) { return [...m.keys()].filter(k => k.startsWith(prefix)); },
+  };
+}
+const PATHS = {
+  posts: 'board/posts.json', hosts: 'companion/hosts.json', requests: 'companion/requests.json',
+  member: uid => `community/members/${uid}.json`,
+  ratingsPrefix: 'community/ratings/', visitsPrefix: 'community/visits/',
+};
+
+test('내 자료 지우기 — 저장소 어디에도 내 흔적이 남지 않는다', async () => {
+  const store = memStore({
+    'board/posts.json': [
+      { id: 'p1', uid: 'me', body: '내 글', name: '아무개', at: '2026-11-01T00:00:00Z', replies: [] },
+      { id: 'p2', uid: 'other', body: '남의 글', at: '2026-11-01T00:00:00Z', replies: [{ id: 'r1', uid: 'me', body: '내 답글', at: '2026-11-02T00:00:00Z' }] },
+    ],
+    'companion/hosts.json': [{ id: 'h1', uid: 'me', intro: '안내합니다' }, { id: 'h2', uid: 'other', intro: '남' }],
+    'companion/requests.json': [{ id: 'q1', uid: 'me' }],
+    'community/ratings/186.json': [{ uid: 'me', text: '주차가 힘듭니다', scores: { parking: 2 } }, { uid: 'other', scores: { parking: 4 } }],
+    'community/ratings/999.json': [{ uid: 'other', scores: { noise: 3 } }],
+    'community/visits/186.json': [{ uid: 'me', note: '다녀왔습니다' }],
+    'community/members/me.json': { uid: 'me', name: '아무개' },
+  });
+
+  const removed = await purgeMember({ store, uid: 'me', paths: PATHS, removeAllBy });
+  assert.deepEqual(removed, { posts: 2, hosts: 1, requests: 1, ratings: 1, visits: 1 });
+
+  // 저장소를 통째로 뒤져 「me」가 남아 있는지 — 가장 확실한 확인
+  const dump = JSON.stringify([...store.map.entries()]);
+  assert.ok(!dump.includes('"uid":"me"'), '내 식별자가 남아 있습니다');
+  assert.ok(!dump.includes('내 글') && !dump.includes('내 답글'), '내가 쓴 내용이 남아 있습니다');
+  assert.ok(!dump.includes('주차가 힘듭니다') && !dump.includes('다녀왔습니다'), '내 평가·방문 기록이 남아 있습니다');
+  assert.equal(await store.get('community/members/me.json'), null, '회원 기록이 남아 있습니다');
+
+  // 남의 것은 그대로여야 합니다
+  assert.ok(dump.includes('남의 글') && dump.includes('남'), '남의 자료까지 지우면 안 됩니다');
+  assert.equal((await store.get('community/ratings/999.json')).length, 1);
+  assert.equal((await store.get('board/posts.json'))[1].body, '남의 글');
+  assert.equal((await store.get('board/posts.json'))[1].replies.length, 1, '답글 자리는 남습니다');
+});
+
+test('두 번 지워도 탈 없다', async () => {
+  const store = memStore({ 'board/posts.json': [{ id: 'p1', uid: 'me', body: 'x', at: '2026-11-01T00:00:00Z', replies: [] }] });
+  assert.equal((await purgeMember({ store, uid: 'me', paths: PATHS, removeAllBy })).posts, 1);
+  assert.equal((await purgeMember({ store, uid: 'me', paths: PATHS, removeAllBy })).posts, 0);
+});
+
+test('확인 문구는 그대로 적어야 한다', () => {
+  assert.equal(PURGE_PHRASE, '내 자료를 지웁니다');
+});

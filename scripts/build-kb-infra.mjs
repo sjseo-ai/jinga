@@ -226,6 +226,17 @@ export async function main(regionKey = 'seoul') {
 
 const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase();
 if (invokedDirectly) {
-  const arg = process.argv.slice(2).find(a => !a.startsWith('-')) || 'seoul';
-  main(arg).catch(e => { console.error('[KB 입지 파일] 실패:', e); process.exit(1); });
+  // 2026-11-24 수집 중단 — 이용허락 검토 결과 KB 는 저장·재배포·파생 전부 금지(data/source-policy.json)입니다.
+  // 파일을 지우지 않고 남긴 이유는 아래 기하 계산 함수(distM·parseZone·inZone·mergeStations)를
+  // 테스트가 그대로 쓰고 있기 때문입니다. **수집만** 막습니다.
+  console.error(`
+[중단] KB 꿀세권 수집은 더 돌리지 않습니다 — 이용허락 검토 결과 저장·재배포 금지입니다.
+
+  대체: npm run kapt:infra   (국토교통부 K-apt 신고 도보시간 구간·배정학교·주차)
+        npm run schools     (교육부 학교알리미 학교 좌표)
+        npm run stations    (국가철도공단 표준데이터 역 좌표 — 파일을 한 번 넣어 주셔야 합니다)
+
+  경위: docs/mitigation-plan.md 6절
+`);
+  process.exit(1);
 }

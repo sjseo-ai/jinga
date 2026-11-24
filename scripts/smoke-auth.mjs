@@ -101,3 +101,157 @@ test('로그인 흐름: 설정 전 안내 → 관리 키로 설정 → 틀리면
   assert.equal((await handle(req('POST', { action: 'clear' }, keyH))).status, 200);
   assert.equal(store.map.has(PASSWORD_PATH), false);
 });
+
+// ── 접근 기록·주소 가림 (T014, 2026-11-20) ──────────────────────────────────
+// 「누가 언제 들어왔는지 모르면, 들어온 적이 있는지도 모릅니다.」
+import { ipKey, recordAccess, ACCESS_PATH, ACCESS_KEEP } from '../site/public/api/_auth.mjs';
+
+test('잠금 기록에 접속 주소를 원문으로 두지 않는다', async () => {
+  const store = memStore();
+  const login = createAdminLogin(store, { JINGA_ADMIN_SECRET: 'k' }, () => Date.now());
+  await store.put(PASSWORD_PATH, await hashPassword('right-password-1'));
+  const req = (body, ip) => new Request('https://jinga.example/api/admin-login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', origin: 'https://jinga.example', 'x-real-ip': ip },
+    body: JSON.stringify(body),
+  });
+  await login(req({ action: 'login', password: '틀린비밀번호' }, '203.0.113.9'));
+  const guard = await store.get('admin/login-guard.json');
+  const keys = Object.keys(guard).filter(k => k !== '*');
+  assert.ok(keys.length, '실패를 세기는 해야 합니다');
+  assert.ok(!keys.some(k => k.includes('203.0.113.9')), `잠금 기록에 IP 원문이 있습니다: ${keys.join(', ')}`);
+  assert.ok(keys.every(k => /^[0-9a-f]{16}$/.test(k)), '해시 열쇠여야 합니다');
+  // 소금이 다르면 다른 열쇠 — 기록만으로 원래 주소를 되찾을 수 없습니다
+  assert.notEqual(ipKey('203.0.113.9', 'a'), ipKey('203.0.113.9', 'b'));
+});
+
+test('관리자 접근 기록이 남고, 로그인한 사람만 볼 수 있다', async () => {
+  const store = memStore();
+  const env = { JINGA_ADMIN_SECRET: 'k' };
+  const login = createAdminLogin(store, env, () => Date.now());
+  await store.put(PASSWORD_PATH, await hashPassword('right-password-1'));
+  const req = (body, extra = {}) => new Request('https://jinga.example/api/admin-login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', origin: 'https://jinga.example', 'x-real-ip': '203.0.113.9', ...extra },
+    body: JSON.stringify(body),
+  });
+
+  await login(req({ action: 'login', password: '틀림' }));
+  const ok = await login(req({ action: 'login', password: 'right-password-1' }));
+  const cookie = ok.headers.get('Set-Cookie').split(';')[0];
+
+  const log = await store.get(ACCESS_PATH);
+  assert.equal(log.items.length, 2, '실패와 성공이 모두 남아야');
+  assert.equal(log.items[0].ok, true, '최근 것이 앞');
+  assert.equal(log.items[1].ok, false);
+  assert.ok(/^[0-9a-f]{16}$/.test(log.items[0].ip), '주소는 해시로만');
+  assert.ok(!JSON.stringify(log).includes('203.0.113.9'), '기록 어디에도 IP 원문이 없어야');
+  assert.ok(!JSON.stringify(log).includes('right-password-1'), '비밀번호가 들어가면 안 됩니다');
+
+  // 로그인 없이 기록을 보려 하면 거절
+  const denied = await login(req({ action: 'access-log' }));
+  assert.equal(denied.status, 401);
+  const seen = await (await login(req({ action: 'access-log' }, { cookie }))).json();
+  assert.equal(seen.ok, true);
+  assert.equal(seen.items.length, 2);
+});
+
+test('기록은 최근 것만 남긴다 — 무한히 쌓이지 않게', async () => {
+  const store = memStore();
+  for (let i = 0; i < 5; i++) await recordAccess(store, { kind: 'login', ok: true, ip: 'x' }, 3);
+  assert.equal((await store.get(ACCESS_PATH)).items.length, 3);
+  assert.equal(ACCESS_KEEP, 200);
+});
+
+// ── 2단계 인증 (T014, 2026-11-23) ───────────────────────────────────────────
+import { TOTP_PATH, codeFor, counterAt } from '../site/public/api/_totp.mjs';
+
+const loginEnv = { JINGA_ADMIN_SECRET: 'k' };
+const post = (body, extra = {}) => new Request('https://jinga.example/api/admin-login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', origin: 'https://jinga.example', 'x-real-ip': '198.51.100.7', ...extra },
+  body: JSON.stringify(body),
+});
+
+async function loggedIn(store) {
+  const login = createAdminLogin(store, loginEnv, () => Date.now());
+  await store.put(PASSWORD_PATH, await hashPassword('right-password-1'));
+  const r = await login(post({ action: 'login', password: 'right-password-1' }));
+  return { login, cookie: r.headers.get('Set-Cookie').split(';')[0] };
+}
+
+test('2단계 인증은 코드로 확인하기 전에는 켜지지 않는다', async () => {
+  const store = memStore();
+  const { login, cookie } = await loggedIn(store);
+
+  const setup = await (await login(post({ action: 'totp-setup' }, { cookie }))).json();
+  assert.match(setup.secret, /^[A-Z2-7]{32}$/);
+  assert.match(setup.url, /^otpauth:\/\/totp\//);
+  assert.equal(setup.backupCodes.length, 10);
+  assert.equal((await store.get(TOTP_PATH)).enabled, false, '설정만 해서는 켜지지 않습니다');
+  // 저장소에는 백업 코드 원문이 없어야 합니다
+  assert.ok(!JSON.stringify(await store.get(TOTP_PATH)).includes(setup.backupCodes[0].replace('-', '')), '백업 코드는 해시로만');
+
+  const bad = await login(post({ action: 'totp-enable', code: '000000' }, { cookie }));
+  assert.equal(bad.status, 400);
+  assert.equal((await store.get(TOTP_PATH)).enabled, false);
+
+  const good = await login(post({ action: 'totp-enable', code: codeFor(setup.secret, counterAt(Date.now())) }, { cookie }));
+  assert.equal(good.status, 200);
+  assert.equal((await store.get(TOTP_PATH)).enabled, true);
+  return setup;
+});
+
+test('켜 두면 비밀번호만으로는 못 들어온다', async () => {
+  const store = memStore();
+  const { login, cookie } = await loggedIn(store);
+  const setup = await (await login(post({ action: 'totp-setup' }, { cookie }))).json();
+  await login(post({ action: 'totp-enable', code: codeFor(setup.secret, counterAt(Date.now())) }, { cookie }));
+
+  const only = await login(post({ action: 'login', password: 'right-password-1' }));
+  assert.equal(only.status, 401, '비밀번호가 맞아도 막아야');
+  assert.equal((await only.json()).need, 'code', '화면이 코드 칸을 띄울 수 있게 알려 줍니다');
+
+  const wrong = await login(post({ action: 'login', password: 'right-password-1', code: '000000' }));
+  assert.equal(wrong.status, 401);
+
+  // 켤 때 쓴 코드는 이미 「쓴 것」이라 로그인에 다시 쓰이지 않습니다 — 다음 칸 코드로 들어갑니다.
+  const code = codeFor(setup.secret, counterAt(Date.now()) + 1);
+  const ok = await login(post({ action: 'login', password: 'right-password-1', code }));
+  assert.equal(ok.status, 200);
+  assert.ok(ok.headers.get('Set-Cookie'), '세션이 나와야');
+
+  // 같은 코드를 또 쓰면 거절 — 어깨너머로 본 사람이 따라 들어오지 못하게
+  const replay = await login(post({ action: 'login', password: 'right-password-1', code }));
+  assert.equal(replay.status, 401, '한 번 쓴 코드는 다시 못 씁니다');
+});
+
+test('인증 앱을 잃어버려도 백업 코드로 들어온다 — 한 번만', async () => {
+  const store = memStore();
+  const { login, cookie } = await loggedIn(store);
+  const setup = await (await login(post({ action: 'totp-setup' }, { cookie }))).json();
+  await login(post({ action: 'totp-enable', code: codeFor(setup.secret, counterAt(Date.now())) }, { cookie }));
+
+  const r = await login(post({ action: 'login', password: 'right-password-1', code: setup.backupCodes[0] }));
+  assert.equal(r.status, 200);
+  const j = await r.json();
+  assert.equal(j.usedBackup, true);
+  assert.equal(j.backupLeft, 9);
+
+  const again = await login(post({ action: 'login', password: 'right-password-1', code: setup.backupCodes[0] }));
+  assert.equal(again.status, 401, '쓴 백업 코드는 다시 못 씁니다');
+});
+
+test('끄려면 비밀번호를 다시 받는다 — 남이 내 화면을 잠깐 쓰는 동안 꺼 버리지 못하게', async () => {
+  const store = memStore();
+  const { login, cookie } = await loggedIn(store);
+  const setup = await (await login(post({ action: 'totp-setup' }, { cookie }))).json();
+  await login(post({ action: 'totp-enable', code: codeFor(setup.secret, counterAt(Date.now())) }, { cookie }));
+
+  assert.equal((await login(post({ action: 'totp-disable' }, { cookie }))).status, 403, '비밀번호 없이는 못 끕니다');
+  assert.equal((await login(post({ action: 'totp-disable', password: '틀림' }, { cookie }))).status, 403);
+  assert.equal((await login(post({ action: 'totp-disable', password: 'right-password-1' }, { cookie }))).status, 200);
+  assert.equal((await store.get(TOTP_PATH)).enabled, false);
+
+  // 로그인 없이 설정을 건드리려 하면 전부 거절
+  assert.equal((await login(post({ action: 'totp-setup' }))).status, 401);
+  assert.equal((await login(post({ action: 'totp-status' }))).status, 401);
+});

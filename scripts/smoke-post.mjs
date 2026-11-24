@@ -73,6 +73,12 @@ const DATA = {
     2: { households: 800, parkUnder: 0, parkGround: 400 },
     3: { households: 1000, parkUnder: 900, parkGround: 50, subwayStation: '명일', subwayLine: '5호선' },
   },
+  // KB 가 보는 주차 — K-apt 와 같은 쪽을 가리키게 둡니다(1: 1.53, 2: 0.5, 3: 0.95)
+  kbPark: {
+    1: { total: 4700, per: 1.57 },
+    2: { total: 420, per: 0.53 },
+    3: { total: 960, per: 0.96 },
+  },
   union: { sites: [
     { gu: '강동구', name: '낡은단지 재건축정비사업 조합', step: '조합설립인가', live: true },
     { gu: '강동구', name: '끝난곳 재건축정비사업 조합', step: '조합해산', live: false },
@@ -94,7 +100,8 @@ test('시세 — 서울 평균 대비와 동네 격차', () => {
   assert.equal(p.perPyeong, 7000);
   assert.equal(p.vsSeoul, 116.7, '7000/6000');
   assert.equal(p.topDongs[0].name, '둔촌동', '비싼 동이 앞');
-  assert.equal(p.lowDongs[0].name, '천호동');
+  // 이 표본은 동이 셋뿐이라 셋 다 위 목록에 들어갑니다 — 「싼 쪽」에 또 적으면 같은 동을 두 번 적는 셈입니다
+  assert.deepEqual(p.lowDongs, []);
   assert.equal(p.spread, 2.4, '9500/4000');
 });
 
@@ -174,6 +181,7 @@ test('「빠듯한 곳」은 세대당 1대 미만만 — 넉넉한 곳과 겹�
     1: { households: 3000, parkUnder: 4500, parkGround: 100 },   // 1.53
     3: { households: 1000, parkUnder: 1200, parkGround: 50 },    // 1.25
   };
+  d.kbPark = { 1: { total: 4700, per: 1.57 }, 3: { total: 1260, per: 1.26 } };
   const p = guFacts('강동구', d).parking;
   assert.equal(MIN_PARK_PER, 1);
   assert.equal(p.under1, 0, '둘 다 1대 이상');
@@ -197,4 +205,41 @@ test('먼저 다룰 구를 앞으로 — 나머지는 가나다순 그대로', (
   assert.equal(s[0].gu, '노원구');
   assert.equal(s[0].date, '2026-10-20');
   assert.equal(s.length, 25);
+});
+
+test('두 자료가 엇갈리는 단지는 초안 목록에서 빠지고, 몇 곳을 뺐는지 남깁니다', () => {
+  // 2026-11-12 명일 신동아 — K-apt 0.62 로 「빠듯한 곳」에 적었는데 KB 는 1.05 였습니다
+  const d = JSON.parse(JSON.stringify(DATA));
+  d.kbPark = {
+    1: { total: 4700, per: 1.57 },
+    2: { total: 850, per: 1.06 },   // K-apt 0.5 ↔ KB 1.06 — 엇갈립니다
+    3: { total: 960, per: 0.96 },
+  };
+  const p = guFacts('강동구', d).parking;
+  assert.equal(p.disputed, 1);
+  assert.ok(!p.worst.some(x => x.name === '낡은단지'), '엇갈리는 단지는 이름을 올리지 않습니다');
+  assert.equal(p.worst[0].name, '임대많은단지', '둘 다 1대 미만인 곳만 남습니다');
+  assert.equal(p.under1, 2, '세어 보는 숫자는 K-apt 그대로 — 목록에서 뺐다고 없던 일이 되진 않습니다');
+});
+
+test('「싼 쪽」에 위에서 이미 적은 동이 또 나오면 안 됩니다', () => {
+  // 관악구는 단지 2곳 이상인 동이 봉천·남현·신림 셋뿐이라, 비싼 순 3곳과 싼 순 3곳이 통째로 겹쳤습니다
+  // — 「가장 비싼 봉천동」 바로 아래에 「싼 쪽은 … 봉천동」이 나왔습니다.
+  const d = JSON.parse(JSON.stringify(DATA));
+  d.gu['강동구'].dongs = [
+    { name: '봉천동', count: 43, avgPerPyeong: 5005 },
+    { name: '남현동', count: 6, avgPerPyeong: 3665 },
+    { name: '신림동', count: 49, avgPerPyeong: 3335 },
+  ];
+  const p = guFacts('강동구', d).price;
+  assert.equal(p.dongCount, 3);
+  assert.deepEqual(p.topDongs.map(x => x.name), ['봉천동', '남현동', '신림동']);
+  assert.deepEqual(p.lowDongs, [], '셋뿐이면 「싼 쪽」은 비워 둡니다 — 같은 동을 두 번 적느니 안 적습니다');
+
+  // 동이 넉넉하면 겹치지 않는 아래쪽만 남습니다
+  d.gu['강동구'].dongs = [1, 2, 3, 4, 5, 6, 7].map((n, i) => ({ name: `동${n}`, count: 5, avgPerPyeong: 9000 - i * 500 }));
+  const q = guFacts('강동구', d).price;
+  assert.deepEqual(q.topDongs.map(x => x.name), ['동1', '동2', '동3', '동4', '동5']);
+  assert.deepEqual(q.lowDongs.map(x => x.name), ['동7', '동6'], '싼 순이되 위 목록과 겹치지 않는 것만');
+  assert.equal(new Set([...q.topDongs, ...q.lowDongs].map(x => x.name)).size, 7, '같은 동이 양쪽에 오르지 않습니다');
 });

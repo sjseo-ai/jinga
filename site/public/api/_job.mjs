@@ -17,6 +17,24 @@ import { renderReportHtml } from './_report-html.mjs';
 import { mailConfigFromEnv, canSend, createTransport, weeklyMail, confirmMail, changeMail, fromHeader } from './_mail.mjs';
 import { annualPath, yearOfAsOf, updateAnnual } from './_annual.mjs';
 
+/**
+ * ── KB 전수 수집 스위치 (2026-11-19부터 **기본 꺼짐**) ───────────────────────────
+ * 이 작업에는 **성격이 다른 두 가지 조회**가 한 단계에 묶여 있었습니다.
+ *   ① 구독자 보고서를 만들려고 **그 사람이 신청한 자치구**를 조회 — 받는 사람이 있는 조회
+ *   ② 사이트 지역 지도를 갱신하려고 **서울 전체 3,000여 곳**을 조회 — 받는 사람 없이 모아 쌓는 조회
+ * ②가 KB 약관 제14조 제1항 제5호(무단 정보 수집)에 가장 가깝게 걸립니다.
+ *
+ * 그래서 스위치가 꺼져 있으면 **작업은 그대로 돌되 ②만 멈춥니다.**
+ *   · KB 조회 범위를 구독 조건 자치구로 좁힙니다(시험 실행과 같은 범위).
+ *   · 지역 지도 집계·연간 기록 단계를 건너뜁니다 — 지도는 마지막 집계값 그대로 남고, 화면은 기준일을 함께 보여 줍니다.
+ *   · 구독자 보고서와 메일 발송은 예전대로 나갑니다.
+ *
+ * 되돌리려면(이용허락을 받았거나 실거래로 바꾼 뒤) Vercel 환경변수에 JINGA_KB_BULK=on 을 넣고 재배포하면
+ * 그 주 월요일부터 예전대로 돕니다 — 코드를 되돌릴 필요가 없습니다.
+ */
+export const KB_BULK_FLAG = 'JINGA_KB_BULK';
+export const kbBulkAllowed = (env = process.env) => String((env || {})[KB_BULK_FLAG] || '').trim().toLowerCase() === 'on';
+
 export const JOB_PATH = 'weekly/job.json';
 // 이번 주 운영 실행 기록 — job.json 은 시험 실행이 덮어쓰므로 크론은 이것으로 「이번 주에 이미 돌았나」를 판단(중복 발송 방지, 2026-09-15)
 export const LAST_FULL_PATH = 'weekly/last-full.json';
@@ -107,8 +125,12 @@ const STAGES = {
   async kb(ctx) {
     const { store, job, P, kb } = ctx;
     const dir = await ctx.dir();
-    // 운영 실행은 서울 전체(지역 지도용), 시험 실행은 보고서 자치구만
-    const targets = dir.filter(c => !c[4] && (job.mode !== 'test' || job.plan.gus.includes(c[2])));
+    // 조회 범위 — 보고서에 필요한 자치구만이 기본입니다.
+    // 서울 전체를 도는 것은 **지역 지도 갱신용**이고, 그것은 전수 수집 스위치가 켜져 있을 때만 합니다(위 주석).
+    const bulk = kbBulkAllowed(ctx.env) && job.mode !== 'test';
+    const targets = dir.filter(c => !c[4] && (bulk || job.plan.gus.includes(c[2])));
+    if (!job.kb) note(job, bulk ? `KB 조회 — 서울 전체 ${targets.length}곳(지역 지도 갱신 포함)`
+      : `KB 조회 — 보고서 자치구만 ${targets.length}곳(전수 수집 꺼짐: ${KB_BULK_FLAG})`);
     if (!job.kb) job.kb = { total: targets.length, cursor: 0, parts: 0, failed: [], retryCursor: 0, got: 0 };
     const S = job.kb;
     const buffer = [];
@@ -150,7 +172,11 @@ const STAGES = {
     const { store, job, P } = ctx;
     const complexes = await loadComplexes(store, P, job);
     await ensureAsOf(ctx, complexes);
-    if (complexes.length < job.kb.total * 0.8) {
+    // 전수 수집이 꺼져 있으면 지도를 갱신하지 않습니다 — 보고서 자치구만 조회한 값으로 서울 집계를 만들면
+    // 「서울 평균」이 몇 개 구의 평균이 되어 버립니다. 거짓 숫자를 올리느니 지난 집계를 그대로 둡니다.
+    if (!kbBulkAllowed(ctx.env) || job.mode === 'test') {
+      note(job, `지역 지도 갱신 건너뜀 — 전수 수집 꺼짐(${KB_BULK_FLAG}). 지도는 지난 집계 기준일 그대로입니다`);
+    } else if (complexes.length < job.kb.total * 0.8) {
       note(job, `지역 지도 집계 건너뜀 — 조회 실패가 많음(${job.kb.total - complexes.length}곳)`);
     } else {
       let old = await store.get(P.map);
@@ -253,10 +279,12 @@ const STAGES = {
       const groupNews = { byGu: Object.fromEntries(p.criteria.gus.map(g => [g, news.byGu[g] || []])), policy: news.policy, errors: news.errors };
       const cfg = { gus: p.criteria.gus };
       const html = renderReportHtml({ cfg, criteria: p.crit, today: job.id, asOf: job.asOf, result, diff, macro, news: groupNews, t0: Date.parse(job.startedAt), ask });
-      const xlsx = buildXlsx(buildReportSheets({ cfg, criteria: p.crit, today: job.id, asOf: job.asOf, complexes: p.subset, result, diff, news: groupNews }));
+      // 전수 데이터 엑셀(진가_주간데이터.xlsx)은 2026-11-19 부터 만들지 않습니다.
+      // 매주 구독자에게 KB 시세 전수를 파일로 보내는 것은 대량 재배포입니다(약관 제12조 제4항·저작권법 제93조).
+      // 보고서 본문의 순위·비교·해석은 저희가 만든 것이라 그대로 보냅니다 — 첨부만 뺍니다.
+      void buildXlsx; void buildReportSheets;
       const webId = p.isDefault ? 'base' : groupDirName(p.key);
       await store.putRaw(`${P.reports}/${webId}.html`, html, 'text/html; charset=utf-8');
-      await store.putRaw(`${P.reports}/${webId}.xlsx`, Buffer.from(xlsx), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       if (p.isDefault) R.manifest.defaultKey = p.key;
       R.manifest.groups[p.key] = { webId, web: webPath(job, webId), criteria: p.criteria, label: criteriaLabel(p.criteria), isDefault: p.isDefault, subscribers: p.subscribers, complexCount: result.complexCount, best1: result.best5[0] ? result.best5[0].c.name : null };
       note(job, `보고서 ${i + 1}/${plans.length} — ${p.isDefault ? '기본' : `구독자 ${p.subscribers}명`}: ${result.complexCount}곳 · 1위 ${result.best5[0] ? result.best5[0].c.name : '없음'}`);
@@ -300,13 +328,12 @@ const STAGES = {
       const g = key ? manifest.groups[key] : manifest.groups[manifest.defaultKey];
       if (!g) return null;
       if (!cache.has(g.webId)) {
-        cache.set(g.webId, {
-          reportHtml: await store.getText(`${P.reports}/${g.webId}.html`),
-          content: await store.getBytes(`${P.reports}/${g.webId}.xlsx`),
-        });
+        cache.set(g.webId, { reportHtml: await store.getText(`${P.reports}/${g.webId}.html`) });
       }
       const f = cache.get(g.webId);
-      return { reportHtml: f.reportHtml, xlsx: f.content ? { filename: XLSX_NAME, content: Buffer.from(f.content) } : null, criteria: key ? g.criteria : null, webUrl: `${cfg.siteUrl}/${g.web}` };
+      // 첨부 없음 — 위 render 단계 주석 참고. 예전 주에 만들어 둔 .xlsx 가 남아 있어도 보내지 않습니다.
+      void XLSX_NAME;
+      return { reportHtml: f.reportHtml, xlsx: null, criteria: key ? g.criteria : null, webUrl: `${cfg.siteUrl}/${g.web}` };
     };
     let tx = null;
     for (const s of targets) {

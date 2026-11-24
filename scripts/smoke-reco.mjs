@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseQuery, findComplexes, pickType, candidateScope, recommend, locPP, eligibleComplexes, compareHomes, scoreHome, fmtEok, SIMILAR_MARGIN, infraOf, infraText, stationScore, schoolScore, annualNotes, rentPct, rentText, rentOk, MAX_RECO_GUS } from '../site/public/jinga-reco.mjs';
+import * as m from '../site/public/jinga-reco.mjs';
 import { updateAnnual, complexYearView } from '../site/public/api/_annual.mjs';
 import { distM, parseZone, inZone, mergeStations, complexMetrics } from './build-kb-infra.mjs';
 
@@ -171,7 +172,8 @@ test('추천 카드 연간 비교: 쌓인 기록이 있을 때만(올해 변동�
 
 test('역세권·학군 점수와 비교 칩', () => {
   const a = infraOf(INFRA, 1293);
-  assert.deepEqual(a.station, { name: '숭실대입구', lines: ['7호선'], m: 477 });
+  // band 는 2026-11-24 에 들어온 칸입니다 — 옛 형식(직선거리)에서는 null 이어야 합니다
+  assert.deepEqual(a.station, { name: '숭실대입구', lines: ['7호선'], m: 477, band: null });
   assert.equal(a.elem.zone, true); assert.equal(infraOf(INFRA, 999), null);
   assert.equal(stationScore(a), Math.round(15 * (1000 - 477) / 700 * 10) / 10 === stationScore(a) ? stationScore(a) : 15 * (1000 - 477) / 700);
   assert.equal(stationScore(infraOf(INFRA, 1)), 15, '250m 환승역은 만점');
@@ -449,4 +451,101 @@ test('찾는 지역: 상한을 넘으면 아무 데나 자르지 않고 평당�
   assert.equal(all.rows.length, 5);
   assert.equal(all.capped, false);
   assert.deepEqual(all.dongs, []);
+});
+
+// ── K-apt 도보구간 입지 자료(2026-11-24 교체) ──────────────────────────────
+// 원천이 KB 꿀세권(직선거리 m)에서 국토교통부 K-apt(도보시간 구간)로 바뀌었습니다.
+// 위의 옛 형식 테스트를 **그대로 남겨 둡니다** — 두 형식을 다 읽어야 쌓인 연간 기록이 살아 있습니다.
+const KAPT_INFRA = {
+  region: 'seoul', regionLabel: '서울', basis: 'kapt-walk-band',
+  bands: ['5분이내', '5~10분이내', '10~15분이내', '15~20분이내', '20분초과'],
+  byComplex: {
+    10: { sw: 0, bw: 0, st: '신사', lines: ['3호선', '신분당선'], el: ['신구초등교'], elStem: ['신구'], mid: ['언북중교'], midStem: ['언북'], pk: 684, pkPer: 1.06 },
+    11: { sw: 2, bw: 1, st: '사당', lines: ['2호선'], el: ['봉천초등학교'], elStem: ['봉천'], pk: 300, pkPer: 0.52 },
+    12: { sw: 4, bw: 2, pk: 120, pkPer: 0.3 },
+    13: { st: '모름역' },                                   // 역명만 있고 구간을 모르는 단지
+  },
+};
+const SCHOOLS = {
+  region: 'seoul',
+  elems: [['서울신구초등학교', 37.5201, 127.0234, '신구'], ['서울봉천초등학교', 37.483, 126.957, '봉천']],
+  mids: [['언북중학교', 37.5231, 127.0351, '언북']],
+  elemStems: { 신구: [0], 봉천: [1] },
+  midStems: { 언북: [0] },
+};
+
+test('K-apt 입지 자료: 도보시간 구간으로 역세권 점수 · 배정 학교는 신고 이름', () => {
+  const inf = m.infraOf(KAPT_INFRA, 10);
+  assert.equal(inf.station.band, 0);
+  assert.equal(inf.station.m, null, '구간만 아는 자료는 거리를 만들어 내지 않습니다');
+  assert.deepEqual(inf.station.lines, ['3호선', '신분당선']);
+  assert.equal(inf.academies, null, '학원 수는 대체 원천이 없어 0 이 아니라 null');
+  assert.deepEqual(inf.parking, { total: 684, per: 1.06 });
+  assert.equal(inf.elem.zone, true, 'K-apt 신고 배정 학교이므로 통학구역 안');
+  assert.equal(inf.elem.m, null, '거리는 단지 좌표가 복원된 뒤');
+
+  // 구간 점수표 — 기존 직선거리 곡선에서 유도한 값
+  assert.deepEqual(m.BAND_STATION_SCORE, [15, 13, 8, 3, 0]);
+  assert.equal(m.stationScore(inf), 15, '5분이내 + 환승역 가산도 15점 상한');
+  assert.equal(m.stationScore(m.infraOf(KAPT_INFRA, 11)), 8, '10~15분이내는 8점');
+  assert.equal(m.stationScore(m.infraOf(KAPT_INFRA, 12)), 0, '20분초과는 0점');
+  assert.equal(m.stationScore(m.infraOf(KAPT_INFRA, 13)), 6, '역명만 알고 구간을 모르면 중간값');
+  assert.equal(m.infraOf(KAPT_INFRA, 999), null);
+});
+
+test('K-apt 입지 자료: 학군 점수는 거리를 모를 때 만점을 주지 않는다', () => {
+  const full = m.infraOf(KAPT_INFRA, 10);      // 배정 초등·중학 둘 다
+  const half = m.infraOf(KAPT_INFRA, 11);      // 초등만
+  const none = m.infraOf(KAPT_INFRA, 12);      // 둘 다 모름
+  // 초등 7×0.7=4.9 + 중학 3×0.7=2.1 + 학원 2.5 = 9.5 (만점 15 이 아님)
+  assert.equal(full, m.infraOf(KAPT_INFRA, 10) && full, '참조 확인');
+  assert.equal(m.schoolScore(full), 9.5);
+  assert.equal(m.schoolScore(half), 4.9 + 1.5 + 2.5, '중학교를 모르면 그 성분은 절반');
+  assert.equal(m.schoolScore(none), 6, '둘 다 모르면 중간값');
+  assert.ok(m.schoolScore(full) > m.schoolScore(half), '아는 것이 많은 쪽이 높음');
+});
+
+test('K-apt 입지 자료: 배정 학교 이름 → 학교알리미 좌표', () => {
+  const withSchools = m.attachSchools(KAPT_INFRA, SCHOOLS);
+  const inf = m.infraOf(withSchools, 10);
+  assert.equal(inf.elem.name, '서울신구초등학교', '줄여 쓴 신고 이름이 정식 이름으로 풀림');
+  assert.equal(inf.elem.lat, 37.5201);
+  assert.equal(inf.mid.name, '언북중학교');
+  // 못 찾으면 좌표 없이 **이름은 그대로** 남아야 합니다(점수는 나고 지도에만 안 찍힘)
+  const noMatch = m.infraOf(m.attachSchools(KAPT_INFRA, { elems: [], mids: [], elemStems: {}, midStems: {} }), 11);
+  assert.equal(noMatch.elem.name, '봉천초등학교');
+  assert.equal(noMatch.elem.lat, null);
+});
+
+test('K-apt 입지 자료: 합치기 · 카드 한 줄 · 비교 칩은 구간끼리만', () => {
+  const gg = { region: 'gyeonggi', regionLabel: '경기', basis: 'kapt-walk-band', byComplex: { 900: { sw: 1, pk: 50, pkPer: 0.4 } } };
+  const M = m.mergeInfra(KAPT_INFRA, gg);
+  assert.equal(M.count, 5, '단지 id 로 찾으므로 번호를 밀 필요가 없습니다');
+  assert.equal(m.infraOf(M, 900).station.band, 1);
+  assert.equal(m.infraOf(M, 10).station.name, '신사');
+
+  // 카드 한 줄 — 구간을 분으로 환산하지 않고 구간 이름 그대로
+  const line = m.infraText(m.attachSchools(KAPT_INFRA, SCHOOLS) && m.infraOf(m.attachSchools(KAPT_INFRA, SCHOOLS), 10), {});
+  assert.match(line, /신사역\(3호선·신분당선\) 도보 5분이내/);
+  assert.match(line, /배정 신구초/);
+  assert.ok(!/학원/.test(line), '모르는 학원 수를 「0곳」으로 적지 않습니다');
+  assert.match(line, /세대당 주차 1\.06대/);
+
+  // 비교 칩 — 구간이 다르면 「몇 m 더 가깝다」가 아니라 구간 이름으로
+  const mk = id => ({ c: { id, gu: '강남구', dong: '논현동', far: null }, t: { price: 100000, excl: 84 }, hh: 600, locPP: 5000, inf: m.infraOf(KAPT_INFRA, id), score: { age: 20, jr: 0.5 } });
+  const chips = m.compareHomes(mk(10), mk(11));
+  const st = chips.find(c => c.key === 'station');
+  assert.equal(st.dir, 'better');
+  assert.match(st.text, /도보 5분이내/);
+  assert.ok(!/m 더/.test(st.text), '구간끼리는 미터로 말하지 않습니다');
+  const pk = chips.find(c => c.key === 'parking');
+  assert.equal(pk.dir, 'better');
+  assert.match(pk.text, /세대당 주차 1\.06대/);
+  assert.equal(chips.find(c => c.key === 'academy'), undefined, '학원 수를 모르면 칩을 내지 않습니다');
+});
+
+test('K-apt 입지 자료: 전년 기록과 단위가 다르면 비교를 건너뛴다', () => {
+  // 전년 기록은 [역 m, 초등 m, 구역, 중학 m, 학원 수] — 올해는 구간이라 뺄 수 없습니다
+  const notes = m.annualNotes({ prevInfra: [800, 300, 1, 700, 200], inf: m.infraOf(KAPT_INFRA, 10) });
+  assert.deepEqual(notes.map(n => n.key), [], '단위가 다른 값을 빼서 「가까워졌다」고 말하지 않습니다');
 });

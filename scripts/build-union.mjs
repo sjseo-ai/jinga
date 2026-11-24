@@ -151,8 +151,21 @@ export async function main({ fetchImpl = (...a) => fetch(...a) } = {}) {
     sites: sites.map(({ gu, kind, law, mode, name, addr, step, live: l, complexId, complexName, matchScore }) =>
       ({ gu, kind, law, mode, name, addr, step, live: l, complexId: complexId || null, complexName: complexName || null, matchScore: matchScore || null })),
   };
-  fs.writeFileSync(dest, JSON.stringify(out));
-  log(`조합 사업장 ${sites.length}곳(단지 현존 ${liveCount}곳) · KB 단지 연결 ${matched}곳 → ${path.relative(process.cwd(), dest)} (${(fs.statSync(dest).size / 1024).toFixed(0)}KB) · ${Math.round((Date.now() - t0) / 1000)}초`);
+  // 2026-11-24 — **배포본과 내부본을 나눕니다.**
+  // 대장(data/source-policy.json)의 이 원천은 「집계값만 쓰고 원자료는 재배포하지 않음」이라고 적혀
+  // 있었는데, 실제로는 사업장 원자료(sites, 319건)까지 함께 배포하고 있었습니다. 적어 둔 것과 내보낸 것이
+  // 어긋나 있었습니다(KB 와 같은 종류의 어긋남). 이용허락을 원문으로 확인하기 전까지 —
+  //   · site/public/seoul-union.json  단지에 붙는 집계값만(byComplex·counts). 화면이 쓰는 전부입니다.
+  //   · data/work/seoul-union.json    원자료 포함. 깃·배포에서 빠지며 블로그 초안 생성기만 읽습니다.
+  const workDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'data', 'work');
+  fs.mkdirSync(workDir, { recursive: true });
+  fs.writeFileSync(path.join(workDir, 'seoul-union.json'), JSON.stringify(out));
+  const { sites: _raw, ...publicOut } = out;
+  publicOut.note += ' 사업장 원자료는 배포하지 않습니다(이용허락 확인 전) — 단지에 붙는 값만 싣습니다.';
+  fs.writeFileSync(dest, JSON.stringify(publicOut));
+  log(`조합 사업장 ${sites.length}곳(단지 현존 ${liveCount}곳) · KB 단지 연결 ${matched}곳`);
+  log(`  배포본 → ${path.relative(process.cwd(), dest)} (${(fs.statSync(dest).size / 1024).toFixed(0)}KB, 원자료 제외)`);
+  log(`  내부본 → data/work/seoul-union.json (원자료 포함, 깃·배포 제외) · ${Math.round((Date.now() - t0) / 1000)}초`);
   return out;
 }
 

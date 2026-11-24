@@ -5,15 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>진가 — 부동산 가치평가 · 재테크 인텔리전스</title>
 <!-- 검색엔진 소유 확인 -->
+<meta name="google-site-verification" content="av_Sx5UNZcfEL1oxto4nSepzCp_qo2KwtchSQw2DjEA" />
+<meta name="naver-site-verification" content="9602cb9773f4b63bdeaf02cdd306de28c219673e" />
 <!-- 공유 카드 — 카톡·블로그·밴드에 링크를 붙였을 때 뜨는 그림과 설명.
      og:image 는 반드시 전체 주소여야 합니다(상대 경로는 카카오가 읽지 못합니다). -->
-<meta name="description" content="KB시세로 예산에 맞는 아파트를 찾아 진가 점수 상위 5곳을 추천합니다. 매매·전세·재건축·리모델링, 서울 25개 자치구와 경기 주요 8곳. 점수 산식을 전부 공개하고, 국토교통부 공식 단지 정보와 전수 데이터 엑셀을 함께 드립니다. 무료·로그인 없음." />
+<meta name="description" content="KB시세로 예산에 맞는 아파트를 찾아 진가 점수 상위 5곳을 추천합니다. 매매·전세·재건축·리모델링, 서울 25개 자치구와 경기 주요 8곳. 점수 산식을 전부 공개하고, 국토교통부 공식 단지 정보를 함께 보여 드립니다. 무료·로그인 없음." />
 <link rel="canonical" href="https://jinga-retech.vercel.app/" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="진가 JINGA" />
 <meta property="og:locale" content="ko_KR" />
 <meta property="og:title" content="진가 JINGA — 같은 돈이면, 어디가 나을까" />
-<meta property="og:description" content="KB시세로 예산에 맞는 아파트를 찾아 진가 점수 상위 5곳을 추천합니다. 매매·전세·재건축·리모델링, 서울 25개 자치구와 경기 주요 8곳. 점수 산식을 전부 공개하고, 국토교통부 공식 단지 정보와 전수 데이터 엑셀을 함께 드립니다. 무료·로그인 없음." />
+<meta property="og:description" content="KB시세로 예산에 맞는 아파트를 찾아 진가 점수 상위 5곳을 추천합니다. 매매·전세·재건축·리모델링, 서울 25개 자치구와 경기 주요 8곳. 점수 산식을 전부 공개하고, 국토교통부 공식 단지 정보를 함께 보여 드립니다. 무료·로그인 없음." />
 <meta property="og:url" content="https://jinga-retech.vercel.app/" />
 <meta property="og:image" content="https://jinga-retech.vercel.app/og.png" />
 <meta property="og:image:secure_url" content="https://jinga-retech.vercel.app/og.png" />
@@ -23,7 +25,7 @@
 <meta property="og:image:alt" content="진가 — 같은 돈이면 어디가 나을까" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="진가 JINGA — 같은 돈이면, 어디가 나을까" />
-<meta name="twitter:description" content="KB시세로 예산에 맞는 아파트를 찾아 진가 점수 상위 5곳을 추천합니다. 매매·전세·재건축·리모델링, 서울 25개 자치구와 경기 주요 8곳. 점수 산식을 전부 공개하고, 국토교통부 공식 단지 정보와 전수 데이터 엑셀을 함께 드립니다. 무료·로그인 없음." />
+<meta name="twitter:description" content="KB시세로 예산에 맞는 아파트를 찾아 진가 점수 상위 5곳을 추천합니다. 매매·전세·재건축·리모델링, 서울 25개 자치구와 경기 주요 8곳. 점수 산식을 전부 공개하고, 국토교통부 공식 단지 정보를 함께 보여 드립니다. 무료·로그인 없음." />
 <meta name="twitter:image" content="https://jinga-retech.vercel.app/og.png" />
 
 
@@ -647,6 +649,18 @@
   .foot-inner a{color:var(--blue); text-decoration:none}
   .foot-inner a:hover{text-decoration:underline}
   .disc{font-size:11.5px; color:var(--muted-2); max-width:430px; line-height:1.7}
+  /* 자치구별 단지 정보 — 푸터 디렉터리(사람이 찾아보기도 하고, 검색엔진이 타고 들어가는 길이기도 합니다) */
+  .gu-dir{margin-bottom:6px}
+  .gu-dir-note{font-weight:400; color:#8696A6; font-size:11px; margin-left:6px}
+  .gu-links{display:flex; flex-wrap:wrap; gap:5px 0; margin-top:4px}
+  .gu-links a{color:#A9B7C6; text-decoration:none; font-size:12px; padding:2px 9px 2px 0; margin-right:3px;
+    border-right:1px solid rgba(255,255,255,.14); line-height:1.5}
+  .gu-links a:last-child{border-right:0}
+  .gu-links a:hover{color:#fff; text-decoration:underline}
+  .gu-dir-all{margin-top:9px; font-size:12.5px}
+  .gu-dir-all a{color:#8FB4EA; text-decoration:none; font-weight:700}
+  .gu-dir-all a:hover{text-decoration:underline}
+
   .legal-links{margin-top:10px; padding-top:9px; border-top:1px solid rgba(255,255,255,.14); font-size:11.5px}
   .legal-links a{color:#A9B7C6; text-decoration:none}
   .legal-links a:hover{color:#fff; text-decoration:underline}
@@ -1648,6 +1662,7 @@
     <nav class="tabs">
       <button class="tab on" data-view="realestate">부동산</button>
       <button class="tab" data-view="stocks">주식</button>
+      <a class="tab" href="/decision/" style="text-decoration:none" title="실거래 추정 시세 + 대출·세금·보유비용">사업성 판단</a>
       <a class="tab" href="/admin" style="margin-left:auto; text-decoration:none" title="구독 관리(관리자 비밀번호 필요)">🔒 관리자</a>
     </nav>
   </div>
@@ -1665,6 +1680,7 @@
     <a href="#pulse-sec">시장 흐름</a>
     <a href="#region-map">지역 지도</a>
     <a href="#mail-sec">보고서 구독</a>
+    <a href="/apt/">단지 정보</a>
   </div>
 </nav>
 
@@ -1675,7 +1691,7 @@
   <section class="search-sec" id="apt-search">
     <div class="eyebrow">단지 검색</div>
     <div class="sec-title">KB시세로 예산에 맞는 단지 찾기</div>
-    <div class="sec-note"><b>매매·전세·재건축·리모델링</b> 네 가지로 나눠 볼 수 있고, 지역은 <b>서울 25개 자치구와 경기 주요 8곳</b>(남양주·구리·하남·성남·용인·수원·안양·동탄)에서 고릅니다. <b>아파트만</b>(오피스텔·주상복합 제외) 대상으로, KB부동산의 주택형(전용면적)별 시세와 <b>KB에 올라온 매물의 호가 평균</b>으로 예산에 맞는 단지를 찾아 <b>진가 점수 상위 5곳</b>을 추천하고, 조회한 전체 데이터는 엑셀로 내려받을 수 있습니다. 호가 평균은 KB에 등록된 매물만 집계하므로 네이버 등 다른 곳의 매물과 차이가 있을 수 있습니다. 추천 단지 카드에서 <b>이웃 평가·임장 후기·임장 동행</b>으로 바로 들어갈 수 있습니다. KB시세는 매주 갱신되며, 조회 결과는 이 브라우저에 24시간 보관됩니다. KB부동산이 공개하는 시세를 참고 목적으로 조회해 보여 주며, <b>공식 제휴가 아니어서</b> KB 사정에 따라 예고 없이 막힐 수 있습니다. 자세한 내용은 <a href="/legal.html#data" target="_blank" rel="noopener">데이터 출처와 한계</a>를 보세요.</div>
+    <div class="sec-note"><b>매매·전세·재건축·리모델링</b> 네 가지로 나눠 볼 수 있고, 지역은 <b>서울 25개 자치구와 경기 주요 8곳</b>(남양주·구리·하남·성남·용인·수원·안양·동탄)에서 고릅니다. <b>아파트만</b>(오피스텔·주상복합 제외) 대상으로, KB부동산의 주택형(전용면적)별 시세와 <b>KB에 올라온 매물의 호가 평균</b>으로 예산에 맞는 단지를 찾아 <b>진가 점수 상위 5곳</b>을 추천합니다. <b>조회 결과를 파일로 내려받는 기능은 내렸습니다</b> — KB 자료를 대량으로 떠서 다시 배포하지 않기 위해서입니다. 호가 평균은 KB에 등록된 매물만 집계하므로 네이버 등 다른 곳의 매물과 차이가 있을 수 있습니다. 추천 단지 카드에서 <b>이웃 평가·임장 후기·임장 동행</b>으로 바로 들어갈 수 있습니다. KB시세는 매주 갱신되며, 조회 결과는 이 브라우저에 24시간 보관됩니다. KB부동산이 공개하는 시세를 참고 목적으로 조회해 보여 주며, <b>공식 제휴가 아니어서</b> KB 사정에 따라 예고 없이 막힐 수 있습니다. 자세한 내용은 <a href="/legal.html#data" target="_blank" rel="noopener">데이터 출처와 한계</a>를 보세요.</div>
 
     <div class="mode-tabs" id="sModeTabs" role="tablist" aria-label="검색 유형">
       <button type="button" class="mode-tab on" data-mode="sale" role="tab" aria-selected="true">매매</button>
@@ -1783,7 +1799,11 @@
       <div class="res-bar">
         <span class="count">진가 BEST 5</span>
         <span class="sec-note" id="sResNote"></span>
-        <button type="button" class="btn-search" id="sExcelBtn" style="margin-left:auto; padding:9px 16px; font-size:13px" disabled>전수 데이터 엑셀 다운로드</button>
+        <!-- 「전수 데이터 엑셀 다운로드」를 2026-11-19 에 내렸습니다.
+             조회 결과 전체(KB 주택형별 시세·호가)를 파일로 내보내는 것은 KB 자료의 대량 재배포에 해당합니다.
+             KB 이용약관 제12조 제4항(사전 승낙 없는 영리목적 복제·배포)과 저작권법 제93조(데이터베이스제작자의 권리)를
+             생각하면, 화면에서 참고로 보는 것과 파일로 떠서 남기는 것은 무게가 다릅니다. 승낙 없이는 안 하는 쪽이 맞습니다.
+             실거래(국토교통부) 기반으로 바꾼 뒤에는 저희가 만든 자료이므로 다시 열 수 있습니다. -->
       </div>
       <div class="best-grid" id="sList"></div>
       <div class="map-box" id="sMapBox" hidden>
@@ -2079,9 +2099,9 @@
   <section class="map-section" id="region-map">
   <div class="jg-wrap">
     <div class="section-head">
-      <div class="jg-eyebrow">세부 데이터 · KB시세 집계</div>
+      <div class="jg-eyebrow">세부 데이터 · 국토교통부 실거래가 집계</div>
       <h2>서울 25개 자치구, 동별 시세 지표</h2>
-      <p><span id="mapIntroLive">KB시세 집계를 불러오는 중입니다.</span> 자치구를 누르면 소속 법정동의 시세 현황을 볼 수 있습니다. 서울 50세대 이상 아파트의 KB시세(단지·주택형별 매매 일반거래가)를 전용면적 평당가로 바꿔 세대수로 가중평균한 값이며, 매주 KB시세 갱신에 맞춰 다시 집계하고 직전 주 대비 변동률을 함께 보여줍니다. 지도는 통계청 행정구역 경계를 단순화해 그린 것으로 실제 축척과는 다릅니다.</p>
+      <p><span id="mapIntroLive">실거래 집계를 불러오는 중입니다.</span> 자치구를 누르면 소속 법정동의 거래 현황을 볼 수 있습니다. <b>국토교통부 아파트 매매 실거래가</b>로, 최근 3개월에 실제로 거래된 값을 전용면적 평당가로 바꿔 <b>중앙값</b>을 낸 것입니다. 시세 조사값이나 매물 호가가 아니라 <b>팔린 값</b>이라 그쪽 숫자보다 낮게 나오는 것이 보통이고, 거래가 드문 동네일수록 흔들립니다. 거래가 10건 미만인 동은 싣지 않습니다. 지도는 통계청 행정구역 경계를 단순화해 그린 것으로 실제 축척과는 다릅니다.</p>
     </div>
 
     <div class="map-tabs" role="tablist" aria-label="지역 데이터 보기 방식">
@@ -2093,7 +2113,7 @@
       <div class="map-layout">
         <div class="tile-col">
           <figure class="gu-map-wrap" style="margin:0;">
-            <svg class="gu-map" id="guMap" viewBox="0 0 840 702.6" role="img" aria-label="서울 25개 자치구 KB시세 평당가 지도"></svg>
+            <svg class="gu-map" id="guMap" viewBox="0 0 840 702.6" role="img" aria-label="서울 25개 자치구 실거래 평당가 지도"></svg>
             <figcaption class="visually-hidden" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);">자치구를 클릭하면 오른쪽에 상세 정보가 표시됩니다.</figcaption>
           </figure>
           <div class="legend-row">
@@ -2112,7 +2132,7 @@
         </select>
         <span class="dong-count tabular" id="dongCount"></span>
       </div>
-      <p class="dong-note">아래 표는 KB시세를 <b>법정동</b> 단위(예: 종로구 &lsquo;명륜2가&rsquo;)로 모은 전용 평당가 순위입니다. 평당가 지수는 서울 법정동 중 최저 0 ~ 최고 100으로 환산한 값이고, 변동은 직전 주 KB시세 대비입니다.</p>
+      <p class="dong-note">아래 표는 <b>국토교통부 실거래가</b>를 <b>법정동</b> 단위(예: 종로구 &lsquo;명륜2가&rsquo;)로 모은 전용 평당가 순위입니다. 평당가 지수는 서울 법정동 중 최저 0 ~ 최고 100으로 환산한 값입니다.</p>
       <div class="dong-table-wrap">
         <table class="dong-table">
           <thead>
@@ -2122,7 +2142,7 @@
         </table>
       </div>
     </div>
-    <div class="map-source">KB부동산 KB시세 집계</div>
+    <div class="map-source">국토교통부 아파트 매매 실거래가 집계 (최근 3개월 중앙값)</div>
   </div>
   <div class="map-tip" id="mapTip"></div>
   </section>
@@ -2131,7 +2151,7 @@
   <section class="search-sec" id="mail-sec">
     <div class="eyebrow">주간 보고서</div>
     <div class="sec-title">진가 주간 보고서를 메일로 받아보기</div>
-    <div class="sec-note">원하는 <b>자치구 · 예산 · 면적</b>을 정해 신청하면, 매주 월요일 아침 그 조건으로 만든 진가 BEST 5 · 가격 동향 · 호가 vs KB시세 · 지역 뉴스 보고서(전체 데이터 엑셀 첨부)를 보내드립니다. 신청하면 확인 메일이 가고, 메일의 「구독 확인」을 눌러야 구독이 시작됩니다. 이미 구독 중인 주소로 조건을 바꿔 다시 신청하면 조건 변경 확인 메일이 갑니다. 모든 메일에 수신 거부 링크가 들어갑니다.</div>
+    <div class="sec-note">원하는 <b>자치구 · 예산 · 면적</b>을 정해 신청하면, 매주 월요일 아침 그 조건으로 만든 진가 BEST 5 · 가격 동향 · 호가 vs KB시세 · 지역 뉴스 보고서를 보내드립니다. 신청하면 확인 메일이 가고, 메일의 「구독 확인」을 눌러야 구독이 시작됩니다. 이미 구독 중인 주소로 조건을 바꿔 다시 신청하면 조건 변경 확인 메일이 갑니다. 모든 메일에 수신 거부 링크가 들어갑니다.</div>
     <div class="card filters mail-card">
       <div class="fgrid mail-criteria">
         <div class="field full">
@@ -2383,13 +2403,44 @@
 
 <footer>
   <div class="wrap foot-inner">
+    <div class="gu-dir">
+      <h5>자치구별 단지 정보 <span class="gu-dir-note">국토교통부 공식 자료 — 지하주차 대수·세대수·면적대별 세대수</span></h5>
+      <nav class="gu-links" aria-label="자치구별 단지 정보">
+          <a href="/gu/강남구/">강남구</a>
+          <a href="/gu/강동구/">강동구</a>
+          <a href="/gu/강북구/">강북구</a>
+          <a href="/gu/강서구/">강서구</a>
+          <a href="/gu/관악구/">관악구</a>
+          <a href="/gu/광진구/">광진구</a>
+          <a href="/gu/구로구/">구로구</a>
+          <a href="/gu/금천구/">금천구</a>
+          <a href="/gu/노원구/">노원구</a>
+          <a href="/gu/도봉구/">도봉구</a>
+          <a href="/gu/동대문구/">동대문구</a>
+          <a href="/gu/동작구/">동작구</a>
+          <a href="/gu/마포구/">마포구</a>
+          <a href="/gu/서대문구/">서대문구</a>
+          <a href="/gu/서초구/">서초구</a>
+          <a href="/gu/성동구/">성동구</a>
+          <a href="/gu/성북구/">성북구</a>
+          <a href="/gu/송파구/">송파구</a>
+          <a href="/gu/양천구/">양천구</a>
+          <a href="/gu/영등포구/">영등포구</a>
+          <a href="/gu/용산구/">용산구</a>
+          <a href="/gu/은평구/">은평구</a>
+          <a href="/gu/종로구/">종로구</a>
+          <a href="/gu/중구/">중구</a>
+          <a href="/gu/중랑구/">중랑구</a>
+      </nav>
+      <p class="gu-dir-all"><a href="/apt/">서울 아파트 단지 전체 보기 →</a></p>
+    </div>
     <div>
       <h5>데이터 출처</h5>
       <ul>
         <li>시장 흐름 대시보드 — <a href="https://data.kbland.kr/kbstats/wmh" target="_blank" rel="noopener">KB데이터허브 주택가격동향</a>(매매·전세지수, 매수우위·매매거래·전세수급·전세거래지수, 전세가율, 선도아파트 50, 주택구매력지수 · 공개 시세 참고 조회) · 네이버 금융 시장금리(국고채·CD·COFIX) · 3시간 캐시</li>
         <li>주간 매매가격지수·변동률(서울·송파·강동) — <a href="https://www.reb.or.kr/r-one/" target="_blank" rel="noopener">한국부동산원 R-ONE Open API</a> · 30분 갱신</li>
         <li>주담대 금리 — <a href="https://finlife.fss.or.kr/" target="_blank" rel="noopener">금융감독원 금융상품 한눈에 Open API</a>(최신 공시월) · 30분 갱신</li>
-        <li>지역 지도(구·법정동 평당가) — KB부동산 KB시세, 서울 50세대 이상 아파트 집계(공개 시세 참고 조회) · 주 1회 갱신</li>
+        <li>지역 지도(구·법정동 평당가) — <b>국토교통부 아파트 매매 실거래가</b>(공공데이터포털, 이용허락범위 제한 없음) · 최근 3개월 거래의 중앙값</li>
         <li>단지 검색·진가 BEST 5 — KB부동산 KB시세(단지·주택형별, 공개 시세 참고 조회) · 조회 시점</li>
         <li>부동산 정책 뉴스 — Google·Bing 뉴스 검색 집계(최근 1개월) · 30분 갱신</li>
       </ul>
@@ -3110,16 +3161,16 @@ async function fetchMacro(){
    페이지를 켜둔 동안 그 주기로도 재조회합니다 — 다만 "최소 1일 1회" 신선도는
    기본적으로 policy-news-proxy.js 자체의 6시간 캐시로 보장되므로(페이지가 하루에
    한 번만 열려도 이미 최신 데이터), refreshMs는 켜두지 않아도 됩니다. */
-/* 서울 25개 구·법정동 KB시세 평당가 — scripts/build-kb-gu.mjs(매주 월요일 작업)가 만든 kb-seoul-gu.json
-   국토부 실거래 API 키가 거부되는 동안 지역 지도는 이 KB시세 집계로 채웁니다. */
+/* 서울 25개 구·법정동 평당가 — **국토교통부 실거래**(trade-gu-seoul.json, scripts/build-trade-prices.mjs)
+   2026-11-20 에 KB시세 집계(kb-seoul-gu.json)에서 갈아탔습니다. 실거래 인증키가 승인되어
+   우리가 직접 만든 값을 쓸 수 있게 됐고, 남의 자료를 공개 파일로 내보내지 않아도 됩니다.
+   **같은 「평당가」라도 재는 것이 다릅니다** — 시세 조사값이 아니라 실제로 팔린 집들의 중앙값입니다. */
 let KBGU_OK = false;
 async function fetchKbGu(){
   try{
-    // 서버 주간 작업이 갱신한 집계(/api/kb-gu)와 배포에 들어 있는 정적 파일 중 더 최근 것을 씀
     const grab = url => fetch(url, { cache:'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null);
-    const [srv, stat] = await Promise.all([location.protocol === 'file:' ? null : grab('/api/kb-gu'), grab('kb-seoul-gu.json')]);
-    const data = [srv, stat].filter(d => d && d.gu).sort((a, b) => String(b.generatedAt || '').localeCompare(String(a.generatedAt || '')))[0];
-    if(!data) throw new Error('KB 집계를 불러오지 못했습니다');
+    const data = await grab('trade-gu-seoul.json');
+    if(!data || !data.gu) throw new Error('실거래 집계를 불러오지 못했습니다');
     KBGU_DATA = data;                                   // 매물 추천이 동별 평당가로 비교 지역을 고를 때 씀
     if(typeof window.jingaApplyKb !== 'function') throw new Error('지도 섹션 미초기화');
     const ok = window.jingaApplyKb(data);
@@ -3170,18 +3221,22 @@ const kbModule = () => (KB_MOD = KB_MOD || import(`./jinga-kb.mjs?v=${APP_VERSIO
 let MAP_MOD = null;
 const mapModule = () => (MAP_MOD = MAP_MOD || import(`./jinga-map.mjs?v=${APP_VERSION}`));
 /**
- * 추천 단지 둘레의 도보 10분 안 지하철역·초등학교 — kb-seoul-infra.json(서울만) 사용
+ * 추천 단지 둘레의 도보 10분 안 지하철역·초등학교
+ * 학교 좌표는 school-<지역>.json(학교알리미), 단지별 지표는 kapt-<지역>-infra.json(K-apt).
+ * **역 좌표는 2026-11-24 로 빠졌습니다**(KB 꿀세권 자료였음) — 그동안 역은 핀 대신 K-apt 도보시간 구간으로만 알려 줍니다.
  * → { extras: 지도에 찍을 시설(중복 제거) · rows: 단지별 요약 · radiusM }
  */
 async function nearbyFor(points){
   const [m, infra] = await Promise.all([recoModule(), loadInfra()]);
   const radiusM = m.WALK_M_PER_MIN * 10;
   if(!infra) return { extras: [], rows: [], radiusM, noData: true };
+  const hasStationCoords = !!(infra.stations && infra.stations.length);
   const extras = new Map();
   const rows = points.map(p => {
     const inf = p.id ? m.infraOf(infra, p.id) : null;
-    // 역·학교 자료는 서울만 있습니다 — 경기 단지는 「역이 없음」이 아니라 「자료 없음」으로 알려 줍니다
-    if(p.id && !(infra.byId && infra.byId[p.id])) return { label: p.label, kind: p.kind, title: p.title, stations: [], elems: [], noInfra: true };
+    // 단지별 지표가 없는 곳은 「역이 없음」이 아니라 「자료 없음」으로 알려 줍니다
+    const has = id => !!((infra.byComplex && infra.byComplex[id]) || (infra.byId && infra.byId[id]));
+    if(p.id && !has(p.id)) return { label: p.label, kind: p.kind, title: p.title, stations: [], elems: [], noInfra: true };
     const n = m.nearbyInfra(infra, p.lat, p.lng, { minutes: 10, limit: 4, assignedElem: inf && inf.elem ? inf.elem.name : null });
     [...n.stations, ...n.elems].forEach(f => {
       const key = f.kind + '|' + f.name;
@@ -3189,19 +3244,27 @@ async function nearbyFor(points){
       // 같은 역·학교가 여러 단지에 걸리면 가장 가까운 단지를 기준으로 표시
       if(!cur || f.m < cur.m) extras.set(key, { ...f, short: f.kind === 'elem' ? m.shortName(f.name) : f.name + '역', from: p.title });
     });
-    return { label: p.label, kind: p.kind, title: p.title, stations: n.stations, elems: n.elems, slope: inf && inf.slope ? m.slopeText(inf.slope) : '', sangga: inf && inf.sangga ? m.sanggaText(inf.sangga) : '' };
+    // 역 좌표가 없는 동안은 K-apt 신고 구간을 글로 — 「신사역(3호선) 도보 5~10분이내」
+    const st = inf && inf.station;
+    const stationBand = st && st.band != null
+      ? `${st.name ? st.name + '역' : '지하철역'}${st.lines && st.lines.length ? '(' + st.lines.join('·') + ')' : ''} 도보 ${m.bandLabel(st.band)}`
+      : '';
+    return { label: p.label, kind: p.kind, title: p.title, stations: n.stations, elems: n.elems, stationBand, slope: inf && inf.slope ? m.slopeText(inf.slope) : '', sangga: inf && inf.sangga ? m.sanggaText(inf.sangga) : '' };
   });
-  return { extras: [...extras.values()], rows, radiusM, noData: false };
+  return { extras: [...extras.values()], rows, radiusM, noData: false, hasStationCoords };
 }
 
 /** 지도 아래 요약 줄 — 「① 은마 · 대치역 5분 · 학여울역 7분 / 배정 대곡초 5분」 */
 function legendHtml(rows, noData, m){
-  if(noData) return '<span class="none">역·학교 정보(kb-seoul-infra.json)를 불러오지 못했습니다. 서울 단지만 표시할 수 있습니다.</span>';
+  if(noData) return '<span class="none">역·학교 정보(kapt-seoul-infra.json)를 불러오지 못했습니다.</span>';
   return rows.map(r => {
     if(r.noInfra) return `<div class="row"><span class="rank ${r.kind === 'target' ? 'target' : ''}">${escapeHtml(r.label)}</span><span><b>${escapeHtml(r.title)}</b> — <span class="none">이 단지는 역·학교 자료가 없어 표시하지 못합니다</span></span></div>`;
+    // 역 좌표가 없으면 「10분 안 역 없음」이라고 적지 않습니다 — 없는 게 아니라 **모르는** 것이기 때문입니다
     const st = r.stations.length
       ? r.stations.map(f => `<span class="st">${escapeHtml(f.name)}역 ${f.min}분</span><span class="none">(${f.m.toLocaleString('ko-KR')}m${f.lines.length ? ' · ' + escapeHtml(f.lines.join('·')) : ''})</span>`).join(' · ')
-      : '<span class="none">도보 10분 안 역 없음</span>';
+      : r.stationBand
+        ? `<span class="st">${escapeHtml(r.stationBand)}</span><span class="none">(국토교통부 K-apt 신고 · 지도 핀은 역 좌표 자료를 다시 붙인 뒤)</span>`
+        : '<span class="none">역 정보 없음</span>';
     const el = r.elems.length
       ? r.elems.map(f => `<span class="el">${f.zone ? '배정 ' : ''}${escapeHtml(m.shortName(f.name))} ${f.min}분</span><span class="none">(${f.m.toLocaleString('ko-KR')}m${f.far ? ' · 10분 밖' : ''})</span>`).join(' · ')
       : '<span class="none">도보 10분 안 초등학교 없음</span>';
@@ -3418,7 +3481,6 @@ function initAptSearch(){
   document.getElementById('s-basis').addEventListener('change', ()=>{ if(SEARCH_DATA) renderAptResults(); });
   document.getElementById('s-union').addEventListener('change', ()=>{ if(SEARCH_DATA) renderAptResults(); });
   document.getElementById('sSearchBtn').addEventListener('click', runAptSearch);
-  document.getElementById('sExcelBtn').addEventListener('click', downloadAptExcel);
   setSearchMode('sale');
   bindMapToggle('sMapInfra', 'sMap');
   bindMapToggle('recoMapInfra', 'recoMap');
@@ -3500,9 +3562,8 @@ async function renderAptResults(){
   }catch(err){ /* 입지 자료가 없으면 줄만 빠짐 */ }
   if(seq !== RENDER_SEQ) return;
   document.getElementById('sResults').classList.add('show');
-  document.getElementById('sExcelBtn').disabled = false;
   note.textContent = (result.qualifying.length
-    ? `조건 충족 ${result.complexCount.toLocaleString('ko-KR')}개 단지(${result.qualifying.length.toLocaleString('ko-KR')}개 면적) 중 진가 점수 상위 ${result.best5.length}곳 · 전체는 엑셀로`
+    ? `조건 충족 ${result.complexCount.toLocaleString('ko-KR')}개 단지(${result.qualifying.length.toLocaleString('ko-KR')}개 면적) 중 진가 점수 상위 ${result.best5.length}곳`
     : '조건 충족 단지 없음')
     + ((result.rentExcluded && result.rentExcluded.length)
       ? ` · 임대 비율로 뺀 단지 ${result.rentExcluded.length}곳(${result.rentExcluded.slice(0, 3).map(x => x.name + (x.pct == null ? '(모름)' : ' ' + x.pct + '%')).join(', ')}${result.rentExcluded.length > 3 ? ' 등' : ''})`
@@ -3540,26 +3601,9 @@ async function renderAptResults(){
 }
 
 // 전수 데이터 엑셀 — BEST 5 · 조건 충족 전체 · 조회 전수(KB) · 점수 산식 4개 시트
-async function downloadAptExcel(){
-  if(!SEARCH_DATA || !SEARCH_RESULT) return;
-  const btn = document.getElementById('sExcelBtn');
-  btn.disabled = true;
-  try{
-    const [mod, xl] = await Promise.all([kbModule(), import(`./xlsx-lite.mjs?v=${APP_VERSION}`)]);
-    const sheets = mod.buildSearchSheets({ criteria: currentCriteria(), gus: SEARCH_DATA.gus, asOf: SEARCH_DATA.asOf,
-      complexes: SEARCH_DATA.complexes, result: SEARCH_RESULT, generatedAt: new Date() });
-    const blob = new Blob([xl.buildXlsx(sheets)], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const d = new Date(), stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `진가_단지검색_${SEARCH_DATA.gus.join('_')}_${stamp}.xlsx` });
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href), 10000);
-  }catch(e){
-    console.warn('엑셀 생성 실패:', e);
-    setSearchStatus('엑셀 파일을 만들지 못했습니다: ' + e.message);
-  }finally{
-    btn.disabled = false;
-  }
-}
+/* downloadAptExcel() 은 2026-11-19 에 지웠습니다 — 위 res-bar 주석 참고.
+   만드는 쪽(jinga-kb.mjs 의 buildSearchSheets, xlsx-lite.mjs)은 남겨 둡니다.
+   포트폴리오 엑셀은 **이용자가 직접 넣은 보유 종목**이라 그대로 둡니다 — 남의 자료가 아닙니다. */
 /* ═══════════════ 진가 매물 추천 ═══════════════
    기준 집(단지·평형)을 고르면 KB 평당가가 비슷한 동의 단지를 조회해, 가격 ±범위·면적·규모 조건에서
    기준 집과 비슷하거나 더 나은 곳 TOP 5 — 계산은 jinga-reco.mjs, KB 조회는 단지 검색과 같은 클라이언트(24시간 브라우저 보관) */
@@ -3579,24 +3623,29 @@ async function loadAnnualFor(ids){
     try{ const r = await fetch(`annual/infra-${prevYear}.json`); RECO_ANNUAL.prevInfra = r.ok ? await r.json() : null; }catch(e){ RECO_ANNUAL.prevInfra = null; }
   }
 }
-// 역세권·학군 단지별 지표(scripts/build-kb-infra.mjs) — 서울·경기 파일을 합쳐서 씀. 없으면 null(점수는 중간값으로)
+// 역세권·학군 단지별 지표 — 2026-11-24 원천 교체:
+//   kapt-<지역>-infra.json  국토교통부 K-apt 신고값(지하철·버스 도보시간 구간 · 배정 초등·중학교 · 주차)
+// 예전 KB 꿀세권 파일(kb-*-infra.json)과 그 좌표로 계산했던 경사·길상권(slope-*·sangga-*)은 함께 빠졌습니다.
+//
+// 학교 좌표(school-*.json)는 **일부러 넣지 않았습니다** — 학교알리미 OpenAPI 는 공공누리 제3유형
+// (출처표시·변경금지)으로 표기돼 있어, 가공물을 공개 배포하기 전에 확인이 필요합니다.
+// 그래서 배정 학교는 K-apt 신고 이름을 그대로 보여 줍니다(「신구초등교」처럼 줄여 적힌 그대로).
+// 이용허락이 정리되면 attachSchools(…, school-*.json) 한 줄로 되살아납니다 — 코드는 그대로 두었습니다.
+// 서울·경기 파일을 합쳐서 씀. 없으면 null(점수는 중간값으로)
 async function loadInfra(){
   if(INFRA_DATA) return INFRA_DATA;
   const get = async name => { try{ const r = await fetch(name); return r.ok ? await r.json() : null; }catch(e){ return null; } };
-  const [seoul, gyeonggi, slopeS, slopeG, sgS, sgG, m] = await Promise.all([
-    get('kb-seoul-infra.json'), get('kb-gyeonggi-infra.json'),
-    get('slope-seoul.json'), get('slope-gyeonggi.json'),
-    get('sangga-seoul.json'), get('sangga-gyeonggi.json'), recoModule(),
+  const [seoul, gyeonggi, m] = await Promise.all([
+    get('kapt-seoul-infra.json'), get('kapt-gyeonggi-infra.json'), recoModule(),
   ]);
-  // 역까지 가는 길의 경사(slope-*.json)와 길 상권(sangga-*.json)을 붙이면 역세권 점수·카드 문구가 이를 함께 씁니다
-  INFRA_DATA = m.attachSangga(m.attachSlope(m.mergeInfra(seoul, gyeonggi), slopeS, slopeG), sgS, sgG);
+  INFRA_DATA = m.mergeInfra(seoul, gyeonggi);
   return INFRA_DATA;
 }
 const recoModule = () => (RECO_MOD = RECO_MOD || import(`./jinga-reco.mjs?v=${APP_VERSION}`));
 const RECO = { target: null, types: [], typeIdx: -1, hint: null, busy: false, last: null };
 async function loadKbGuData(){               // fetchKbGu()가 먼저 채우면 그것을, 아니면 배포된 정적 집계
-  if(KBGU_DATA) return KBGU_DATA;
-  try{ const r = await fetch('kb-seoul-gu.json', { cache:'no-cache' }); if(r.ok) KBGU_DATA = await r.json(); }catch(e){}
+  if(KBGU_DATA) return KBGU_DATA;                                 // 2026-11-20: 국토교통부 실거래 집계로 교체
+  try{ const r = await fetch('trade-gu-seoul.json', { cache:'no-cache' }); if(r.ok) KBGU_DATA = await r.json(); }catch(e){}
   return KBGU_DATA;
 }
 const setRecoStatus = t => { document.getElementById('rStatus').textContent = t; };
@@ -5789,17 +5838,23 @@ async function bdOpenPost(id){
           <span class="bd-tag">${escapeHtml(bdKindLabel(p.kind))}</span>${bdStatus(p.status)}
           ${tgt && tgt.file ? `<a class="bd-tag" href="/${escapeHtml(tgt.file)}" target="_blank" rel="noopener">${escapeHtml(tgt.file)} 보기</a>` : ''}
         </div>
-        <h4>${escapeHtml(p.title)}</h4>
-        <div class="who" style="font-size:11.5px;color:var(--muted-2)">${escapeHtml(p.name)} · ${bdDate(p.at)}</div>
-        <div class="body">${p.hidden ? '<span class="dim">신고가 쌓여 감춰진 글입니다.</span>' : escapeHtml(p.body)}</div>
-        ${p.mine || p.hidden ? '' : `<div style="margin-top:10px"><button type="button" class="bd-mini" data-report="${escapeHtml(p.id)}">신고</button></div>`}
+        <h4>${p.deleted ? '' : escapeHtml(p.title)}</h4>
+        <div class="who" style="font-size:11.5px;color:var(--muted-2)">${p.deleted ? '' : escapeHtml(p.name) + ' · '}${bdDate(p.at)}</div>
+        <div class="body">${p.deleted ? '<span class="dim">쓴 사람이 지운 글입니다.</span>'
+          : p.hidden ? '<span class="dim">신고가 쌓여 감춰진 글입니다.</span>' : escapeHtml(p.body)}</div>
+        ${p.deleted ? '' : p.mine
+          ? `<div style="margin-top:10px"><button type="button" class="bd-mini" data-del="${escapeHtml(p.id)}">내 글 지우기</button></div>`
+          : p.hidden ? '' : `<div style="margin-top:10px"><button type="button" class="bd-mini" data-report="${escapeHtml(p.id)}">신고</button></div>`}
         <div class="bd-re">
           <div class="who" style="margin-bottom:8px">답글 ${p.replies.filter(r => !r.hidden).length}</div>
           ${p.replies.map(r => `
             <div class="one${r.admin ? ' admin' : ''}">
-              <div class="who">${r.admin ? '운영자' : escapeHtml(r.name)} <span class="dim">${bdDate(r.at)}</span>
-                ${r.mine || r.hidden || r.admin ? '' : `<button type="button" class="bd-mini" style="margin-left:auto" data-report="${escapeHtml(p.id)}" data-reply="${escapeHtml(r.id)}">신고</button>`}</div>
-              <div class="txt">${r.hidden ? '<span class="dim">신고가 쌓여 감춰진 답글입니다.</span>' : escapeHtml(r.body)}</div>
+              <div class="who">${r.deleted ? '' : (r.admin ? '운영자' : escapeHtml(r.name))} <span class="dim">${bdDate(r.at)}</span>
+                ${r.deleted ? '' : r.mine
+                  ? `<button type="button" class="bd-mini" style="margin-left:auto" data-del="${escapeHtml(p.id)}" data-del-reply="${escapeHtml(r.id)}">지우기</button>`
+                  : (r.hidden || r.admin) ? '' : `<button type="button" class="bd-mini" style="margin-left:auto" data-report="${escapeHtml(p.id)}" data-reply="${escapeHtml(r.id)}">신고</button>`}</div>
+              <div class="txt">${r.deleted ? '<span class="dim">쓴 사람이 지운 답글입니다.</span>'
+                : r.hidden ? '<span class="dim">신고가 쌓여 감춰진 답글입니다.</span>' : escapeHtml(r.body)}</div>
             </div>`).join('') || '<div class="dim" style="font-size:12.5px">아직 답글이 없습니다.</div>'}
           ${BD.me ? `
             <textarea id="bdReplyIn" maxlength="1000" placeholder="답글을 남기세요" style="width:100%;margin-top:10px;min-height:72px;font-family:inherit;font-size:13px;padding:9px 11px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--text);resize:vertical"></textarea>
@@ -5841,6 +5896,23 @@ async function bdDetailClick(e){
       if(!j.ok) throw new Error(j.error);
       bdOpenPost(rep.dataset.report);
     }catch(err){ alert('신고하지 못했습니다: ' + err.message); rep.disabled = false; }
+  }
+
+  // 내가 쓴 글·답글 지우기 — 쓴 사람만 됩니다(서버가 다시 확인합니다).
+  // 답글이 달린 글은 자리만 남고 내용이 지워집니다. 남의 답글이 딸려 사라지면 안 되니까요.
+  const del = e.target.closest('[data-del]');
+  if(del){
+    const isReply = !!del.dataset.delReply;
+    if(!confirm(isReply ? '이 답글을 지울까요? 되돌릴 수 없습니다.'
+      : '이 글을 지울까요? 되돌릴 수 없습니다. (달린 답글은 남습니다)')) return;
+    del.disabled = true;
+    try{
+      const r = await fetch('/api/community', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'boardDelete', postId: del.dataset.del, replyId: del.dataset.delReply || null }) });
+      const j = await r.json();
+      if(!j.ok) throw new Error(j.error);
+      bdOpenPost(del.dataset.del);
+    }catch(err){ alert('지우지 못했습니다: ' + err.message); del.disabled = false; }
   }
 }
 
@@ -5962,7 +6034,8 @@ async function cmWhoami(){
   try{ CM.me = (await (await fetch(cmApi('?area=me'))).json()).me || null; }catch(e){ CM.me = null; }
   const box = cmEl('cmLoginBox');
   box.innerHTML = CM.me
-    ? `<div class="cm-signed"><b>${escapeHtml(CM.me.name)}</b> 님으로 남깁니다 <span class="dim">메일 주소는 저장하지 않습니다</span></div>`
+    ? `<div class="cm-signed"><b>${escapeHtml(CM.me.name)}</b> 님으로 남깁니다 <span class="dim">메일 주소는 저장하지 않습니다</span>
+        <button type="button" class="bd-mini" id="cmPurgeBtn" style="margin-left:auto">내 자료 전부 지우기</button></div>`
     : `<div class="cm-login">
         <input type="email" id="cm-email" class="reco-q" placeholder="메일 주소" autocomplete="email">
         <input type="text" id="cm-website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
@@ -5970,6 +6043,25 @@ async function cmWhoami(){
        </div><span class="sec-note" id="cmLoginNote">글을 쓰려면 메일 확인을 한 번만 하면 됩니다.</span>`;
   const btn = cmEl('cmLoginBtn');
   if(btn) btn.addEventListener('click', cmLogin);
+  // 개인정보 파기 — 그동안 메일로만 받던 것을 여기서 바로 받습니다(2026-11-23).
+  // 되돌릴 수 없으므로 **무엇이 지워지는지 먼저 말하고**, 확인 문구를 그대로 적게 합니다.
+  const purge = cmEl('cmPurgeBtn');
+  if(purge) purge.addEventListener('click', async () => {
+    const ok = confirm('지우는 것 — 게시판 글·답글, 임장 동행 등록·신청, 단지 평가·방문 기록, 회원 기록.\n\n되돌릴 수 없습니다. 계속할까요?');
+    if(!ok) return;
+    const said = prompt('정말 지우려면 아래 문구를 그대로 적어 주세요.\n\n내 자료를 지웁니다');
+    if(said === null) return;
+    purge.disabled = true;
+    try{
+      const r = await fetch(cmApi(), { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'purgeMe', confirm: said }) });
+      const j = await r.json();
+      if(!j.ok) throw new Error(j.error);
+      const n = j.removed;
+      alert(`지웠습니다 — 글·답글 ${n.posts}개, 임장 동행 ${n.hosts + n.requests}개, 평가 ${n.ratings}개, 방문 기록 ${n.visits}개.`);
+      location.reload();
+    }catch(err){ alert('지우지 못했습니다: ' + err.message); purge.disabled = false; }
+  });
   const osf = cmEl('osForm');
   if(osf) osf.hidden = !CM.me;
   const alu = cmEl('alUp');
@@ -6509,7 +6601,7 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
         '<div class="gd-diff">서울 평균 대비 <b class="tabular" style="color:'+(diff>=0?'var(--jg-good)':'var(--jg-warn)')+';">'+diffLabel+'</b></div>'+
         '<div class="gu-score-big tabular">'+fmtWon(g.price)+'</div>'+
         '<div class="gd-diff" style="margin-top:-14px;">전용 평당 <b class="tabular">'+fmtWon(g.price)+'만원</b>'+
-          (g.pct != null ? ' · 전주 대비 <b class="tabular" style="color:'+(g.pct>=0?'var(--jg-good)':'var(--jg-warn)')+';">'+(g.pct>=0?'+':'')+g.pct.toFixed(2)+'%</b>' : '')+
+          (g.pct != null ? ' · ' + (KB_GU_PREV_ASOF ? KB_GU_PREV_ASOF + ' 대비' : '직전 집계 대비') + ' <b class="tabular" style="color:'+(g.pct>=0?'var(--jg-good)':'var(--jg-warn)')+';">'+(g.pct>=0?'+':'')+g.pct.toFixed(2)+'%</b>' : '')+
           ' · 단지 <b class="tabular">'+g.total+'곳</b> · '+(g.households || 0).toLocaleString('ko-KR')+'세대</div>'+
         '<div class="gd-sub">법정동별 시세 현황 (KB시세 기준, 세대수 상위 8개 동)</div>'+
         '<div class="dong-mini">'+rows+'</div>'+
@@ -6586,6 +6678,8 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
     renderDongTable();
 
     // ---- KB시세 구·동 집계 반영 (kb-seoul-gu.json → fetchKbGu() → 여기) ----
+    // KB 구 집계의 비교 기준일 — 「전주」라고 단정하지 않으려고 둡니다(간격이 늘 7일은 아닙니다)
+    var KB_GU_PREV_ASOF = '';
     // data = { asOf, prevAsOf?, seoul:{count, avgPerPyeong}, gu:{ '강남구':{count, households, avgPerPyeong, pct?, dongs:[{name, count, households, avgPerPyeong, pct?}]}, ... } }
     window.jingaApplyKb = function(data){
       if(!data || !data.gu) return false;
@@ -6596,6 +6690,7 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
         g.price = Math.round(k.avgPerPyeong);
         g.total = k.count;
         g.households = k.households || 0;
+        KB_GU_PREV_ASOF = data.prevAsOf || '';
         g.pct = typeof k.pct === 'number' ? k.pct : null;
         // [법정동, 평당가, 단지 수, 0~100 지수(아래에서 계산), 주간 변동률] — 세대수 많은 동부터
         g.dong = (k.dongs || []).map(function(d){ return [d.name, Math.round(d.avgPerPyeong), d.count, 0, typeof d.pct === 'number' ? d.pct : null]; });

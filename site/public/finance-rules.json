@@ -1,0 +1,195 @@
+{
+  "version": "2026.11.23",
+  "asOf": "2026-11-23",
+  "staleAfterDays": 180,
+  "title": "진가 대출·세금 규칙집",
+  "notice": "세무·금융 자문이 아닙니다. 실제 신고·대출 전에 위택스·홈택스·취급 은행에서 반드시 확인하십시오.",
+  "confidenceLegend": {
+    "confirmed": "복수의 독립 출처가 같은 값을 말하고, 별도의 계산 예시로도 맞아떨어진 값",
+    "likely": "복수 출처가 대체로 일치하나 공식 원문으로 확인하지 못한 값",
+    "uncertain": "출처마다 값이 엇갈리는 값. 계산에는 쓰되 결과에 경고를 함께 냅니다"
+  },
+  "rules": {
+    "acquisitionTax": {
+      "label": "취득세 (주택 유상취득)",
+      "confidence": "confirmed",
+      "sources": [
+        "https://jipsem.com/guide/acquisition-tax-guide/",
+        "https://esgbusiness.kr/blog/acquisition-tax-2026/"
+      ],
+      "checkedWith": "6억·85㎡이하 660만원 / 9억·85㎡초과 3,150만원 예시와 일치",
+      "brackets": [
+        { "upTo": 600000000, "rate": 0.01 },
+        { "upTo": 900000000, "formula": "progressive6to9" },
+        { "upTo": null, "rate": 0.03 }
+      ],
+      "formulaNote": "6억 초과 9억 이하 구간 세율(%) = 취득가액(억원) × 2/3 − 3",
+      "localEducationTaxRate": 0.1,
+      "ruralTaxRate": 0.002,
+      "ruralTaxExemptAreaM2": 85,
+      "ruralTaxNote": "전용면적 85㎡ 이하는 농어촌특별세 비과세"
+    },
+    "acquisitionTaxHeavy": {
+      "label": "취득세 다주택 중과",
+      "confidence": "uncertain",
+      "warn": "2026년 중과 운영 여부·대상 지역이 출처마다 다릅니다. 다주택이면 세무 상담 없이 이 숫자를 믿지 마십시오.",
+      "sources": ["https://gyujemap.com/tax/rates"],
+      "rates": { "adjusted2House": 0.08, "house3Plus": 0.12 }
+    },
+    "firstHomeRelief": {
+      "label": "생애최초 취득세 감면",
+      "confidence": "uncertain",
+      "warn": "감면 한도·소득요건이 출처마다 다릅니다. 적용 전 지자체 확인이 필요합니다.",
+      "maxRelief": 2000000
+    },
+    "brokerage": {
+      "label": "중개보수 상한요율 (주택 매매)",
+      "confidence": "likely",
+      "sources": [
+        "https://esgbusiness.kr/blog/brokerage-fee-2026/",
+        "https://calcmoney.kr/real-estate-fee"
+      ],
+      "note": "상한일 뿐이며 실제 금액은 상한 안에서 협의합니다. 부가세 별도.",
+      "vatRate": 0.1,
+      "brackets": [
+        { "upTo": 50000000, "rate": 0.006, "cap": 250000 },
+        { "upTo": 200000000, "rate": 0.005, "cap": 800000 },
+        { "upTo": 900000000, "rate": 0.004, "cap": null },
+        { "upTo": 1200000000, "rate": 0.005, "cap": null },
+        { "upTo": 1500000000, "rate": 0.006, "cap": null },
+        { "upTo": null, "rate": 0.007, "cap": null }
+      ]
+    },
+    "registration": {
+      "label": "법무·등기 실비",
+      "confidence": "uncertain",
+      "warn": "거래마다 크게 다릅니다. 기본값은 가정이며 견적으로 바꿔 쓰십시오.",
+      "baseFee": 400000,
+      "rateOfPrice": 0.0008,
+      "note": "법무사 보수 + 국민주택채권 할인손실 + 인지세를 뭉뚱그린 가정값"
+    },
+    "propertyTax": {
+      "label": "재산세 (주택)",
+      "confidence": "confirmed",
+      "sources": [
+        "https://www.jptcalc.kr/blog/posts/property-tax-guide.html",
+        "https://money-magazine.co.kr/property-tax-calculation/"
+      ],
+      "checkedWith": "공시 3억 1주택 → 본세 99,000 · 도시지역분 180,600 · 지방교육세 19,800 = 299,400원 예시와 일치",
+      "fairRatio": 0.6,
+      "fairRatioOneHouse": [
+        { "upTo": 300000000, "ratio": 0.43 },
+        { "upTo": 600000000, "ratio": 0.44 },
+        { "upTo": null, "ratio": 0.45 }
+      ],
+      "standardBrackets": [
+        { "upTo": 60000000, "rate": 0.001, "deduct": 0 },
+        { "upTo": 150000000, "rate": 0.0015, "deduct": 30000 },
+        { "upTo": 300000000, "rate": 0.0025, "deduct": 180000 },
+        { "upTo": null, "rate": 0.004, "deduct": 630000 }
+      ],
+      "oneHouseBrackets": [
+        { "upTo": 60000000, "rate": 0.0005, "deduct": 0 },
+        { "upTo": 150000000, "rate": 0.001, "deduct": 30000 },
+        { "upTo": 300000000, "rate": 0.002, "deduct": 180000 },
+        { "upTo": null, "rate": 0.0035, "deduct": 630000 }
+      ],
+      "oneHouseSpecialMaxPublicPrice": 900000000,
+      "urbanAreaRate": 0.0014,
+      "urbanAreaNote": "조례로 0.23%까지 달리 정할 수 있습니다",
+      "localEducationTaxRate": 0.2,
+      "localEducationTaxNote": "재산세 본세의 20%. 도시지역분은 제외합니다.",
+      "capNotModeled": "세부담상한제(전년 대비 105~130%)는 계산에 넣지 않았습니다. 실제 고지액은 이보다 낮을 수 있습니다."
+    },
+    "comprehensiveTax": {
+      "label": "종합부동산세 (주택)",
+      "confidence": "likely",
+      "sources": [
+        "https://policy.ambitstock.com/policies/comprehensive-real-estate-tax/",
+        "https://taxstory365.com/comprehensive-real-estate-tax-2026/"
+      ],
+      "basicDeduction": 900000000,
+      "oneHouseDeduction": 1200000000,
+      "fairRatio": 0.6,
+      "brackets": [
+        { "upTo": 300000000, "rate": 0.005 },
+        { "upTo": 600000000, "rate": 0.007 },
+        { "upTo": 1200000000, "rate": 0.01 },
+        { "upTo": 2500000000, "rate": 0.013 },
+        { "upTo": 5000000000, "rate": 0.015 },
+        { "upTo": 9400000000, "rate": 0.02 },
+        { "upTo": null, "rate": 0.027 }
+      ],
+      "ruralTaxRate": 0.2,
+      "ruralTaxNote": "종부세액의 20%가 농어촌특별세로 함께 부과됩니다",
+      "notModeled": "재산세 중복분 공제, 고령자·장기보유 세액공제(합산 최대 80%)는 넣지 않았습니다. 실제 고지액은 이보다 낮을 수 있습니다.",
+      "warn": "2027년부터 공정시장가액비율이 오른다는 개편안 보도가 있으나 확정 여부를 확인하지 못했습니다."
+    },
+    "capitalGainsTax": {
+      "label": "양도소득세",
+      "confidence": "likely",
+      "sources": [
+        "https://esgbusiness.kr/blog/transfer-tax-2026/",
+        "https://simpletax.kr/taxRate/transferTaxRate"
+      ],
+      "note": "장기보유특별공제율 표가 출처마다 조금씩 다릅니다(특히 거주 요건). 공식 원문으로 확인하지 못했습니다.",
+      "oneHouseExemptPrice": 1200000000,
+      "oneHouseMinHoldYears": 2,
+      "basicDeduction": 2500000,
+      "shortTermRates": [
+        { "underYears": 1, "rate": 0.7 },
+        { "underYears": 2, "rate": 0.6 }
+      ],
+      "baseBrackets": [
+        { "upTo": 14000000, "rate": 0.06, "deduct": 0 },
+        { "upTo": 50000000, "rate": 0.15, "deduct": 1260000 },
+        { "upTo": 88000000, "rate": 0.24, "deduct": 5760000 },
+        { "upTo": 150000000, "rate": 0.35, "deduct": 15440000 },
+        { "upTo": 300000000, "rate": 0.38, "deduct": 19940000 },
+        { "upTo": 500000000, "rate": 0.4, "deduct": 25940000 },
+        { "upTo": 1000000000, "rate": 0.42, "deduct": 35940000 },
+        { "upTo": null, "rate": 0.45, "deduct": 65940000 }
+      ],
+      "longHoldGeneral": { "minYears": 3, "perYear": 0.02, "max": 0.3 },
+      "longHoldOneHouse": {
+        "minYears": 3,
+        "holdPerYear": 0.04,
+        "holdMax": 0.4,
+        "livePerYear": 0.04,
+        "liveMax": 0.4,
+        "requiresLiveYears": 2
+      },
+      "localIncomeTaxRate": 0.1,
+      "localIncomeTaxNote": "양도소득세의 10%가 지방소득세로 따로 붙습니다"
+    },
+    "capitalGainsHeavy": {
+      "label": "양도세 다주택 중과",
+      "confidence": "uncertain",
+      "warn": "2026년 중과 부활·장특공제 배제 여부가 출처마다 다릅니다. 다주택이면 이 계산을 쓰지 마십시오.",
+      "surcharge2House": 0.2,
+      "surcharge3House": 0.3
+    },
+    "loan": {
+      "label": "주택담보대출 한도",
+      "confidence": "uncertain",
+      "warn": "LTV 비율과 스트레스 DSR 가산금리는 출처마다 크게 달랐습니다. 반드시 취급 은행에서 확인하십시오.",
+      "sources": [
+        "https://finlab.kr/finance-guide/ltv-real-calculation",
+        "https://www.welfarehello.com/community/policyInfo/2026-주택담보대출-LTV-DSR-한도-계산-예시-3가지-총정리"
+      ],
+      "dsrCap": 0.4,
+      "dsrCapSecondTier": 0.5,
+      "ltv": { "regulated": 0.4, "normal": 0.7, "firstHomeRegulated": 0.7 },
+      "amountCapByPrice": [
+        { "upTo": 1500000000, "cap": 600000000 },
+        { "upTo": 2500000000, "cap": 400000000 },
+        { "upTo": null, "cap": 200000000 }
+      ],
+      "amountCapConfidence": "likely",
+      "stressRateAdd": { "capital": 0.015, "other": 0.0075 },
+      "stressRateConfidence": "uncertain",
+      "dsrTermYearsCap": 40,
+      "dsrTermNote": "DSR 산정 시 만기는 최장 40년으로 제한해 계산합니다"
+    }
+  }
+}

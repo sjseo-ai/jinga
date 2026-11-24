@@ -16,14 +16,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadStations, nearestStation } from './_nearest-station.mjs';
 
 const API = 'https://api.opentopodata.org/v1/srtm30m';
 const BATCH = 100;                 // 한 요청에 담을 지점 수(OpenTopoData 공개 서버 상한)
 const GAP_MS = 1100;               // 초당 1회 제한 — 여유 있게
 export const SAMPLES = 5;          // 경로를 5등분 → 지점 6개
 export const REGIONS = {
-  seoul: { label: '서울', infra: 'kb-seoul-infra.json', dir: 'kb-seoul-complexes.json', out: 'slope-seoul.json' },
-  gyeonggi: { label: '경기', infra: 'kb-gyeonggi-infra.json', dir: 'kb-gyeonggi-complexes.json', out: 'slope-gyeonggi.json' },
+  // 2026-11-24 — 역 좌표 원천을 KB 꿀세권에서 국가철도공단 표준데이터(station-<지역>.json)로 바꿨습니다.
+  // 「가장 가까운 역」은 이제 미리 계산된 값을 읽는 게 아니라 _nearest-station.mjs 가 직접 찾습니다.
+  seoul: { label: '서울', dir: 'kb-seoul-complexes.json', out: 'slope-seoul.json' },
+  gyeonggi: { label: '경기', dir: 'kb-gyeonggi-complexes.json', out: 'slope-gyeonggi.json' },
 };
 
 const log = msg => console.log(`[${new Date().toLocaleTimeString('ko-KR', { hour12: false })}] ${msg}`);
@@ -94,7 +97,7 @@ export async function main(regionKey = 'seoul', { fetchImpl = (...a) => fetch(..
   if (!region) throw new Error('모르는 지역: ' + regionKey);
   const t0 = Date.now();
   const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'site', 'public');
-  const infra = JSON.parse(fs.readFileSync(path.join(root, region.infra), 'utf8'));
+  const stations = loadStations(root, regionKey);
   const dir = JSON.parse(fs.readFileSync(path.join(root, region.dir), 'utf8'));
   const dest = path.join(root, region.out);
   const prev = !all && fs.existsSync(dest) ? JSON.parse(fs.readFileSync(dest, 'utf8')) : null;
@@ -104,13 +107,11 @@ export async function main(regionKey = 'seoul', { fetchImpl = (...a) => fetch(..
   const jobs = [];
   for (const c of dir.complexes) {
     const id = c[0], lat = c[7], lng = c[8];
-    const v = infra.byId && infra.byId[id];
-    if (lat == null || lng == null || !v) continue;
-    const [st, stM] = v;
-    const s = infra.stations[st];
-    if (!s || !(stM > 0)) continue;
+    if (lat == null || lng == null) continue;
     if (byId[id] && !all) continue;
-    jobs.push({ id, lat, lng, stLat: s[2], stLng: s[3], m: stM, station: s[0] });
+    const s = nearestStation(lat, lng, stations);
+    if (!s || !(s.m > 0)) continue;
+    jobs.push({ id, lat, lng, stLat: s.lat, stLng: s.lng, m: s.m, station: s.name });
   }
   log(`${region.label} — 경사를 잴 단지 ${jobs.length}곳(이미 있는 ${Object.keys(byId).length}곳은 건너뜀)`);
   if (!jobs.length) { log('새로 잴 단지가 없습니다'); return prev; }
@@ -133,7 +134,7 @@ export async function main(regionKey = 'seoul', { fetchImpl = (...a) => fetch(..
   const out = {
     generatedAt: new Date().toISOString(),
     region: regionKey, regionLabel: region.label,
-    source: 'OpenTopoData SRTM 30m — 단지에서 가장 가까운 지하철역까지 직선 경로를 5등분한 표고. 실제 보행 경로가 아니며 30m 격자라 좁은 골목의 급경사는 뭉개집니다.',
+    source: 'OpenTopoData SRTM 30m — 단지에서 가장 가까운 지하철역까지 직선 경로를 5등분한 표고. 실제 보행 경로가 아니며 30m 격자라 좁은 골목의 급경사는 뭉개집니다. 역 좌표는 국가철도공단 전국도시철도역사정보표준데이터.',
     fields: ['rise', 'grade', 'up', 'maxGrade'],
     samples: SAMPLES,
     count: Object.keys(byId).length,

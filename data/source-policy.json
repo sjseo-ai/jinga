@@ -1,0 +1,330 @@
+{
+  "_": "T009 — 상용 서비스에 쓸 원천의 이용조건. 각 항목은 '확인 URL'을 그날 직접 읽고 적은 것이며, 읽히지 않은 값은 null 로 둡니다(추정으로 채우지 않습니다). 허용 칸(allows)은 commercial·redistribute·derive·cache 네 가지이며, null 은 「확인하지 못했다」는 뜻입니다. 공개 파일은 두 칸으로 가릅니다 — publicPrefixes 는 **원자료**가 그대로 나가는 파일(redistribute 가 true 여야 함), publicDerivedPrefixes 는 **집계·파생값만** 나가는 파일(derive 가 true 여야 하고 무엇을 뺐는지 derivedNote 에 적음)입니다.",
+  "checkedAt": "2026-11-24",
+  "recheckEvery": "6개월 또는 원천의 수정일이 바뀔 때",
+  "sources": [
+    {
+      "key": "molit-apt-trade",
+      "name": "국토교통부_아파트 매매 실거래가 자료",
+      "datasetId": "15126469",
+      "org": "국토교통부 부동산소비자보호기획단",
+      "endpoint": "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade",
+      "params": [
+        "LAWD_CD",
+        "DEAL_YMD",
+        "serviceKey"
+      ],
+      "license": "이용허락범위 제한 없음",
+      "cost": "무료",
+      "updatedAt": "2026-07-22",
+      "checkedUrl": "https://www.data.go.kr/data/15126469/openapi.do",
+      "dailyQuota": null,
+      "allows": {
+        "commercial": true,
+        "redistribute": true,
+        "derive": true,
+        "cache": true
+      },
+      "status": "사용 가능 — 2026-11-19 활용신청 승인 확인(.secrets/molit.json)",
+      "role": "가격 엔진의 주 원천",
+      "cacheNote": "이용허락 제한 없음 — 저장·재가공 가능. data/trades-seoul.json 에 보관",
+      "publicPrefixes": [
+        "trade-price-",
+        "trade-gu-",
+        "decision-index"
+      ],
+      "publicDerivedPrefixes": []
+    },
+    {
+      "key": "molit-apt-trade-dev",
+      "name": "국토교통부_아파트 매매 실거래가 상세 자료",
+      "datasetId": "15126468",
+      "org": "국토교통부 부동산소비자보호기획단",
+      "endpoint": "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev",
+      "params": [
+        "LAWD_CD",
+        "DEAL_YMD",
+        "serviceKey",
+        "pageNo",
+        "numOfRows"
+      ],
+      "license": "이용허락범위 제한 없음",
+      "cost": "무료",
+      "updatedAt": "2026-09-08",
+      "checkedUrl": "https://www.data.go.kr/data/15126468/openapi.do",
+      "dailyQuota": null,
+      "allows": {
+        "commercial": true,
+        "redistribute": true,
+        "derive": true,
+        "cache": true
+      },
+      "status": "사용 중 — 서울 12개월 62,335건 수집(2026-11-19). 수집의 주 경로",
+      "role": "쪽수 나눠 받기가 되므로 대량 수집에는 이쪽이 유리할 수 있음 — 응답 필드 비교 후 결정",
+      "cacheNote": "이용허락 제한 없음 — 저장·재가공 가능. 수집의 주 경로",
+      "publicPrefixes": [],
+      "publicDerivedPrefixes": []
+    },
+    {
+      "key": "molit-apt-rent",
+      "name": "국토교통부_아파트 전월세 실거래가 자료",
+      "datasetId": "15126474",
+      "org": "국토교통부 부동산소비자보호기획단",
+      "endpoint": "https://apis.data.go.kr/1613000/RTMSDataSvcAptRent",
+      "params": [
+        "LAWD_CD",
+        "DEAL_YMD",
+        "serviceKey"
+      ],
+      "license": "이용허락범위 제한 없음",
+      "cost": "무료",
+      "updatedAt": "2026-07-29",
+      "checkedUrl": "https://www.data.go.kr/data/15126474/openapi.do",
+      "dailyQuota": null,
+      "allows": {
+        "commercial": true,
+        "redistribute": true,
+        "derive": true,
+        "cache": true
+      },
+      "status": "사용 가능 — 승인 확인. 아직 수집하지 않음",
+      "note": "동·호 정보는 제공되지 않음(페이지 설명). 전세가율·갭 계산에 씀",
+      "role": "전세 시세",
+      "cacheNote": "이용허락 제한 없음 — 아직 저장하지 않음(전세가율은 다음 판)",
+      "publicPrefixes": [],
+      "publicDerivedPrefixes": []
+    },
+    {
+      "key": "molit-apt-list",
+      "name": "국토교통부_공동주택 단지 목록제공 서비스",
+      "datasetId": "15057332",
+      "org": "국토교통부 주택건설운영과",
+      "endpoint": "https://apis.data.go.kr/1613000/AptListService4",
+      "license": "이용허락범위 제한 없음",
+      "cost": "무료",
+      "updatedAt": "2026-08-07",
+      "checkedUrl": "https://www.data.go.kr/data/15057332/openapi.do",
+      "dailyQuota": null,
+      "allows": {
+        "commercial": true,
+        "redistribute": true,
+        "derive": true,
+        "cache": true
+      },
+      "status": "사용 중(.secrets/sangga.json 의 계정 키)",
+      "role": "**KB 단지목록을 대체할 후보** — 단지 식별자를 K-apt 코드로 바꾸는 열쇠",
+      "cacheNote": "이용허락 제한 없음 — site/public/kapt-list-*.json 으로 배포",
+      "publicPrefixes": [
+        "kapt-list-"
+      ],
+      "publicDerivedPrefixes": []
+    },
+    {
+      "key": "molit-bld-rgst",
+      "name": "국토교통부_건축HUB_건축물대장정보 서비스",
+      "datasetId": "15134735",
+      "org": "국토교통부 건축문화경관과",
+      "endpoint": "https://apis.data.go.kr/1613000/BldRgstHubService",
+      "params": [
+        "serviceKey",
+        "sigunguCd",
+        "bjdongCd",
+        "platGbCd",
+        "bun",
+        "ji",
+        "_type"
+      ],
+      "license": "이용허락범위 제한 없음",
+      "cost": "무료",
+      "updatedAt": "2026-07-10",
+      "checkedUrl": "https://www.data.go.kr/data/15134735/openapi.do",
+      "dailyQuota": null,
+      "allows": {
+        "commercial": true,
+        "redistribute": true,
+        "derive": true,
+        "cache": true
+      },
+      "status": "미사용 — 신청 대상",
+      "note": "건축데이터 PK 가 바뀌었다는 안내가 페이지에 있음(첨부 전환규칙 확인 필요)",
+      "role": "**KB 용적률·건폐율·준공일을 대체** — 재건축 여력 판단의 근거",
+      "cacheNote": "이용허락 제한 없음 — 미사용",
+      "publicPrefixes": [],
+      "publicDerivedPrefixes": []
+    },
+    {
+      "key": "kapt-basis",
+      "name": "국토교통부 공동주택관리정보시스템(K-apt) 기본·상세정보",
+      "datasetId": "15058453",
+      "endpoint": "AptBasisInfoServiceV5 / getAphusBassInfoV5 · getAphusDtlInfoV5",
+      "license": "이용허락범위 제한 없음 (2026-11-23 포털 페이지 확인)",
+      "cost": "무료",
+      "updatedAt": null,
+      "checkedUrl": "https://www.data.go.kr/data/15058453/openapi.do",
+      "dailyQuota": null,
+      "allows": {
+        "commercial": true,
+        "redistribute": true,
+        "derive": true,
+        "cache": true
+      },
+      "status": "사용 중 — 단지 페이지 2,002장의 전부가 이 자료. 이용허락 확인됨(2026-11-23)",
+      "note": "이용허락범위 제한 없음을 2026-11-23 포털 페이지에서 확인했습니다. 사이트의 공개 페이지 2,002장과 2026-11-24 부터 입지·주차 지표(kapt-*-infra.json)까지 이 자료에 기댑니다.",
+      "role": "세대수·준공·주차·승강기·면적대별 · **지하철/버스 도보시간 구간 · 배정 초등·중학교**(2026-11-24 추가)",
+      "cacheNote": "이용허락 제한 없음 — site/public/kapt-*.json 으로 저장·배포",
+      "org": "국토교통부 (수집: 공동주택관리정보시스템 K-apt · 운영 한국부동산원)",
+      "publicPrefixes": [
+        "kapt-seoul",
+        "kapt-gyeonggi"
+      ],
+      "publicDerivedPrefixes": []
+    },
+    {
+      "key": "seoul-union",
+      "name": "서울시 정비사업 정보몽땅",
+      "endpoint": "cleanup.seoul.go.kr",
+      "license": "확인 필요",
+      "checkedUrl": "https://cleanup.seoul.go.kr/",
+      "allows": {
+        "commercial": null,
+        "redistribute": null,
+        "derive": true,
+        "cache": null
+      },
+      "status": "사용 중 — 배포본은 집계값만. 이용허락범위 원문 확인 대기(공공누리 유형 표기를 사이트에서 찾지 못함)",
+      "role": "재건축·리모델링 조합",
+      "cacheNote": "이용조건 미확인 — 집계·파생값만 배포하고 원자료는 배포하지 않음(2026-11-24 에 실제로 그렇게 바꿈)",
+      "org": "서울특별시 (정비사업 정보몽땅)",
+      "publicPrefixes": [],
+      "publicDerivedPrefixes": [
+        "seoul-union"
+      ],
+      "derivedNote": "배포본에는 단지에 붙는 집계값(byComplex 74곳·counts)만 싣고 **사업장 원자료(sites 319건)는 빼냈습니다**(2026-11-24). 원자료는 data/work/ 에만 둡니다(깃·배포 제외).",
+      "note": "정보몽땅 페이지에서 공공누리 유형 표기를 찾지 못했습니다. 서울시 저작권 정책은 「공공누리가 붙지 않은 자료는 담당 부서와 사전 협의」라고 적고 있습니다 — **담당 부서 문의가 필요합니다.** 기사상 제4유형(상업적 이용금지)이라는 언급이 있어, 사실이면 유료 기능에서는 쓸 수 없습니다."
+    },
+    {
+      "key": "schoolinfo",
+      "name": "학교알리미 Open API",
+      "endpoint": "https://www.schoolinfo.go.kr/openApi.do",
+      "license": "공공누리 제3유형(출처표시 · 변경금지) — 공공데이터포털 15098092 표기(2026-11-24 확인)",
+      "checkedUrl": "https://www.data.go.kr/data/15098092/openapi.do",
+      "allows": {
+        "commercial": null,
+        "redistribute": false,
+        "derive": null,
+        "cache": true
+      },
+      "status": "사용 중(.secrets/schoolinfo.json) — 학교 좌표를 받아 data/work/school-*.json 에만 둠. 배포 안 함",
+      "role": "학군 — 배정 학교 이름을 정식 이름·좌표로 맞추는 데 씀(지금은 계산·확인용)",
+      "cacheNote": "내부 계산용 보관은 함(data/work/, 깃·배포 제외). **가공물 공개 배포는 하지 않음** — 「변경금지」와 부딪칠 수 있음",
+      "org": "한국교육학술정보원(KERIS) — 운영 · 교육부 소관",
+      "publicPrefixes": [],
+      "datasetId": "15098092",
+      "note": "**제3유형의 「변경금지」가 가공·공개 배포를 막을 수 있습니다.** 두 갈래로 풀립니다 — ① 교육부 「학교알리미 학교기본정보」 파일데이터(15106331, 공공누리 **제1유형**, 학교좌표 포함)로 바꿔 받기 ② KERIS 에 제3유형 가공·공개 가능 여부 문의. ①이 더 빠릅니다(사람이 CSV 한 번 내려받으면 끝).",
+      "publicDerivedPrefixes": []
+    },
+    {
+      "key": "opentopodata",
+      "name": "OpenTopoData (SRTM 30m)",
+      "endpoint": "https://api.opentopodata.org",
+      "license": "확인 필요 — 출처표기 조건 및 호출 한도",
+      "checkedUrl": "https://www.opentopodata.org/",
+      "allows": {
+        "commercial": null,
+        "redistribute": null,
+        "derive": true,
+        "cache": null
+      },
+      "status": "사용 중",
+      "role": "경사도",
+      "cacheNote": "출처표기 조건·호출한도 미확인. 고도값은 단지당 1회만 받아 저장",
+      "org": "OpenTopoData (오픈소스 프로젝트) · 원자료 NASA SRTM",
+      "publicPrefixes": [],
+      "publicDerivedPrefixes": [
+        "slope-"
+      ],
+      "derivedNote": "표고 원값을 싣지 않고 단지→역 경로의 요약값(오름 높이·평균 경사)만 싣습니다."
+    },
+    {
+      "key": "kb",
+      "name": "KB부동산",
+      "endpoint": "api.kbland.kr · data-api.kbland.kr",
+      "license": "**이용허락 없음** — 약관 제12조 제4항·제14조 제1항 제5호",
+      "checkedUrl": "https://img2.kbstar.com/obj/ocommon/250624_kbland_full.pdf",
+      "allows": {
+        "commercial": false,
+        "redistribute": false,
+        "derive": false,
+        "cache": false
+      },
+      "status": "재배포 차단(2026-11-19 가격 · 2026-11-24 입지·주차·파생). 남은 것은 단지 목록 2개(검색의 KB id 대조표, 대표 판단)와 이용자 브라우저 직접 조회",
+      "role": "대체 대상 — legal/data-rights-decision.md",
+      "cacheNote": "**저장 금지.** 서버 수집·저장·재배포 전면 차단(2026-11-19). 이용자 브라우저의 직접 조회만 남김",
+      "org": "KB국민은행 (KB부동산)",
+      "publicPrefixes": [
+        "kb-"
+      ],
+      "note": "2026-11-24: 가격이 아닌 KB 자료(꿀세권 입지·주차·단지 좌표) 1.5MB 가 공개 배포 중이던 것을 찾아 8개 파일을 뺐습니다 — kb-*-infra, kb-*-parking, 그리고 KB 역 좌표로 계산했던 slope-*·sangga-*. 남은 kb-*-complexes 2개는 검색 기능이 KB 단지 id 를 쓰기 때문이고, 좌표 교체(npm run geocode)를 마치면 함께 정리합니다. 경위: docs/mitigation-plan.md 6절",
+      "publicDerivedPrefixes": []
+    },
+    {
+      "key": "krnetwork-station",
+      "name": "전국도시철도역사정보표준데이터",
+      "datasetId": "15013205",
+      "org": "국가철도공단 (소관 국토교통부)",
+      "endpoint": "파일(XLSX) 제공 — 오픈API 없음",
+      "license": "공공데이터포털 표준데이터 — 이용허락범위를 원문으로 아직 확인하지 못했습니다",
+      "cost": "무료",
+      "checkedUrl": "https://www.data.go.kr/data/15013205/standard.do",
+      "allows": {
+        "commercial": null,
+        "redistribute": null,
+        "derive": null,
+        "cache": null
+      },
+      "cacheNote": "파일을 아직 받지 않았습니다 — 받을 때 포털 페이지의 이용허락범위 표기를 함께 적을 것",
+      "status": "**대기** — 사람이 한 번 내려받아 data/stations.csv 로 두면 npm run stations 가 만듭니다",
+      "role": "KB 역 좌표 대체 — 추천 지도의 역 핀 · 경사(slope) · 길상권(sangga) 재생성",
+      "publicPrefixes": [
+        "station-"
+      ],
+      "note": "역 좌표가 들어오기 전까지 역세권 점수는 K-apt 도보시간 구간만으로 납니다(경사 감점·길상권 가산은 비어 있음).",
+      "publicDerivedPrefixes": []
+    },
+    {
+      "key": "kakao-local",
+      "name": "카카오 로컬 — 주소 검색(지오코딩)",
+      "org": "카카오",
+      "endpoint": "https://dapi.kakao.com/v2/local/search/address.json",
+      "license": "카카오 디벨로퍼스 서비스 약관 — 원문으로 아직 확인하지 못했습니다(상업적 이용·결과 저장 조항 확인 필요)",
+      "cost": "무료 300,000건/일",
+      "checkedUrl": "https://developers.kakao.com/docs/latest/ko/local/dev-guide",
+      "allows": {
+        "commercial": null,
+        "redistribute": null,
+        "derive": null,
+        "cache": null
+      },
+      "cacheNote": "좌표 결과를 저장·배포해도 되는지 약관 확인 전입니다 — 지오코딩을 돌리기 전에 확인할 것",
+      "status": "**대기** — REST API 키 필요(.scriptskakao-rest-key.cmd)",
+      "role": "KB 단지 좌표 대체 — K-apt 도로명주소를 좌표로. 추천 지도·경사·길상권의 뿌리 값",
+      "publicPrefixes": [
+        "complex-coords-"
+      ],
+      "note": "지도 표시에 쓰는 JavaScript 키와 다른 키입니다. 주소 원천은 K-apt(이용허락 제한 없음)이고 좌표만 카카오가 붙입니다.",
+      "publicDerivedPrefixes": []
+    }
+  ],
+  "unavailable": [
+    {
+      "need": "매물 호가",
+      "why": "네이버 부동산·호갱노노·아실·KB 모두 자동수집 금지. 적법한 공급처 없음",
+      "decision": "**기능을 넣지 않습니다.** 대체하지 말고 빼는 쪽입니다(로드맵 hard_rules 2)"
+    },
+    {
+      "need": "실시간 시세",
+      "why": "실거래는 신고 후 공개까지 시차가 있음",
+      "decision": "「최근 거래 기준일」을 화면에 항상 표시하고, 추정가와 실거래가를 같은 숫자처럼 쓰지 않습니다(hard_rules 4)"
+    }
+  ]
+}

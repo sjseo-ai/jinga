@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사업성 판단 · 진가</title>
+<meta name="description" content="국토교통부 실거래로 추정한 시세와 대출·세금·보유비용을 한 화면에서. 추정치이며 실거래가가 아닙니다.">
+<meta name="robots" content="index, follow">
+<link rel="icon" href="/icon-192.png">
+<link rel="manifest" href="/manifest.json">
+<style>
+/* ── 색·타입 ────────────────────────────────────────────────────────────────
+   기존 진가 사이트의 토큰을 그대로 씁니다(네이비 #1E2A47 · 청록 #35798A).
+   본문 글씨는 16px, 가장 작은 글씨도 14px 아래로 내려가지 않습니다.
+   제목은 20~44px 범위 안에서만 움직입니다. 본문 대비는 WCAG AA 이상으로 잡았습니다. */
+:root{
+  --navy:#1E2A47; --navy-2:#2C3A5C; --navy-fg:#F4F6FA;
+  --teal:#35798A; --teal-text:#255E6C; --teal-soft:#DCEBEE;
+  --ink:#121729; --ink-soft:#434B60; --ink-faint:#5E6676;
+  --canvas:#F1F3F5; --canvas-2:#E7EAEE; --surface:#FFFFFF;
+  --line:#D4D9E0; --line-strong:#B9C0CB;
+  --accent:#8A5F20; --accent-soft:#F6EEDC;
+  --good:#1F6B4C; --warn:#9C4620; --warn-soft:#FBEAE2;
+  --r:12px;
+  --body:"IBM Plex Sans KR","Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --shadow:0 1px 2px rgba(18,23,41,.06),0 8px 24px rgba(18,23,41,.07);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--canvas);color:var(--ink);font:400 16px/1.65 var(--body);
+  padding-bottom:48px}
+h1,h2,h3{margin:0;line-height:1.3;letter-spacing:-.01em;font-weight:700}
+h1{font-size:clamp(28px,5vw,44px)}
+h2{font-size:clamp(20px,2.6vw,27px)}
+h3{font-size:clamp(17px,1.8vw,19px)}
+p{margin:0 0 .7em}
+a{color:var(--teal-text)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* 머리 */
+.top{background:var(--navy);color:var(--navy-fg)}
+.top .wrap{display:flex;align-items:center;gap:16px;min-height:56px;flex-wrap:wrap}
+.top a{color:var(--navy-fg);text-decoration:none;font-weight:600;font-size:15px}
+.top a:hover{text-decoration:underline}
+.top .sep{opacity:.45}
+.top .here{opacity:1;border-bottom:2px solid var(--teal-soft);padding-bottom:2px}
+
+/* 출처 배지 — 이 페이지에서 가장 중요한 장치 */
+/* 배지는 장식이 아니라 **출처 표시**라서 읽혀야 합니다. 12px 로 잡았다가 한글이 작아 13px 로 올렸습니다. */
+.bq{display:inline-block;font:600 13px/1.5 var(--body);padding:1px 8px;border-radius:999px;
+  vertical-align:.08em;white-space:nowrap;margin-left:5px}
+.bq-real{background:var(--navy);color:#fff}
+.bq-official{background:var(--teal-soft);color:var(--teal-text);border:1px solid var(--teal)}
+.bq-est{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+.bq-assume{background:#fff;color:var(--ink-faint);border:1px dashed var(--line-strong)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--ink-soft);
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.legend b{color:var(--ink)}
+.legend div{display:flex;align-items:baseline;gap:2px}
+
+section{margin:28px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:20px;box-shadow:var(--shadow)}
+.card+.card{margin-top:16px}
+.hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.hd .sub{font-size:14px;color:var(--ink-faint)}
+
+/* 1. Hero */
+.hero{background:linear-gradient(170deg,var(--navy) 0%,#172138 100%);color:var(--navy-fg);
+  padding:40px 0 34px;margin:0}
+.hero .lead{font-size:clamp(15px,1.8vw,18px);color:#D3DBE8;max-width:46em;margin:12px 0 0}
+.hero .asof{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;font-size:14px}
+.hero .asof span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);
+  border-radius:999px;padding:4px 12px}
+.notice{margin-top:18px;background:rgba(255,255,255,.07);border-left:3px solid var(--teal-soft);
+  padding:12px 16px;border-radius:0 8px 8px 0;font-size:15px;color:#E4EAF3}
+.notice b{color:#fff}
+
+/* 입력 */
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+label{display:block;font-size:14px;font-weight:600;color:var(--ink-soft);margin-bottom:5px}
+label .u{font-weight:400;color:var(--ink-faint)}
+input,select,button{font:inherit;font-size:16px}
+input[type=text],input[type=number],select{width:100%;padding:9px 11px;border:1px solid var(--line-strong);
+  border-radius:8px;background:#fff;color:var(--ink);min-height:44px}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--teal);outline-offset:1px}
+.check{display:flex;align-items:center;gap:8px;font-size:15px;min-height:44px}
+.check input{width:20px;height:20px;accent-color:var(--teal)}
+.btn{min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--navy);
+  background:var(--navy);color:#fff;font-weight:700;cursor:pointer}
+.btn:hover{background:var(--navy-2)}
+.btn-2{background:#fff;color:var(--navy);border-color:var(--line-strong)}
+.btn-2:hover{background:var(--canvas-2)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+
+/* 3. MetricSummary */
+.metric{display:grid;gap:18px;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+.big{font:700 clamp(30px,5vw,42px)/1.15 var(--body);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.big small{font-size:.45em;font-weight:600;color:var(--ink-faint);letter-spacing:0}
+.range{font-size:15px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:14px}
+.chip{background:var(--canvas);border:1px solid var(--line);border-radius:999px;padding:3px 11px}
+.chip b{color:var(--ink)}
+.gradeA{background:var(--teal-soft);border-color:var(--teal);color:var(--teal-text)}
+.gradeD{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+
+/* 표 */
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--line);
+  font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left;font-variant-numeric:normal}
+thead th{font-size:14px;color:var(--ink-soft);border-bottom:2px solid var(--line-strong);font-weight:700}
+tbody tr:last-child td{border-bottom:none}
+tfoot td{font-weight:700;border-top:2px solid var(--line-strong);border-bottom:none}
+td .note{display:block;font-size:14px;color:var(--ink-faint);font-weight:400}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* 4. CandidateCards */
+.cands{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.cand{border:1px solid var(--line);border-radius:var(--r);padding:16px;background:var(--surface);position:relative}
+.cand.best{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft)}
+.cand .nm{font-weight:700;font-size:17px;padding-right:28px}
+.cand .loc{font-size:14px;color:var(--ink-faint);margin-bottom:10px}
+.cand dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:15px}
+.cand dt{color:var(--ink-faint);font-size:14px}
+.cand dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.x{position:absolute;top:10px;right:10px;width:30px;height:30px;border:1px solid var(--line);
+  background:#fff;border-radius:8px;cursor:pointer;color:var(--ink-faint);font-size:16px;line-height:1}
+.x:hover{background:var(--canvas-2);color:var(--ink)}
+
+/* 경고 */
+.warns{margin-top:16px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.warns>div{padding:11px 14px;font-size:15px;border-bottom:1px solid var(--line);display:flex;gap:10px}
+.warns>div:last-child{border-bottom:none}
+.warns .tag{flex:0 0 auto;font:600 13px/1.6 var(--body);padding:0 8px;border-radius:999px;height:fit-content}
+.t-uncertain{background:var(--warn-soft);color:var(--warn)}
+.t-likely{background:var(--accent-soft);color:var(--accent)}
+.t-confirmed{background:var(--teal-soft);color:var(--teal-text)}
+
+/* 6. ReportPreview */
+.toc{counter-reset:s;margin:0;padding:0;list-style:none}
+.toc li{counter-increment:s;display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
+.toc li:last-child{border-bottom:none}
+.toc li::before{content:counter(s);flex:0 0 26px;height:26px;border-radius:50%;background:var(--canvas);
+  border:1px solid var(--line);display:grid;place-items:center;font:700 14px/1 var(--body);color:var(--ink-soft)}
+.toc .st{margin-left:auto;flex:0 0 auto;font-size:14px;font-weight:600}
+.st-ready{color:var(--good)}
+.st-wip{color:var(--ink-faint)}
+
+/* 8. DataSources */
+.src td:first-child{font-weight:600}
+.src .u{font-size:14px;color:var(--ink-faint)}
+dl.meth{margin:0}
+dl.meth dt{font-weight:700;margin-top:14px}
+dl.meth dd{margin:4px 0 0}
+.foot{margin-top:34px;padding-top:20px;border-top:1px solid var(--line);font-size:14px;color:var(--ink-faint)}
+.empty{color:var(--ink-faint);font-size:15px;padding:10px 0}
+
+@media (max-width:760px){
+  .metric{grid-template-columns:1fr}
+  .hero{padding:30px 0 26px}
+  .card{padding:16px}
+  .wrap{padding:0 16px}
+  th,td{padding:8px 6px;font-size:15px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .btn,.x{transition:background .15s ease}
+}
+</style>
+</head>
+<body>
+
+<nav class="top" aria-label="진가 둘러보기">
+  <div class="wrap">
+    <a href="/">진가</a><span class="sep" aria-hidden="true">·</span>
+    <a href="/" >검색·추천</a><span class="sep" aria-hidden="true">·</span>
+    <a class="here" href="/decision/" aria-current="page">사업성 판단</a>
+  </div>
+</nav>
+
+<!-- 1. Hero -->
+<header class="hero">
+  <div class="wrap">
+    <h1>이 집을 사면, 돈이 어떻게 되는가</h1>
+    <p class="lead">국토교통부 실거래로 추정한 시세에, 취득세·대출·보유비용·양도세를 붙여
+      <b>5년 뒤 손에 남는 돈</b>까지 한 화면에서 봅니다. 최대 세 단지를 나란히 견줄 수 있습니다.</p>
+    <div class="asof">
+      <span id="asofTrade">실거래 기준월 …</span>
+      <span id="asofRules">세금·대출 규칙 …</span>
+      <span id="countComplex">단지 …</span>
+    </div>
+    <p class="notice"><b>추정치이며 실거래가가 아닙니다.</b> 세무·금융 자문도 아닙니다.
+      실제 신고·대출 전에는 위택스·홈택스·취급 은행에서 확인해야 합니다.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section aria-labelledby="h-legend">
+    <h2 id="h-legend" class="sr">숫자 읽는 법</h2>
+    <div class="legend">
+      <b>숫자 읽는 법 —</b>
+      <div><span class="bq bq-real">실거래</span> 국토교통부 신고 자료</div>
+      <div><span class="bq bq-official">공식</span> K-apt 공식 단지목록</div>
+      <div><span class="bq bq-est">추정</span> 진가가 계산한 값</div>
+      <div><span class="bq bq-assume">가정</span> 입력값·기본 가정</div>
+    </div>
+  </section>
+
+  <!-- 2. SearchPanel -->
+  <section aria-labelledby="h-search">
+    <div class="card">
+      <div class="hd">
+        <h2 id="h-search">① 단지 고르기</h2>
+        <span class="sub">실거래가 붙은 서울 아파트만 나옵니다</span>
+      </div>
+      <div class="grid">
+        <div>
+          <label for="gu">자치구</label>
+          <select id="gu"><option value="">불러오는 중…</option></select>
+        </div>
+        <div>
+          <label for="name">단지</label>
+          <select id="name" disabled><option value="">자치구를 먼저 고르세요</option></select>
+        </div>
+        <div>
+          <label for="area">전용면적 <span class="u">㎡</span></label>
+          <select id="area" disabled><option value="">단지를 먼저 고르세요</option></select>
+        </div>
+        <div>
+          <label for="floor">층 <span class="u">모르면 비워 두세요</span></label>
+          <input id="floor" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="예: 15">
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn" id="add" type="button" disabled>후보에 담기</button>
+        <button class="btn btn-2" id="clear" type="button">후보 비우기</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="hd">
+        <h2>② 내 자금 <span class="bq bq-assume">가정</span></h2>
+        <span class="sub">단위: 억원 · 금리는 %</span>
+      </div>
+      <div class="grid">
+        <div><label for="cash">가진 현금 <span class="u">억</span></label>
+          <input id="cash" type="number" min="0" step="0.1" inputmode="decimal" value="7"></div>
+        <div><label for="income">연소득 <span class="u">억</span></label>
+          <input id="income" type="number" min="0" step="0.05" inputmode="decimal" value="1"></div>
+        <div><label for="rate">금리 <span class="u">%</span></label>
+          <input id="rate" type="number" min="0" max="20" step="0.05" inputmode="decimal" value="4.0"></div>
+        <div><label for="years">대출 기간 <span class="u">년</span></label>
+          <input id="years" type="number" min="1" max="50" step="1" inputmode="numeric" value="30"></div>
+        <div><label for="hold">보유 기간 <span class="u">년</span></label>
+          <input id="hold" type="number" min="1" max="30" step="1" inputmode="numeric" value="5"></div>
+        <div><label for="method">상환 방식</label>
+          <select id="method">
+            <option value="equal">원리금균등</option>
+            <option value="principal">원금균등</option>
+            <option value="bullet">만기일시</option>
+          </select></div>
+        <div><label for="maint">관리비 <span class="u">월 만원</span></label>
+          <input id="maint" type="number" min="0" step="1" inputmode="numeric" value="25"></div>
+        <div><label for="ppr">공시가격 비율 <span class="u">% · 시세 대비</span></label>
+          <input id="ppr" type="number" min="30" max="100" step="1" inputmode="numeric" value="70"></div>
+        <div class="check"><input id="regulated" type="checkbox" checked>
+          <label for="regulated" style="margin:0">규제지역</label></div>
+        <div class="check"><input id="firstHome" type="checkbox">
+          <label for="firstHome" style="margin:0">생애최초</label></div>
+      </div>
+      <div class="row">
+        <button class="btn" id="calc" type="button">계산하기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. MetricSummary -->
+  <section aria-labelledby="h-metric">
+    <div class="card">
+      <div class="hd">
+        <h2 id="h-metric">③ 지금 얼마쯤인가 <span class="bq bq-est">추정</span></h2>
+        <span class="sub" id="metricSub">단지를 고르면 나옵니다</span>
+      </div>
+      <div id="metric"><p class="empty">위에서 단지와 면적을 고르세요.</p></div>
+    </div>
+  </section>
+
+  <!-- 4. CandidateCards -->
+  <section aria-labelledby="h-cands">
+    <div class="card">
+      <div class="hd">
+        <h2 id="h-cands">④ 후보 견주기 <span class="sub" id="candCount"></span></h2>
+        <span class="sub">최대 3곳</span>
+      </div>
+      <div class="cands" id="cands"><p class="empty">「후보에 담기」로 최대 세 곳을 담아 나란히 볼 수 있습니다.</p></div>
+    </div>
+  </section>
+
+  <!-- 5. DecisionBreakdown -->
+  <section aria-labelledby="h-break">
+    <div class="card">
+      <div class="hd">
+        <h2 id="h-break">⑤ 돈이 어떻게 나가는가</h2>
+        <span class="sub" id="breakSub"></span>
+      </div>
+      <div id="breakdown"><p class="empty">「계산하기」를 누르면 나옵니다.</p></div>
+    </div>
+  </section>
+
+  <!-- 6. ReportPreview -->
+  <section aria-labelledby="h-report">
+    <div class="card">
+      <div class="hd">
+        <h2 id="h-report">⑥ 보고서 미리보기</h2>
+        <span class="sub">PDF 보고서는 아직 준비 중입니다</span>
+      </div>
+      <p>지금 화면에 나온 값으로 보고서가 어디까지 채워졌는지 그대로 보여 드립니다.
+        <b>준비 중인 칸은 준비 중이라고 적습니다</b> — 빈칸을 그럴듯한 문장으로 메우지 않습니다.</p>
+      <ol class="toc" id="toc"></ol>
+      <div class="row">
+        <button class="btn btn-2" type="button" disabled title="보고서 생성은 아직 준비 중입니다">PDF 내려받기 (준비 중)</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Methodology -->
+  <section aria-labelledby="h-meth">
+    <div class="card">
+      <div class="hd"><h2 id="h-meth">⑦ 어떻게 계산했나</h2></div>
+      <dl class="meth">
+        <dt>시세 추정 — J-AVM v3</dt>
+        <dd>같은 단지의 <b>전용면적 ±10%</b> 거래를 최근 3개월에서 고릅니다. 3건이 안 모이면
+          6개월 → 12개월로 넓히되 <b>넓힌 만큼 등급을 낮추고</b>, 넓혔을 때는 최근 것만 씁니다.
+          각 거래를 그 자치구의 월별 지수로 기준월까지 끌어온 뒤(시점 보정),
+          <b>1·2층 거래는 중층 기준으로 맞춘 다음</b> 중앙값을 냅니다.
+          평균이 아니라 중앙값을 쓰는 것은 직거래 한 건에 끌려가지 않기 위해서입니다.</dd>
+        <dt>층 보정은 재서 넣은 것입니다</dt>
+        <dd>같은 단지·같은 면적대 안에서 51,995건을 재어 <b>1층 −6.2% · 2층 −2.9%</b>를 얻었고,
+          그 위(저층·고층·탑층)는 ±0.5% 안이라 사실상 평평했습니다.
+          「고층일수록 비싸다」는 통념은 서울 아파트 실거래에서 확인되지 않았습니다.</dd>
+        <dt>얼마나 맞나</dt>
+        <dd>시간순 백테스트에서 <b>중앙오차 4.1%</b>, 제시한 범위 안에 실제 거래가 들어온 비율 <b>87.5%</b>입니다(9,764건).
+          등급 A 3.6% · B 4.2% · C 4.7% 로 등급 순서대로 정확합니다.
+          맞히려는 달의 거래는 비교 거래·지수 어디에도 쓰지 않았습니다.
+          자세한 수치는 <a href="https://github.com/sjseo-ai/jinga/blob/main/research/avm-backtest.md">백테스트 기록</a>에 있습니다.</dd>
+        <dt>세금·대출</dt>
+        <dd>규칙 수치는 코드가 아니라 규칙집 파일 한 곳에만 둡니다(<span id="rulesVer">…</span>).
+          규칙마다 출처와 <b>확신도</b>를 붙여 두고, 출처가 엇갈리는 항목은 계산하되 경고를 함께 냅니다.
+          기준일이 오래되면 결과에 「규칙집이 묵었다」는 경고가 자동으로 붙습니다.</dd>
+        <dt>일부러 비워 둔 것</dt>
+        <dd>재산세 세부담상한제, 종부세 재산세중복분·고령자·장기보유 세액공제는 넣지 않았습니다 —
+          <b>그래서 보유세는 실제 고지액보다 높게 나옵니다.</b>
+          임대소득·중도상환수수료·변동금리 경로·분양권은 다루지 않습니다.
+          미래 가격은 <b>예측이 아니라 가정</b>이며, 진가는 가격을 맞히지 않습니다.</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 8. DataSources -->
+  <section aria-labelledby="h-src">
+    <div class="card">
+      <div class="hd">
+        <h2 id="h-src">⑧ 쓴 자료</h2>
+        <span class="sub">이 페이지는 공공데이터와 자체 계산값만 씁니다</span>
+      </div>
+      <div class="scroll">
+        <table class="src">
+          <thead><tr><th>자료</th><th>성격</th><th>기준</th><th>이용허락</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>아파트 매매 실거래가<span class="u"> 국토교통부 · 포털 15126468</span></td>
+              <td><span class="bq bq-real">실거래</span></td>
+              <td id="srcTrade">—</td>
+              <td>제한 없음</td>
+            </tr>
+            <tr>
+              <td>공동주택 단지목록<span class="u"> K-apt</span></td>
+              <td><span class="bq bq-official">공식</span></td>
+              <td id="srcKapt">—</td>
+              <td>제한 없음</td>
+            </tr>
+            <tr>
+              <td>단지·면적별 추정 시세<span class="u"> 진가 J-AVM v3</span></td>
+              <td><span class="bq bq-est">추정</span></td>
+              <td id="srcModel">—</td>
+              <td>자체 계산</td>
+            </tr>
+            <tr>
+              <td>세금·대출 규칙집<span class="u"> 진가 정리 · 규칙별 출처 표기</span></td>
+              <td><span class="bq bq-est">추정</span></td>
+              <td id="srcRules">—</td>
+              <td>자체 정리</td>
+            </tr>
+            <tr>
+              <td>내 자금·보유기간·관리비</td>
+              <td><span class="bq bq-assume">가정</span></td>
+              <td>입력값</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="foot">이 페이지에 <b>민간 유료 시세 자료는 쓰지 않습니다.</b>
+        입력한 값은 이 기기 안에만 남고 서버로 보내지 않습니다.
+        <a href="/legal.html">이용약관·개인정보</a></p>
+    </div>
+  </section>
+
+</main>
+
+<script type="module">
+import {
+  plan, scenarios, acquisitionCost, loanLimit, holdingCost, rulesAge,
+} from '/jinga-finance.mjs';
+
+const $ = s => document.querySelector(s);
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+
+// ── 숫자 적기 ───────────────────────────────────────────────────────────────
+// 만원 단위를 사람이 읽는 말로. 억 아래는 만원으로, 그 위는 억으로 적습니다.
+const 억 = won => `${(Math.round(won / 1e7) / 10).toLocaleString('ko-KR')}억`;
+const 만 = won => `${Math.round(won / 10000).toLocaleString('ko-KR')}만`;
+const manwonToWon = m => m * 10000;
+const pp = v => `${Math.round(v).toLocaleString('ko-KR')}만`;
+const amtKr = manwon => {
+  const 억n = Math.floor(manwon / 10000), 만n = Math.round(manwon % 10000);
+  if (억n <= 0) return `${만n.toLocaleString('ko-KR')}만`;
+  return 만n ? `${억n}억 ${만n.toLocaleString('ko-KR')}만` : `${억n}억`;
+};
+const ymKr = ym => (ym ? `${String(ym).slice(0, 4)}년 ${Number(String(ym).slice(4, 6))}월` : '—');
+const GRADE_TEXT = { A: '최근 3개월 거래', B: '최근 6개월 거래', C: '최근 1년 거래', D: '거래가 너무 적음', none: '거래 없음' };
+
+let IDX = null, RULES = null, CANDS = [];
+
+// ── 불러오기 ────────────────────────────────────────────────────────────────
+async function boot() {
+  const [idx, rules] = await Promise.all([
+    fetch('/decision-index.json').then(r => r.json()),
+    fetch('/finance-rules.json').then(r => r.json()),
+  ]);
+  IDX = idx; RULES = rules;
+
+  $('#asofTrade').textContent = `실거래 기준월 ${ymKr(idx.asOfYM)}`;
+  $('#asofRules').textContent = `세금·대출 규칙 ${rules.asOf} 기준`;
+  $('#countComplex').textContent = `서울 ${idx.counts.complexes.toLocaleString('ko-KR')}개 단지`;
+  $('#srcTrade').textContent = `${ymKr(idx.asOfYM)}까지`;
+  $('#srcKapt').textContent = String(idx.generatedAt).slice(0, 10);
+  $('#srcModel').textContent = `중앙오차 4.1%`;
+  $('#srcRules').textContent = `${rules.version} (${rules.asOf})`;
+  $('#rulesVer').textContent = `${rules.version} · 기준일 ${rules.asOf}`;
+
+  const gus = [...new Set(idx.complexes.map(c => c.gu))].sort((a, b) => a.localeCompare(b, 'ko'));
+  const gu = $('#gu');
+  gu.innerHTML = '';
+  gu.append(el('option', null, '자치구를 고르세요'));
+  for (const g of gus) { const o = el('option', null, g); o.value = g; gu.append(o); }
+
+  restore();
+  renderToc();
+}
+
+// ── 단지 고르기 ─────────────────────────────────────────────────────────────
+const current = () => {
+  const c = IDX && IDX.complexes.find(x => x.id === $('#name').value);
+  if (!c) return null;
+  const a = c.areas.find(x => String(x.m2) === $('#area').value);
+  return a ? { c, a } : null;
+};
+
+$('#gu').addEventListener('change', () => {
+  const list = IDX.complexes.filter(c => c.gu === $('#gu').value);
+  const sel = $('#name');
+  sel.innerHTML = '';
+  if (!list.length) { sel.append(el('option', null, '자치구를 먼저 고르세요')); sel.disabled = true; onPick(); return; }
+  sel.append(el('option', null, `${list.length}곳 중에서 고르세요`));
+  for (const c of list) {
+    const o = el('option', null, `${c.name} · ${c.dong}`);
+    o.value = c.id; sel.append(o);
+  }
+  sel.disabled = false;
+  $('#area').innerHTML = ''; $('#area').append(el('option', null, '단지를 먼저 고르세요')); $('#area').disabled = true;
+  onPick();
+});
+
+$('#name').addEventListener('change', () => {
+  const c = IDX.complexes.find(x => x.id === $('#name').value);
+  const sel = $('#area');
+  sel.innerHTML = '';
+  if (!c) { sel.append(el('option', null, '단지를 먼저 고르세요')); sel.disabled = true; onPick(); return; }
+  for (const a of c.areas) {
+    const o = el('option', null, `${a.m2}㎡ (${Math.round(a.m2 / 3.3058)}평) · 거래 ${a.n}건`);
+    o.value = String(a.m2); sel.append(o);
+  }
+  sel.disabled = false;
+  sel.value = String(c.areas[0].m2);
+  onPick();
+});
+
+$('#area').addEventListener('change', onPick);
+$('#floor').addEventListener('input', onPick);
+
+function onPick() {
+  const cur = current();
+  $('#add').disabled = !cur || CANDS.length >= 3;
+  renderMetric(cur);
+}
+
+// ── 층 보정 — 서버에서 쓴 것과 같은 배수 ────────────────────────────────────
+// 단지별 최고층을 모르므로 **1·2층만** 보정합니다. 재어 보니 그 위는 사실상 평평했습니다.
+const FLOOR_FACTOR = { 1: 0.938, 2: 0.971 };
+const floorAdj = floor => FLOOR_FACTOR[Number(floor)] || 1;
+
+/** 고른 면적의 추정값에 층 보정을 적용한 것 */
+function priced(cur) {
+  if (!cur) return null;
+  const f = floorAdj($('#floor').value);
+  const { a } = cur;
+  return {
+    perPyeong: a.pp ? Math.round(a.pp * f) : null,
+    amount: a.amt ? Math.round(a.amt * f) : null,
+    low: Math.round(a.lo * f), high: Math.round(a.hi * f),
+    n: a.n, grade: a.g, last: a.last, floorFactor: f,
+  };
+}
+
+// ── 3. MetricSummary ────────────────────────────────────────────────────────
+function renderMetric(cur) {
+  const box = $('#metric');
+  box.innerHTML = '';
+  if (!cur) { box.append(el('p', 'empty', '위에서 단지와 면적을 고르세요.')); $('#metricSub').textContent = '단지를 고르면 나옵니다'; return; }
+
+  const p = priced(cur);
+  const { c, a } = cur;
+  $('#metricSub').textContent = `${c.name} · 전용 ${a.m2}㎡ · 기준월 ${ymKr(p.last)}`;
+
+  const left = el('div');
+  if (p.amount) {
+    const big = el('div', 'big');
+    big.append(document.createTextNode(amtKr(p.amount)));
+    const s = el('small', null, '원 추정');
+    big.append(s);
+    left.append(big);
+  } else {
+    left.append(el('div', 'big', '값을 내지 않습니다'));
+    left.append(el('p', 'range', '거래가 너무 적어 한 값으로 적지 않고 범위만 보여 드립니다.'));
+  }
+  left.append(el('div', 'range', `범위 ${amtKr(p.low)} ~ ${amtKr(p.high)}원`));
+
+  const chips = el('div', 'chips');
+  const chip = (text, cls) => { const n = el('span', `chip ${cls || ''}`.trim(), text); chips.append(n); };
+  chip(`${GRADE_TEXT[p.grade] || p.grade} · ${p.grade}등급`, p.grade === 'A' ? 'gradeA' : (p.grade === 'D' || p.grade === 'none') ? 'gradeD' : '');
+  chip(`표본 ${p.n}건`);
+  if (p.perPyeong) chip(`평당 ${pp(p.perPyeong)}원`);
+  if (p.floorFactor !== 1) chip(`${$('#floor').value}층 보정 ${Math.round((p.floorFactor - 1) * 1000) / 10}%`);
+  else chip('중층 기준');
+  left.append(chips);
+
+  // 자치구·법정동 실거래 평균과 견주기 — 이건 추정이 아니라 집계값이라 배지가 다릅니다
+  const right = el('div');
+  const reg = IDX.region && IDX.region.gu && IDX.region.gu[c.gu];
+  const t = el('table');
+  const tb = el('tbody');
+  const tr = (label, value, badge) => {
+    const r = el('tr');
+    const th = el('th', null, label); th.scope = 'row';
+    if (badge) { const b = el('span', `bq ${badge}`, badge === 'bq-real' ? '실거래' : '추정'); th.append(b); }
+    const td = el('td', null, value);
+    r.append(th, td); tb.append(r);
+  };
+  if (p.perPyeong) tr('이 면적 평당가', `${pp(p.perPyeong)}원`, 'bq-est');
+  if (reg) {
+    const dong = (reg.dongs || []).find(d => d.name === c.dong);
+    if (dong) tr(`${c.dong} 평균 평당가`, `${pp(dong.perPyeong)}원 · ${dong.n}건`, 'bq-real');
+    tr(`${c.gu} 평균 평당가`, `${pp(reg.perPyeong)}원 · ${reg.n}건`, 'bq-real');
+  }
+  if (IDX.region && IDX.region.seoul) tr('서울 평균 평당가', `${pp(IDX.region.seoul.perPyeong)}원 · ${IDX.region.seoul.n.toLocaleString('ko-KR')}건`, 'bq-real');
+  if (p.perPyeong && reg) {
+    const d = Math.round((p.perPyeong / reg.perPyeong - 1) * 1000) / 10;
+    tr(`${c.gu} 평균 대비`, `${d > 0 ? '+' : ''}${d}%`);
+  }
+  t.append(tb);
+  const sc = el('div', 'scroll'); sc.append(t); right.append(sc);
+  right.append(el('p', 'foot', `자치구·법정동 평균은 최근 ${IDX.region ? IDX.region.months : 3}개월 실거래 집계값입니다(추정 아님). 면적·연식이 섞여 있어 단지끼리 바로 견주는 값은 아닙니다.`));
+
+  const wrap = el('div', 'metric');
+  wrap.append(left, right);
+  box.append(wrap);
+}
+
+// ── 4. CandidateCards ───────────────────────────────────────────────────────
+$('#add').addEventListener('click', () => {
+  const cur = current();
+  if (!cur || CANDS.length >= 3) return;
+  const p = priced(cur);
+  const key = `${cur.c.id}|${cur.a.m2}|${$('#floor').value || ''}`;
+  if (CANDS.some(x => x.key === key)) return;
+  CANDS.push({ key, name: cur.c.name, gu: cur.c.gu, dong: cur.c.dong, m2: cur.a.m2, floor: $('#floor').value || null, p });
+  renderCands();
+  onPick();
+});
+$('#clear').addEventListener('click', () => { CANDS = []; renderCands(); onPick(); });
+
+function renderCands() {
+  const box = $('#cands');
+  box.innerHTML = '';
+  $('#candCount').textContent = CANDS.length ? `${CANDS.length}곳` : '';
+  if (!CANDS.length) { box.append(el('p', 'empty', '「후보에 담기」로 최대 세 곳을 담아 나란히 볼 수 있습니다.')); return; }
+
+  // 가장 싼 평당가에 표시 — 「좋다」가 아니라 「싸다」입니다. 좋음은 저희가 판단하지 않습니다.
+  const withPp = CANDS.filter(c => c.p.perPyeong);
+  const cheapest = withPp.length > 1 ? withPp.reduce((a, b) => (b.p.perPyeong < a.p.perPyeong ? b : a)).key : null;
+
+  for (const c of CANDS) {
+    const card = el('div', `cand${c.key === cheapest ? ' best' : ''}`);
+    const x = el('button', 'x', '×');
+    x.type = 'button';
+    x.setAttribute('aria-label', `${c.name} 후보에서 빼기`);
+    x.addEventListener('click', () => { CANDS = CANDS.filter(v => v.key !== c.key); renderCands(); onPick(); });
+    card.append(x);
+    card.append(el('div', 'nm', c.name));
+    card.append(el('div', 'loc', `${c.gu} ${c.dong} · 전용 ${c.m2}㎡${c.floor ? ` · ${c.floor}층` : ' · 중층 기준'}`));
+    const dl = el('dl');
+    const add = (k, v) => { dl.append(el('dt', null, k), el('dd', null, v)); };
+    add('추정가', c.p.amount ? `${amtKr(c.p.amount)}원` : '값 없음');
+    add('범위', `${amtKr(c.p.low)} ~ ${amtKr(c.p.high)}`);
+    if (c.p.perPyeong) add('평당', `${pp(c.p.perPyeong)}원`);
+    add('등급·표본', `${c.p.grade} · ${c.p.n}건`);
+    const reg = IDX.region && IDX.region.gu && IDX.region.gu[c.gu];
+    if (c.p.perPyeong && reg) add(`${c.gu} 대비`, `${c.p.perPyeong >= reg.perPyeong ? '+' : ''}${Math.round((c.p.perPyeong / reg.perPyeong - 1) * 1000) / 10}%`);
+    card.append(dl);
+    if (c.key === cheapest) card.append(el('p', 'foot', '평당가가 가장 낮습니다 — 싸다는 뜻이고, 좋다는 뜻은 아닙니다.'));
+    box.append(card);
+  }
+}
+
+// ── 5. DecisionBreakdown ────────────────────────────────────────────────────
+const n = (id, d = 0) => { const v = Number($(id).value); return Number.isFinite(v) ? v : d; };
+
+function inputs(cur) {
+  const p = priced(cur);
+  const price = p && p.amount ? manwonToWon(p.amount) : 0;
+  return {
+    price,
+    areaM2: cur.a.m2,
+    cash: n('#cash') * 1e8,
+    annualIncome: n('#income') * 1e8,
+    annualRate: n('#rate') / 100,
+    years: n('#years', 30),
+    holdYears: n('#hold', 5),
+    method: $('#method').value,
+    monthlyMaintenance: n('#maint') * 10000,
+    publicPriceRatio: n('#ppr', 70) / 100,
+    regulated: $('#regulated').checked,
+    firstHome: $('#firstHome').checked,
+    houses: 1,
+    liveYears: n('#hold', 5),
+  };
+}
+
+$('#calc').addEventListener('click', () => { save(); renderBreakdown(); });
+
+function renderBreakdown() {
+  const box = $('#breakdown');
+  box.innerHTML = '';
+  const cur = current();
+  if (!cur) { box.append(el('p', 'empty', '먼저 단지와 면적을 고르세요.')); return; }
+  const p = priced(cur);
+  if (!p.amount) {
+    box.append(el('p', 'empty', '이 면적은 거래가 너무 적어 추정 대표값이 없습니다. 값이 있는 면적을 고르거나, 거래가 더 쌓일 때까지 기다려 주세요.'));
+    $('#breakSub').textContent = '';
+    renderToc();
+    return;
+  }
+
+  const inp = inputs(cur);
+  const out = scenarios(inp, RULES, undefined, new Date().toISOString().slice(0, 10));
+  const b = out.base;
+  $('#breakSub').textContent = `${cur.c.name} 전용 ${cur.a.m2}㎡ · 추정가 ${amtKr(p.amount)}원 기준`;
+
+  // 살 때
+  box.append(el('h3', null, '살 때 드는 돈'));
+  const t1 = el('table'), tb1 = el('tbody');
+  for (const i of b.acquisition.items) {
+    const tr = el('tr');
+    const th = el('th', null, i.label); th.scope = 'row';
+    if (i.note) th.append(el('span', 'note', i.note));
+    tr.append(th, el('td', null, `${만(i.amount)}원`));
+    tb1.append(tr);
+  }
+  const tf1 = el('tfoot'), trf = el('tr');
+  trf.append(el('td', null, '합계'), el('td', null, `${만(b.acquisition.total)}원`));
+  tf1.append(trf);
+  t1.append(tb1, tf1);
+  const s1 = el('div', 'scroll'); s1.append(t1); box.append(s1);
+
+  // 대출
+  box.append(el('h3', null, '빌릴 수 있는 돈'));
+  const t2 = el('table'), th2 = el('thead'), hr = el('tr');
+  hr.append(el('th', null, '기준'), el('th', null, '한도'));
+  th2.append(hr);
+  const tb2 = el('tbody');
+  for (const c of b.loanLimit.candidates) {
+    const tr = el('tr');
+    const th = el('th', null, `${c.key === b.loanLimit.binding ? '▶ ' : ''}${c.label}`); th.scope = 'row';
+    if (c.key === b.loanLimit.binding) th.append(el('span', 'note', '가장 빡빡한 조건 — 실제 한도를 정합니다'));
+    tr.append(th, el('td', null, `${억(c.amount)}원`));
+    tb2.append(tr);
+  }
+  t2.append(th2, tb2);
+  const s2 = el('div', 'scroll'); s2.append(t2); box.append(s2);
+
+  const loanP = el('p');
+  loanP.append(document.createTextNode(`실행액 ${억(b.loan.principal)}원 · 첫 달 ${만(b.loan.firstPayment)}원 · 총이자 ${억(b.loan.totalInterest)}원`));
+  box.append(loanP);
+  if (b.loan.shortfall > 0) {
+    const w = el('p', 'range');
+    w.append(el('b', null, `필요한 대출보다 ${억(b.loan.shortfall)}원 모자랍니다. `));
+    w.append(document.createTextNode(`${b.loanLimit.bindingLabel}에 걸립니다.`));
+    box.append(w);
+  }
+  const cashP = el('p');
+  cashP.append(document.createTextNode(`처음 들어가는 현금 ${억(b.cashNeeded)}원`));
+  if (b.cashShort > 0) cashP.append(el('b', null, ` — 가진 돈보다 ${억(b.cashShort)}원 모자랍니다`));
+  box.append(cashP);
+
+  // 보유
+  box.append(el('h3', null, `가지고 있는 동안 (${b.input.holdYears}년)`));
+  const t3 = el('table'), th3 = el('thead'), hr3 = el('tr');
+  hr3.append(el('th', null, '해'), el('th', null, '재산세'), el('th', null, '종부세'), el('th', null, '관리비'), el('th', null, '대출'), el('th', null, '합계'));
+  th3.append(hr3);
+  const tb3 = el('tbody');
+  b.holding.rows.forEach((h, i) => {
+    const y = b.yearly[i];
+    const tr = el('tr');
+    const th = el('th', null, `${h.year}년차`); th.scope = 'row';
+    tr.append(th, el('td', null, `${만(h.propertyTax)}`), el('td', null, `${만(h.comprehensiveTax)}`),
+      el('td', null, `${만(h.maintenance)}`), el('td', null, `${만(y.loan)}`), el('td', null, `${만(y.total)}`));
+    tb3.append(tr);
+  });
+  const tf3 = el('tfoot'), tr3 = el('tr');
+  tr3.append(el('td', null, '합계'), el('td', null, ''), el('td', null, ''), el('td', null, ''), el('td', null, ''), el('td', null, `${억(b.outflowDuringHold)}원`));
+  tf3.append(tr3);
+  t3.append(th3, tb3, tf3);
+  const s3 = el('div', 'scroll'); s3.append(t3); box.append(s3);
+  box.append(el('p', 'foot', `단위: 만원. ${b.holding.note}`));
+
+  // 팔 때 — 가정
+  const h4 = el('h3');
+  h4.append(document.createTextNode('팔 때 '));
+  h4.append(el('span', 'bq bq-assume', '가정'));
+  box.append(h4);
+  const dis = el('p');
+  dis.append(el('b', null, '아래 가격은 예측이 아니라 가정입니다. '));
+  dis.append(document.createTextNode('진가는 미래 가격을 맞히지 않습니다. 세 갈래를 나란히 두고 「이렇게 움직이면 이렇게 된다」만 보여 줍니다.'));
+  box.append(dis);
+
+  const t4 = el('table'), th4 = el('thead'), hr4 = el('tr');
+  hr4.append(el('th', null, '경우'), el('th', null, '매도가'), el('th', null, '양도세'), el('th', null, '대출잔액'), el('th', null, '손에 남는 돈'), el('th', null, '총투입'), el('th', null, '손익'));
+  th4.append(hr4);
+  const tb4 = el('tbody');
+  for (const c of out.cases) {
+    const g = `${c.yearlyGrowth > 0 ? '+' : ''}${Math.round(c.yearlyGrowth * 100)}%/년`;
+    const tr = el('tr');
+    const th = el('th', null, `${c.label} (${g})`); th.scope = 'row';
+    const profit = el('td', null, `${c.profit >= 0 ? '+' : '−'}${억(Math.abs(c.profit))}원`);
+    profit.style.color = c.profit >= 0 ? 'var(--good)' : 'var(--warn)';
+    profit.style.fontWeight = '700';
+    tr.append(th, el('td', null, `${억(c.sellPrice)}`), el('td', null, `${만(c.capitalGains.total)}`),
+      el('td', null, `${억(c.loanBalance)}`), el('td', null, `${억(c.proceeds)}`), el('td', null, `${억(c.invested)}`), profit);
+    tb4.append(tr);
+  }
+  t4.append(th4, tb4);
+  const s4 = el('div', 'scroll'); s4.append(t4); box.append(s4);
+  box.append(el('p', 'foot', '총투입 = 처음 들어간 현금 + 보유 기간 동안 더 낸 돈. 갚은 원금은 대출잔액이 줄어든 만큼 「손에 남는 돈」으로 되돌아옵니다.'));
+
+  // 경고 — 믿지 말아야 할 것
+  if (out.warnings.length) {
+    box.append(el('h3', null, `믿지 말아야 할 것 (${out.warnings.length}건)`));
+    const w = el('div', 'warns');
+    const T = { uncertain: '출처 엇갈림', likely: '원문 미확인', confirmed: '확인됨' };
+    for (const x of out.warnings) {
+      const row = el('div');
+      row.append(el('span', `tag t-${x.confidence}`, T[x.confidence] || x.confidence));
+      const d = el('div');
+      d.append(el('b', null, `${x.label} — `));
+      d.append(document.createTextNode(x.message));
+      row.append(d);
+      w.append(row);
+    }
+    box.append(w);
+  }
+
+  renderToc(out);
+}
+
+// ── 6. ReportPreview ───────────────────────────────────────────────────────
+// 채워진 칸은 지금 값을 그대로 적고, 안 된 칸은 **안 됐다고 적습니다.**
+function renderToc(out) {
+  const cur = IDX ? current() : null;
+  const p = cur ? priced(cur) : null;
+  const rows = [
+    ['요약', out ? `${cur.c.name} 전용 ${cur.a.m2}㎡ · 추정 ${amtKr(p.amount)}원` : '단지를 고르고 계산하면 채워집니다', !!out],
+    ['가정과 기준일', RULES ? `실거래 ${ymKr(IDX.asOfYM)} · 규칙집 ${RULES.version}` : '—', !!RULES],
+    ['후보 비교', CANDS.length ? `${CANDS.length}곳 담김` : '후보를 담으면 채워집니다', CANDS.length > 0],
+    ['시세 근거표', p ? `표본 ${p.n}건 · ${p.grade}등급 · 범위 ${amtKr(p.low)}~${amtKr(p.high)}` : '—', !!p],
+    ['취득·보유·처분 비용', out ? `취득 ${만(out.base.acquisition.total)}원 · ${out.base.input.holdYears}년 보유 ${억(out.base.outflowDuringHold)}원` : '—', !!out],
+    ['시나리오', out ? `${out.cases.length}갈래(가정)` : '—', !!out],
+    ['리스크·경고', out ? `${out.warnings.length}건` : '—', !!out],
+    ['체크리스트', '준비 중 — 고객 인터뷰에서 항목을 정한 뒤 넣습니다', false],
+    ['PDF 조판·출처 각주', '준비 중', false],
+    ['사람 검수', '준비 중 — 유료 전환 전에는 사람이 한 번 봅니다', false],
+  ];
+  const ol = $('#toc');
+  ol.innerHTML = '';
+  for (const [name, detail, ready] of rows) {
+    const li = el('li');
+    const d = el('div');
+    d.append(el('b', null, name));
+    d.append(el('span', 'note', detail));
+    li.append(d);
+    li.append(el('span', `st ${ready ? 'st-ready' : 'st-wip'}`, ready ? '채워짐' : '준비 중'));
+    ol.append(li);
+  }
+}
+
+// ── 입력값 기억 — 이 기기 안에만. 서버로 보내지 않습니다 ────────────────────
+const KEEP = ['cash', 'income', 'rate', 'years', 'hold', 'method', 'maint', 'ppr'];
+function save() {
+  try {
+    const o = {};
+    for (const k of KEEP) o[k] = $(`#${k}`).value;
+    o.regulated = $('#regulated').checked;
+    o.firstHome = $('#firstHome').checked;
+    localStorage.setItem('jinga.decision', JSON.stringify(o));
+  } catch (e) { /* 사생활 보호 모드에서는 저장이 막힙니다 — 그래도 계산은 됩니다 */ }
+}
+function restore() {
+  try {
+    const o = JSON.parse(localStorage.getItem('jinga.decision') || '{}');
+    for (const k of KEEP) if (o[k] != null && $(`#${k}`)) $(`#${k}`).value = o[k];
+    if (o.regulated != null) $('#regulated').checked = !!o.regulated;
+    if (o.firstHome != null) $('#firstHome').checked = !!o.firstHome;
+  } catch (e) { /* 값이 깨졌으면 기본값으로 */ }
+}
+
+boot().catch(err => {
+  const box = $('#metric');
+  box.innerHTML = '';
+  box.append(el('p', 'empty', `자료를 불러오지 못했습니다. 새로 고쳐 주세요. (${err && err.message ? err.message : err})`));
+});
+</script>
+</body>
+</html>

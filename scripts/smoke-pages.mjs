@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  esc, slug, aptPath, guPath, usedText, parkPerHouse, parkText, areaMix, rentPct,
+  esc, slug, aptPath, guPath, usedText, parkPerHouse, parkText, areaMix, rentPct, sourcesAgree, parkAdvice,
   aptPage, guPage, hubPage, sitemap, SITE,
 } from '../scripts/_pages.mjs';
 
@@ -104,24 +104,33 @@ test('자료가 빈 단지 — 아는 것만 적고 나머지 줄은 통째로 �
 test('자치구 페이지', () => {
   const rows = [
     { ...C, k: K },
-    { id: 2, name: '빠듯단지', gu: '성동구', dong: '행당동', households: 800, k: { parkUnder: 0, parkGround: 400, households: 800 } },
+    // KB 값을 같이 둡니다 — 두 자료가 같은 쪽을 가리켜야 이름을 올리기 때문입니다
+    { id: 2, name: '빠듯단지', gu: '성동구', dong: '행당동', households: 800, k: { parkUnder: 0, parkGround: 400, households: 800 }, kbPark: { total: 420, per: 0.53 } },
   ];
-  const p = guPage('성동구', rows, { avgPerPyeong: 7657, vsSeoul: 127, asOf: '2026.09.11',
-    dongs: [{ name: '마장동', count: 5, avgPerPyeong: 6000 }, { name: '행당동', count: 3, avgPerPyeong: 8000 }, { name: '한곳뿐', count: 1, avgPerPyeong: 99999 }] });
+  // 시세를 **넘겨도** 페이지에 나오면 안 됩니다. 부르는 쪽(build-pages.mjs)에서 빼는 것만으로는
+  // 예전 호출이 하나 남아 있어도 조용히 다시 실립니다 — 그래서 그리는 쪽에서 막고 여기서 지킵니다.
+  const p = guPage('성동구', rows, { avgPerPyeong: 7657, vsSeoul: 127, asOf: '2026.09.11', kaptAsOf: '2026.10.12',
+    dongs: [{ name: '마장동', count: 5, avgPerPyeong: 6000 }, { name: '행당동', count: 3, avgPerPyeong: 8000 }] });
   assert.equal(p.path, '/gu/성동구/');
-  assert.ok(p.title.includes('평당 7,657만원'));
-  assert.ok(p.html.includes('서울 평균의 127%'));
-  assert.ok(p.html.includes('행당동'), '동네별 평당가');
-  assert.ok(!p.html.includes('한곳뿐'), '단지 1곳뿐인 동은 「동네 평균」으로 쓰지 않습니다');
-  assert.ok(p.html.includes('주차가 빠듯한 단지'), '세대당 0.5대짜리가 있으니');
+  assert.ok(!p.title.includes('평당'), '제목에 시세를 쓰지 않습니다');
+  assert.ok(!p.html.includes('7,657') && !p.html.includes('서울 평균의 127%'), 'KB 평당가를 싣지 않습니다');
+  assert.ok(!p.html.includes('동네별 평당가') && !p.html.includes('6,000만원'), '동네별 시세도 싣지 않습니다');
+  assert.ok(p.html.includes('K-apt') && p.html.includes('2026.10.12'), '남는 것은 국토부 공식 자료');
+  assert.ok(p.html.includes('주차가 빠듯한 단지'), '두 자료 모두 세대당 0.5대 안팎이니');
+  assert.ok(p.html.includes('빠듯단지'), '두 자료가 일치하면 이름을 올립니다');
   assert.ok(p.html.includes('/apt/1747-청계현대/'), '단지 페이지로 가는 길');
 });
 
 test('입구와 sitemap', () => {
-  const hub = hubPage([{ gu: '강동구', n: 56 }, { gu: '성동구', n: 43 }], 1069);
+  const hub = hubPage([
+    { region: 'seoul', rows: [{ gu: '강동구', n: 56 }, { gu: '성동구', n: 43 }] },
+    { region: 'gyeonggi', rows: [{ gu: '용인', n: 120 }] },
+  ], 1189);
   assert.equal(hub.path, '/apt/');
-  assert.ok(hub.html.includes('/gu/강동구/'));
-  assert.ok(hub.html.includes('1,069'));
+  assert.ok(hub.html.includes('/gu/강동구/') && hub.html.includes('/gu/용인/'), '두 지역 모두');
+  assert.ok(hub.html.includes('1,189'));
+  assert.ok(hub.html.includes('서울 자치구로 찾기') && hub.html.includes('경기 시로 찾기'),
+    '서울은 「자치구」, 경기는 「시」로 불러야 합니다');
 
   const sm = sitemap(['/apt/1747-청계현대/', '/gu/성동구/'], '2026-10-19');
   assert.ok(sm.startsWith('<?xml'));
@@ -144,4 +153,132 @@ test('sitemap·canonical 은 인코딩된 주소여야 합니다 — 크롤러�
   assert.ok(!/<loc>[^<]*[가-힣]/.test(sm), 'sitemap 에 날한글이 남으면 안 됩니다');
   // 화면에 보이는 링크(href)는 읽기 좋게 한글 그대로 둡니다 — 브라우저가 알아서 바꿉니다
   assert.ok(html.includes('href="/gu/성동구/"'), '사람이 보는 링크는 한글 그대로');
+});
+
+test('지역을 가립니다 — 경기 단지를 서울로 적으면 안 됩니다', () => {
+  const seoul = aptPage(C, K, { region: 'seoul' }).html;
+  assert.ok(seoul.includes('"addressRegion":"서울특별시"'));
+
+  const gg = { ...C, id: 90001, name: '수지한양', gu: '용인', dong: '풍덕천동' };
+  const html = aptPage(gg, K, { region: 'gyeonggi' }).html;
+  assert.ok(html.includes('"addressRegion":"경기도"'), '경기 단지는 경기도로');
+  assert.ok(!html.includes('서울특별시'), '서울이 섞이면 안 됩니다');
+  assert.ok(html.includes('/gu/용인/'));
+
+  // 지역을 안 주면 서울로 둡니다(예전 호출을 깨지 않게)
+  assert.ok(aptPage(C, K).html.includes('"addressRegion":"서울특별시"'));
+});
+
+test('경기 시 페이지 — 평당가 집계가 없어도 만들어집니다', () => {
+  const rows = [{ id: 90001, name: '수지한양', gu: '용인', dong: '풍덕천동', households: 800, k: K }];
+  const p = guPage('용인', rows, { region: 'gyeonggi' });
+  assert.equal(p.path, '/gu/용인/');
+  assert.ok(p.html.includes('용인 아파트'));
+  assert.ok(p.desc.includes('경기도 용인'), '설명에 지역이 들어가야 검색에서 갈립니다');
+  assert.ok(!p.html.includes('평당'), '평당가 자료가 없으면 그 줄은 통째로 빠집니다');
+  assert.ok(!/undefined|NaN/.test(p.html));
+});
+
+test('주차: 두 자료가 엇갈리면 이름을 짚지 않습니다', () => {
+  // 2026-11-12 명일 신동아 — 우리는 K-apt 0.62 로 「빠듯한 곳」에 올렸는데
+  // 독자가 본 KB부동산 화면은 1.05 였습니다. 한쪽만 보고 단정한 탓입니다.
+  assert.equal(sourcesAgree(0.62, 1.05), false, '1대를 사이에 두고 갈리면 false');
+  assert.equal(sourcesAgree(0.62, 0.83), true, '둘 다 1대 미만이면 true');
+  assert.equal(sourcesAgree(1.21, 0.51), false, 'K-apt 가 더 높은 반대 경우도 걸러야 합니다');
+  assert.equal(sourcesAgree(1.76, 1.8), true);
+  assert.equal(sourcesAgree(0.99, 1), false, '경계선도 규칙대로');
+  assert.equal(sourcesAgree(0.62, null), null, 'KB 를 모르면 「같다」도 「다르다」도 아닙니다');
+  assert.equal(sourcesAgree(null, 1.05), null);
+
+  // 한 마디도 단정하지 않습니다
+  assert.match(parkAdvice(0.62, 1.05), /엇갈/);
+  assert.match(parkAdvice(0.62, 0.83), /한 대가 안 됩니다/);
+  assert.match(parkAdvice(1.5, 1.6), /넉넉/);
+  assert.equal(parkAdvice(null, 1.05), '');
+});
+
+test('구 페이지: 엇갈리는 단지는 목록에서 빠지고, 왜 뺐는지 밝힙니다', () => {
+  const mk = (id, name, hh, under, ground, kbPer) => ({
+    id, name, gu: '강동구', dong: '명일동', households: hh,
+    k: { households: hh, parkUnder: under, parkGround: ground },
+    kbPark: kbPer == null ? null : { total: Math.round(kbPer * hh), per: kbPer },
+  });
+  const rows = [
+    mk(1, '신동아', 570, 0, 355, 1.05),      // 엇갈림 — 빠져야 합니다
+    mk(2, '한양', 500, 0, 325, 0.7),         // 둘 다 1대 미만 — 빠듯한 곳
+    mk(3, '고덕아이파크', 1000, 1760, 0, 1.8), // 둘 다 1대 이상 — 넉넉한 곳
+  ];
+  const html = guPage('강동구', rows, { region: 'seoul' }).html;
+  assert.ok(!/신동아/.test(html.split('세대수가 많은')[0]), '엇갈리는 단지는 주차 목록에 없어야 합니다');
+  assert.ok(/한양/.test(html));
+  assert.ok(/고덕아이파크/.test(html));
+  assert.match(html, /엇갈리는 단지 1곳은 목록에서 뺐습니다/);
+});
+
+test('단지 페이지: 두 숫자를 나란히 싣습니다', () => {
+  const c = { id: 1, name: '신동아', gu: '강동구', dong: '명일동', households: 570 };
+  const k = { households: 570, parkUnder: 0, parkGround: 355 };
+  const html = aptPage(c, k, { region: 'seoul', kbPark: { total: 600, per: 1.05 } }).html;
+  assert.match(html, /세대당 0\.62대/, 'K-apt 값');
+  assert.match(html, /KB부동산은 세대당 1\.05대/, 'KB 값도 함께');
+  assert.match(html, /600대/);
+  assert.match(html, /고르지 않고/, '어느 쪽이 맞다고 고르지 않는다고 밝힙니다');
+
+  // KB 를 모르면 그 줄만 빠지고 나머지는 그대로
+  const only = aptPage(c, k, { region: 'seoul' }).html;
+  assert.match(only, /세대당 0\.62대/);
+  assert.ok(!/KB부동산은/.test(only));
+});
+
+// ── 실거래 기반 추정 시세 (T011) ────────────────────────────────────────────
+// 모델 카드가 요구하는 여섯 가지를 한 화면에 함께 적어야 합니다 —
+// 추정치·범위·거래 건수·등급·기준월·출처. 하나라도 빠지면 추정치가 실거래가처럼 읽힙니다.
+test('단지 페이지의 추정 시세 — 여섯 가지를 함께 적는다', () => {
+  const tp = {
+    asOfYM: '202611',
+    areas: [{ area: 84, perPyeong: 9800, amount: 249068, low: 224344, high: 274605, n: 3, grade: 'A', last: '202610' }],
+  };
+  const { html } = aptPage(C, K, { tradePrice: tp });
+  assert.ok(html.includes('24.9억'), '추정치');
+  assert.ok(html.includes('22.4~27.5억'), '범위');
+  assert.ok(html.includes('거래 3건'), '거래 건수');
+  assert.ok(html.includes('A등급'), '등급');
+  assert.ok(html.includes('2026년 11월 기준'), '기준월');
+  assert.ok(html.includes('국토교통부 실거래가'), '출처');
+  assert.ok(html.includes('추정치이며 실거래가가 아닙니다'), '추정임을 분명히');
+});
+
+test('거래가 적은 면적은 대표값 없이 범위만 — 0 이나 빈칸으로 두지 않는다', () => {
+  const tp = { asOfYM: '202611', areas: [{ area: 59, perPyeong: null, amount: null, low: 90000, high: 135000, n: 2, grade: 'D', last: '202605' }] };
+  const { html } = aptPage(C, K, { tradePrice: tp });
+  assert.ok(html.includes('9~13.5억'), '범위는 보여 줍니다');
+  assert.ok(html.includes('대표값 없음'), '왜 숫자가 하나가 아닌지 적습니다');
+  assert.ok(!/>\s*0억/.test(html), '0억 같은 값이 나오면 안 됩니다');
+});
+
+test('실거래 자료가 없는 단지는 그 칸이 통째로 빠진다', () => {
+  const { html } = aptPage(C, K, {});
+  assert.ok(!html.includes('실거래로 본 시세'), '없으면 제목도 나오지 않아야 — 빈 표는 고장으로 보입니다');
+});
+
+// 자치구 페이지의 평당가 — KB 를 내린 자리를 **실거래**로 되살린 것(2026-11-20).
+// 같은 「평당가」라도 재는 것이 다르므로, 무엇을 잰 값인지 화면에 적혀 있어야 합니다.
+test('자치구 페이지는 실거래 평당가를 싣되 무엇을 잰 값인지 밝힌다', () => {
+  const rows = [{ ...C, k: K }];
+  const trade = { perPyeong: 7020, n: 100, months: 3, seoul: { perPyeong: 4580, n: 8431 },
+    dongs: [{ name: '광장동', perPyeong: 8559, n: 30 }, { name: '자양동', perPyeong: 7939, n: 41 }] };
+  const p = guPage('광진구', rows, { region: 'seoul', kaptAsOf: '2026.10.12', trade });
+  assert.ok(p.html.includes('평당 7,020만원'), '평당가');
+  assert.ok(p.html.includes('실거래 100건의 중앙값'), '몇 건을 어떻게 셌는지');
+  assert.ok(p.html.includes('국토교통부 실거래가'), '출처');
+  assert.ok(p.html.includes('시세가 아니라 거래된 값입니다'), 'KB 시세와 다른 것임을 밝힘');
+  assert.ok(p.html.includes('광장동') && p.html.includes('8,559'), '동네별');
+  assert.ok(p.title.includes('실거래 평당 7,020만원'), '제목에도 실거래임을 밝힘');
+});
+
+test('실거래 자료가 없는 자치구는 평당가 칸이 통째로 빠진다', () => {
+  const rows = [{ ...C, k: K }];
+  const p = guPage('광진구', rows, { region: 'seoul', kaptAsOf: '2026.10.12' });
+  assert.ok(!p.html.includes('평당'), '없으면 아예 안 싣습니다');
+  assert.ok(!p.title.includes('평당'));
 });

@@ -1,0 +1,121 @@
+# 로드맵 진행 상황
+
+기준 문서 `재태크 앱/JINGA_Claude_Execution_Roadmap_2027.json` · 갱신 2026-11-23
+표기 원칙 — **증빙 파일이 있는 것만 done.** 사람 승인이나 외부 입력을 기다리는 것은 blocked 로 적고 무엇이 필요한지 함께 적습니다.
+
+## P0 — 현황 진단 및 즉시 위험 통제 (11/19~12/04)
+
+| 과제 | 상태 | 증빙 | 남은 것 |
+|---|---|---|---|
+| T001 저장소·배포·기능 인벤토리 | **done** | `docs/current-state.md`, `artifacts/inventory.json`, `scripts/build-inventory.mjs` | 없음 (`node scripts/build-inventory.mjs` 로 언제든 갱신) |
+| T002 KB 데이터 계보·외부전송 감사 | **done** | `docs/data-lineage.md`, `artifacts/source-register.csv` | 변호사 확인이 필요한 「추정」 항목은 문서에 분리해 표시 |
+| T003 위험기능 차단·롤백 계획 | **done** | `docs/mitigation-plan.md`, `config/feature-flags.example.json`, 배포 완료(2026-11-19 15:37) | 없음 |
+| T004 법률 의견·KB 이용허락 질의 | **blocked** | `legal/questions-to-counsel.md`, `legal/data-rights-decision.md` (초안 완성) | 대표가 ①변호사 선임 ②질의서 발송. 둘 다 사람 승인 사항 |
+
+### P0 종료 게이트
+> 법률 검토 전 KB 기반 신규 유료기능 배포 금지 · 무단 수집·재배포로 판단되는 기능 제한
+
+- 유료기능: **없음** (결제 기능 자체가 없음)
+- 재배포 기능: 가격 7건(2026-11-19) + **가격이 아닌 KB 자료 8파일 약 2.6MB(2026-11-24)** 차단·제거 완료.
+  남은 것은 검색이 쓰는 KB 단지 id 대조표 2개(좌표 교체 후 정리) — `docs/mitigation-plan.md` 7절
+
+## P1 — 고객·시장·제품정의 (진행 중)
+
+| 과제 | 상태 | 증빙 | 남은 것 |
+|---|---|---|---|
+| T005 초기 타깃 고객 세분화 | **done(가설 표시)** | `business/icp-personas.md` | 지불의향 수치는 T006 으로 검증 |
+| T006 고객 인터뷰 20건 | **blocked(사람)** | `research/interview-template.md`, `research/findings-anonymized.csv` | 대표가 섭외·진행. 대본·기록 양식은 준비됨 |
+| T007 경쟁 벤치마킹 | **done(일부 미확인)** | `business/competitor-matrix.md` | 국내 3사 금액 비공개 — 앱에서 직접 확인 필요 |
+| T008 요구사항·비범위 동결 | 대기 | — | T006 결과 필요 |
+
+## P2 — 적법 데이터 엔진 (키 없이 할 수 있는 것부터 시작)
+
+| 과제 | 상태 | 증빙 | 남은 것 |
+|---|---|---|---|
+| T009 공공 API 이용조건·데이터 사전 | **done(일부 미확인)** | `data/source-policy.json`, `data/data-dictionary.md` | K-apt·학교알리미·OpenTopoData 이용허락범위 원문 확인 |
+| T010 수집·정규화 파이프라인 | **진행 중** | `scripts/_trades.mjs`, `scripts/build-trades.mjs`, `scripts/match-trades.mjs`, `scripts/smoke-trades-ingest.mjs`(8건) | 서울 12개월 62,335건 수집·정규화 완료 · 단지 매칭 74.7% · 남은 것: 일별 갱신·메타데이터 저장(`docs/schema.md`) |
+| T011 KB 의존 교체 | **done** | `scripts/build-kapt-list.mjs`, `scripts/smoke-no-unlicensed.mjs`(6건), 공식 단지목록 교체·지역 지도 실거래 전환 | 용적률은 건축물대장(15134735) 연결 시 복원 |
+| T012 기초 J-AVM | **done(v1)** | `scripts/_avm.mjs`, `scripts/run-avm.mjs`, `scripts/smoke-avm.mjs`(8건), `docs/model-card.md` | 층 보정·전월세 결합은 다음 판 |
+| T013 백테스트 | **done** | `scripts/backtest-avm.mjs`, `scripts/exp-avm.mjs`, `research/metrics.json`, `research/avm-backtest.md` | 중앙오차 4.3% · 범위 적중 85% · **기준선과 동률**(정확도 개선은 층·향 자료 필요) |
+| T014 개인정보·보안 기본체계 | **done** | `security/privacy-checklist.md`, `security/threat-model.md`, `scripts/smoke-privacy.mjs`(8건) | 2FA·접근기록·자동 취약점 점검은 P4 진입 조건으로 미룸 |
+
+## P2 종료
+
+> 게이트: 적법 데이터로 돌아가는 가격 엔진 · 무허가 수집 제거
+
+- 가격: 국토교통부 실거래 기반 J-AVM v2(중앙오차 4.3%·범위 적중 85%)로 **사이트 전면 교체 완료**
+- 무허가 수집: 배포물에서 0 — `smoke-no-unlicensed.mjs` 가 매 테스트마다 확인
+- 남은 KB: 이용자 브라우저의 검색 조회(대표 판단), 시장 흐름 집계 통계(T004 질의 대상), 단지 목록 파일
+
+## P3 — 의사결정 보고서 MVP (시작)
+
+| 과제 | 상태 | 증빙 | 남은 것 |
+|---|---|---|---|
+| T015 비교 분석 엔진 | 대기 | — | T008(요구사항 동결) 필요 — 무엇을 비교할지가 인터뷰에서 나옵니다 |
+| T016 대출·비용 및 시나리오 계산 | **done** | `scripts/_finance.mjs`, `data/finance-rules.json`, `scripts/smoke-finance.mjs`(24건), `docs/finance-model.md`, `npm run finance` | 화면 연결은 T017 |
+| T017 PDF 보고서 템플릿 | 대기 | — | T015 필요 |
+| T018 품질·환각 방지 게이트 | 대기 | — | T017 필요 |
+| T019 시범 사용자 10명 | 대기(사람) | — | T018 필요 |
+
+**T016 합격 기준 대조**
+
+| 기준 | 결과 |
+|---|---|
+| 대표 시나리오 수동 대조검증 | 9개 값을 외부 계산 예시·닫힌 수식·조문 손계산으로 대조 — 재산세는 **원 단위까지** 일치 |
+| 규제·세법 변경시 경고/업데이트 경로 존재 | 규칙집 분리(`data/finance-rules.json`) + 규칙별 출처·확신도 + 180일 경과 시 **자동 갱신 경고** |
+| 미래 가격은 가정 시나리오로 분리 | `plan()`(사실)과 `scenarios()`(가정)를 분리하고, **`plan()` 출력에 매도가가 없음을 테스트가 검사** |
+
+> 조사 중 확인된 것: **LTV·스트레스DSR·다주택 중과는 출처마다 값이 엇갈립니다.**
+> 숨기지 않고 `uncertain` 으로 표시해 계산 결과에 경고를 함께 냅니다. 법령 원문 확인은 T004(변호사)와 묶어 두었습니다.
+
+## 구현 계획서(㉯ `JINGA_IMPLEMENTATION_PLAN.json`) 반영 — 2026-11-23
+
+계획서가 둘이고 번호가 겹치므로 **대조표를 따로 두었습니다 → `docs/plan-mapping.md`.**
+㉯ 를 받아 새로 한 일은 셋입니다.
+
+| ㉯ | 한 일 | 증빙 |
+|---|---|---|
+| T007 | **층 보정을 재서 모델에 넣음** — 1층 −6.2% · 2층 −2.9%, 그 위는 평평. 중앙오차 4.3%→4.1% | `scripts/exp-floor.mjs`, `scripts/_avm.mjs` `FLOOR_FACTOR`, `docs/model-card.md`(v3), `scripts/smoke-avm.mjs`(14건) |
+| T009 | **`/decision` 화면 신설** — 단지 고르기·추정 시세·후보 3곳 비교·비용 전개·보고서 미리보기·방법론·출처 | `site/public/decision/index.html`, `scripts/build-decision.mjs`, `scripts/smoke-decision.mjs`(13건), `scripts/check-decision.mjs`(브라우저 22건) |
+| T004 | 이용허락 대장에 **캐시 권리** 칸 추가 · 빈 소유자·원문URL 채움 · 실거래 키 상태 갱신 | `data/source-policy.json`, `scripts/smoke-no-unlicensed.mjs`(8건) |
+
+**덤으로 풀린 것:** K-apt 기본정보가 「국토교통부 제공 · 이용허락범위 제한 없음」(데이터셋 15058453)으로
+확인됐습니다. 단지 페이지 2,002장의 근거 자료가 「확인 필요」에서 벗어났습니다.
+
+| T008 | **백테스트 v3 로 갱신 · 코호트 추가**(면적대·층대) — 기준선을 처음으로 이김 | `research/metrics.json`, `research/avm-backtest.md` |
+
+**T013/㉯T008 재측정 결과(2026-11-23, 9,764건)** — 중앙오차 **4.3% → 4.1%**, 범위 적중 85% → **86%**,
+기준선(직전 거래 그대로) 4.3% 대비 **처음으로 모델이 우위**. 등급도 처음으로 순서대로 섰습니다
+(A 3.6% · B 4.2% · C 4.7% · D 5.4%). 층 보정은 **1층에서 기준선 대비 1.1%p** 로 가장 크게 들었습니다.
+
+**㉯ T010 입지 어댑터 교체(2026-11-24):** KB 꿀세권·주차·그 좌표로 계산한 경사·길상권 **8개 파일(약 2.6MB)을
+배포에서 빼고**, 같은 지표를 국토교통부 K-apt 신고값으로 다시 만들었습니다(`scripts/build-kapt-infra.mjs`).
+역세권 점수가 직선거리 → **도보시간 구간**이 되었고, 점수표 `[15, 13, 8, 3, 0]` 은 기존 곡선에서 유도했습니다
+(구간 중앙값 × 70m/분 ÷ 보행 우회계수 1.4). 학군은 통학구역 추정 → **K-apt 신고 배정 학교 이름**으로 근거가 세졌지만,
+단지 좌표가 없어 거리 성분과 학원 수는 멈춰 있습니다 — 화면 설명에 그대로 적었습니다.
+교체 중 **학교알리미(공공누리 제3유형 변경금지)** 와 **정보몽땅 원자료 배포** 두 건을 더 찾아 함께 정리했습니다.
+검사를 6건 → 12건으로 늘리고, 「금지 목록」이 아니라 **「허용을 증명하게」** 바꿨습니다.
+
+**A등급 범위 폭 재측정(2026-11-24):** `scripts/exp-band.mjs` 로 재어 `BAND.A` 를 0.08→0.09 로 넓혔습니다.
+A등급 적중 82.4% → **86.1%**, 전체 86% → **87.5%** 로 네 등급 모두 목표 85% 를 넘겼습니다. 대표값·중앙오차는 그대로(4.1%).
+
+## P4~P6 — 아직 시작 전
+
+| 단계 | 시작 조건 |
+|---|---|
+| P4 결제·B2B | 변호사 의견 + 사업자·전자상거래 준비(대표) |
+| P5 모두의 창업 지원 | 2027 공고 확인(미공개) |
+
+## 사람이 해 주셔야 하는 것 (막혀 있는 순서대로)
+
+1. ~~국토교통부 실거래 API 활용신청~~ — **2026-11-19 완료.** 매매·매매상세·전월세 3종 모두 통과,
+   서울 12개월 62,335건을 실제로 받았습니다. 키는 `.secrets/molit.json`(git 제외).
+   · **남은 일 하나: Cloudflare 로그인** — 워커(`jinga-korea-macro`)에 등록된 키는 다른(예전) 키라 아직 403 입니다.
+     `npx wrangler login` 을 한 번 해 주시면 제가 `wrangler secret put MOLIT_API_KEY` 로 바꾸고 배포하겠습니다.
+   · **키가 대화에 노출되었으므로 재발급을 권합니다** — 재발급 후 `npm run molit:key` 로 다시 넣으면 끝입니다.
+2. ~~`JINGA_KB_BULK` 차단 배포~~ — 2026-11-19 완료.
+3. **고객 인터뷰 섭외** — 대본은 `research/interview-template.md` 에 준비돼 있습니다. 실수요자 12·중개사 8이 목표이며,
+   블로그 연재 독자(강동·노원·관악)가 가장 가까운 모집단입니다. *(T008 과 P3 보고서 구성이 여기서 막힘)*
+   · 구독자 발송 중단 안내는 **필요 없어졌습니다** — 대표 지시대로 기존 구독자에게 보고서는 계속 나갑니다(전수 엑셀 첨부만 빠짐).
+4. **변호사 선임·질의서 발송** — `legal/questions-to-counsel.md`.
+5. 2027 모두의 창업 공고가 뜨면 알려 주시면 목표·일정을 갱신하겠습니다.

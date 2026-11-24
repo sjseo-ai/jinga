@@ -157,19 +157,32 @@ export function adminOp(posts, { op, postId, status }) {
 export const displayName = (name, uid) => name || `이웃 ${String(uid || '').slice(0, 4) || '****'}`;
 
 /** 화면으로 내보낼 글 — uid·신고자 목록처럼 남에게 보일 필요가 없는 것은 뺍니다 */
-export const publicPost = (p, me = null, { withReplies = true } = {}) => ({
+export const publicPost = (p, me = null, { withReplies = true } = {}) => (p.deleted ? {
+  // 지운 글 — 자리만 남습니다(답글이 딸려 사라지지 않게). 쓴 사람이 누구였는지는 내보내지 않습니다.
+  id: p.id, at: p.at, deleted: true, deletedAt: p.deletedAt, status: p.status,
+  title: '', body: '', name: '', kind: p.kind, target: p.target, hidden: false, mine: false,
+  replyCount: (p.replies || []).filter(r => !r.hidden && !r.deleted).length,
+  ...(withReplies ? {
+    replies: (p.replies || []).map(r => (r.deleted
+      ? { id: r.id, at: r.at, deleted: true, body: '', name: '', admin: false, hidden: false, mine: false }
+      : { id: r.id, body: r.hidden ? '' : r.body, admin: !!r.admin, name: r.admin ? '운영자' : displayName(r.name, r.uid), at: r.at, hidden: !!r.hidden, mine: !!me && r.uid === me })),
+  } : {}),
+} : {
   id: p.id, kind: p.kind, target: p.target, title: p.title,
   body: p.hidden ? '' : p.body,
   name: displayName(p.name, p.uid),
   status: p.status, at: p.at, hidden: !!p.hidden,
   mine: !!me && p.uid === me,
-  replyCount: (p.replies || []).filter(r => !r.hidden).length,
+  replyCount: (p.replies || []).filter(r => !r.hidden && !r.deleted).length,
   ...(withReplies ? {
-    replies: (p.replies || []).map(r => ({
-      id: r.id, body: r.hidden ? '' : r.body, admin: !!r.admin,
-      name: r.admin ? '운영자' : displayName(r.name, r.uid),
-      at: r.at, hidden: !!r.hidden, mine: !!me && r.uid === me,
-    })),
+    // 살아 있는 글에 **지운 답글**이 섞여 있을 수 있습니다 — 그 줄도 이름·내용을 내보내지 않습니다
+    replies: (p.replies || []).map(r => (r.deleted
+      ? { id: r.id, at: r.at, deleted: true, body: '', name: '', admin: false, hidden: false, mine: false }
+      : {
+        id: r.id, body: r.hidden ? '' : r.body, admin: !!r.admin,
+        name: r.admin ? '운영자' : displayName(r.name, r.uid),
+        at: r.at, hidden: !!r.hidden, mine: !!me && r.uid === me,
+      })),
   } : {}),
 });
 
@@ -195,4 +208,56 @@ export function counts(posts) {
   const out = { total: (posts || []).length };
   for (const s of STATUSES) out[s.key] = (posts || []).filter(p => p.status === s.key).length;
   return out;
+}
+
+/**
+ * 본인 글·답글 지우기 (2026-11-23).
+ *
+ * **글 자체를 배열에서 빼지 않고 「지운 자리」만 남깁니다.** 답글이 달린 글을 통째로 빼면
+ * 남의 답글까지 같이 사라집니다. 그래서 내용·이름·uid 는 지우고 자리만 둡니다 —
+ * 읽는 사람에게는 「지워진 글」로 보이고, 지운 사람의 흔적은 남지 않습니다.
+ *
+ * 지울 수 있는 사람은 **쓴 사람 본인뿐**입니다(운영자 숨김은 report/hide 쪽 일).
+ * uid 는 메일 주소의 해시라, 같은 메일로 로그인한 사람만 자기 글을 지울 수 있습니다.
+ */
+export function removeOwn(posts, { postId, replyId = null, uid }) {
+  const list = posts || [];
+  const i = list.findIndex(p => p.id === postId);
+  if (i < 0) return { ok: false, error: '글을 찾지 못했습니다' };
+  const tomb = row => ({ id: row.id, at: row.at, deleted: true, deletedAt: new Date().toISOString(),
+    ...(row.replies ? { replies: row.replies } : {}) });
+
+  const next = [...list];
+  if (!replyId) {
+    if (next[i].uid !== uid) return { ok: false, error: '자기 글만 지울 수 있습니다' };
+    next[i] = { ...tomb(next[i]), status: next[i].status };
+  } else {
+    const rs = next[i].replies || [];
+    const j = rs.findIndex(r => r.id === replyId);
+    if (j < 0) return { ok: false, error: '답글을 찾지 못했습니다' };
+    if (rs[j].uid !== uid) return { ok: false, error: '자기 답글만 지울 수 있습니다' };
+    const rr = [...rs];
+    rr[j] = tomb(rr[j]);
+    next[i] = { ...next[i], replies: rr };
+  }
+  return { ok: true, value: next };
+}
+
+/** 한 사람이 쓴 것을 모두 지웁니다 — 글·답글 양쪽. 지운 개수를 함께 돌려줍니다. */
+export function removeAllBy(posts, uid) {
+  let n = 0;
+  const value = (posts || []).map(p => {
+    let post = p;
+    if (p.uid === uid && !p.deleted) { post = { id: p.id, at: p.at, deleted: true, deletedAt: new Date().toISOString(), replies: p.replies, status: p.status }; n++; }
+    const rs = post.replies || [];
+    if (rs.some(r => r.uid === uid && !r.deleted)) {
+      post = { ...post, replies: rs.map(r => {
+        if (r.uid !== uid || r.deleted) return r;
+        n++;
+        return { id: r.id, at: r.at, deleted: true, deletedAt: new Date().toISOString() };
+      }) };
+    }
+    return post;
+  });
+  return { value, removed: n };
 }

@@ -218,3 +218,49 @@ export function outsideLinks({ name, gu = '', dong = '', lat = null, lng = null 
   out.push({ site: '호갱노노', url: 'https://hogangnono.com/', note: '단지명으로 검색' });
   return out;
 }
+
+/**
+ * 한 사람이 남긴 것을 **모두 지웁니다**(2026-11-23).
+ *
+ * 왜 여기 있는가 — 지우는 일은 조용히 실패하면 가장 나쁩니다. 「지웠습니다」라고 말해 놓고
+ * 어딘가에 남아 있으면, 그 사람은 지워진 줄 알고 있습니다. 그래서 저장소를 넣어 시험할 수 있는
+ * 자리(순수 함수에 가까운 형태)에 두고, 테스트가 **정말 안 남았는지** 확인합니다.
+ *
+ * 지우는 곳
+ *   · 게시판 글·답글 — 내용만 지우고 자리는 남깁니다(남의 답글이 딸려 사라지지 않게)
+ *   · 임장 동행 등록·신청 — 줄째로 뺍니다
+ *   · 단지별 평가·방문 기록 — 단지마다 흩어져 있어 훑어서 지웁니다
+ *   · 회원 기록
+ *
+ * @param removeAllBy 게시판 쪽 함수를 넣어 줍니다(모듈 순환을 피하려고)
+ */
+export async function purgeMember({ store, uid, paths, removeAllBy }) {
+  const removed = { posts: 0, hosts: 0, requests: 0, ratings: 0, visits: 0 };
+
+  const posts = (await store.get(paths.posts).catch(() => null)) || [];
+  const rp = removeAllBy(posts, uid);
+  if (rp.removed) await store.put(paths.posts, rp.value);
+  removed.posts = rp.removed;
+
+  for (const [key, path] of [['hosts', paths.hosts], ['requests', paths.requests]]) {
+    const list = (await store.get(path).catch(() => null)) || [];
+    if (!Array.isArray(list)) continue;
+    const left = list.filter(x => x.uid !== uid);
+    if (left.length !== list.length) { await store.put(path, left); removed[key] = list.length - left.length; }
+  }
+
+  for (const [key, prefix] of [['ratings', paths.ratingsPrefix], ['visits', paths.visitsPrefix]]) {
+    for (const path of (await store.list(prefix).catch(() => [])) || []) {
+      const list = (await store.get(path).catch(() => null)) || [];
+      if (!Array.isArray(list)) continue;
+      const left = list.filter(x => x.uid !== uid);
+      if (left.length !== list.length) { await store.put(path, left); removed[key] += list.length - left.length; }
+    }
+  }
+
+  await store.del(paths.member(uid)).catch(() => {});
+  return removed;
+}
+
+/** 지우기 전에 받는 확인 문구 — 되돌릴 수 없는 일이라 그대로 적게 합니다 */
+export const PURGE_PHRASE = '내 자료를 지웁니다';

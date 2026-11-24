@@ -69,6 +69,8 @@
     <p class="muted">관리자 비밀번호를 입력하세요. 로그인은 이 브라우저에서 12시간 유지되고, 「로그아웃」을 누르면 바로 풀립니다.</p>
     <form id="gateForm">
       <input type="password" id="pwInput" autocomplete="current-password" placeholder="비밀번호" aria-label="관리자 비밀번호" required>
+      <!-- 2단계 인증을 켜 두었을 때만 나타납니다(서버가 need:'code' 로 알려 줍니다) -->
+      <input type="text" id="codeInput" inputmode="numeric" autocomplete="one-time-code" placeholder="인증 앱 6자리 (또는 백업 코드)" aria-label="2단계 인증 코드" hidden>
       <button type="submit" id="loginBtn">로그인</button>
     </form>
     <div id="gateMsg" aria-live="polite"></div>
@@ -87,6 +89,7 @@
         <button type="button" class="ghost" id="refreshBtn">새로고침</button>
         <button type="button" class="ghost" id="csvBtn">CSV 내려받기</button>
         <button type="button" class="ghost" id="pwToggleBtn">비밀번호 변경</button>
+        <button type="button" class="ghost" id="secToggleBtn">보안</button>
         <button type="button" class="ghost" id="logoutBtn">로그아웃</button>
       </div>
     </header>
@@ -101,6 +104,37 @@
       </form>
       <div id="pwMsg" aria-live="polite"></div>
       <p class="muted" style="margin:6px 0 0">바꾸면 다른 기기·브라우저의 로그인은 모두 풀립니다. 비밀번호를 잊었으면 운영 PC에서 scripts\admin-password.cmd 로 다시 정하세요.</p>
+    </section>
+
+    <!-- 보안 — 2단계 인증과 접근 기록. 둘 다 2026-11-23 에 넣었습니다(security/privacy-checklist.md) -->
+    <section class="card" id="secCard" hidden style="margin-bottom:14px">
+      <h2>보안</h2>
+
+      <h3 style="margin:10px 0 6px;font-size:15px">2단계 인증</h3>
+      <p class="muted" id="totpState">확인 중…</p>
+      <div class="toolbar">
+        <button type="button" id="totpStartBtn">켜기</button>
+        <button type="button" class="ghost" id="totpOffBtn" hidden>끄기</button>
+      </div>
+
+      <div id="totpSetup" hidden style="margin-top:10px">
+        <p class="muted">인증 앱(구글 OTP·Authy 등)에 아래 비밀값을 넣고, 앱에 뜬 6자리를 적어 주세요.
+          <b>이 화면을 닫으면 비밀값과 백업 코드를 다시 볼 수 없습니다.</b></p>
+        <p><code id="totpSecret" style="font-size:15px;letter-spacing:1px;word-break:break-all"></code></p>
+        <p class="muted">백업 코드 — 인증 앱을 잃어버렸을 때 쓰는 일회용 열쇠입니다. <b>종이에 적어 두세요.</b></p>
+        <pre id="totpBackup" style="white-space:pre-wrap;font-size:13px;margin:4px 0 10px"></pre>
+        <form id="totpForm" class="toolbar">
+          <input type="text" id="totpCode" inputmode="numeric" placeholder="앱에 뜬 6자리" aria-label="인증 코드" required>
+          <button type="submit">확인하고 켜기</button>
+        </form>
+      </div>
+      <div id="totpMsg" aria-live="polite"></div>
+
+      <h3 style="margin:16px 0 6px;font-size:15px">관리자 접근 기록</h3>
+      <p class="muted">최근 로그인·비밀번호 변경 기록입니다. <b>내가 하지 않은 성공 기록</b>이 있으면 바로 비밀번호를 바꾸세요.
+        접속 주소는 해시로만 남습니다(같은 곳인지만 구분).</p>
+      <div class="toolbar"><button type="button" class="ghost" id="logLoadBtn">기록 보기</button></div>
+      <div id="accessLog" style="margin-top:8px"></div>
     </section>
 
     <div class="stats" id="stats"></div>
@@ -197,8 +231,8 @@
   async function call(url, init){
     const r = await fetch(url, { cache:'no-store', credentials:'same-origin', ...(init || {}), headers:{ 'Content-Type':'application/json' } });
     const j = await r.json().catch(() => ({}));
-    if(r.status === 401){ const e = new Error(j.error || '로그인이 필요합니다.'); e.auth = true; throw e; }
-    if(!r.ok || !j.ok){ const e = new Error(j.error || `서버 응답 ${r.status}`); e.status = r.status; throw e; }
+    if(r.status === 401){ const e = new Error(j.error || '로그인이 필요합니다.'); e.auth = true; e.body = j; throw e; }
+    if(!r.ok || !j.ok){ const e = new Error(j.error || `서버 응답 ${r.status}`); e.status = r.status; e.body = j; throw e; }
     return j;
   }
   const api = init => call('/api/admin' + (init ? '' : '?view=page'), init);
@@ -370,7 +404,7 @@
   }
 
   function renderStats(r){
-    const days = r.days || [], refs = r.refs || [], utm = r.utm || [], dev = r.device || [];
+    const days = r.days || [], refs = r.refs || [], utm = r.utm || [], dev = r.device || [], areas = r.areas || [];
     if(!days.length){
       $('stBox').innerHTML = '<span class="muted">아직 방문 기록이 없습니다. 사이트를 한 번 열면 쌓이기 시작합니다.</span>';
       return;
@@ -395,6 +429,8 @@
         <div><div style="font-weight:800;font-size:13px;margin-bottom:5px">어디서 왔나</div>${list(refs, '아직 없습니다')}</div>
         <div><div style="font-weight:800;font-size:13px;margin-bottom:5px">링크 꼬리표(utm_source)</div>${list(utm, '꼬리표 붙은 링크로 들어온 방문이 아직 없습니다')}</div>
         <div><div style="font-weight:800;font-size:13px;margin-bottom:5px">휴대폰 / PC</div>${list(dev, '아직 없습니다')}</div>
+        <div><div style="font-weight:800;font-size:13px;margin-bottom:5px">어느 화면으로 들어왔나</div>${list(areas, '아직 없습니다')}
+          <div class="muted" style="font-size:11.5px;margin-top:4px">단지·자치구는 검색으로 바로 들어온 쪽입니다</div></div>
       </div>`;
   }
 
@@ -574,16 +610,24 @@
     e.preventDefault();
     const password = $('pwInput').value;
     if(!password) return;
+    const code = $('codeInput').value.trim();
     $('loginBtn').disabled = true;
     $('gateMsg').textContent = '확인 중…';
     try{
-      await loginApi(post({ action:'login', password }));
-      $('pwInput').value = '';
-      $('gateMsg').textContent = '';
+      const r = await loginApi(post({ action:'login', password, ...(code ? { code } : {}) }));
+      $('pwInput').value = ''; $('codeInput').value = '';
+      $('gateMsg').textContent = r.usedBackup ? `백업 코드로 들어왔습니다. 남은 백업 코드 ${r.backupLeft}개 — 떨어지기 전에 새로 받아 두세요.` : '';
       await load();
     }catch(err){
-      $('gateMsg').textContent = err.message;
-      $('pwInput').select();
+      // 2단계 인증이 켜져 있으면 서버가 need:'code' 로 알려 줍니다 — 그때 코드 칸을 띄웁니다
+      if(err.body && err.body.need === 'code'){
+        $('codeInput').hidden = false;
+        $('gateMsg').textContent = code ? err.message : '인증 앱의 6자리 숫자를 입력하세요.';
+        $('codeInput').focus();
+      }else{
+        $('gateMsg').textContent = err.message;
+        $('pwInput').select();
+      }
     }finally{
       $('loginBtn').disabled = false;
     }
@@ -594,6 +638,69 @@
   });
   $('pwToggleBtn').addEventListener('click', () => { $('pwCard').hidden = !$('pwCard').hidden; $('pwMsg').textContent = ''; if(!$('pwCard').hidden) $('pwCurrent').focus(); });
   $('pwCancelBtn').addEventListener('click', () => { $('pwForm').reset(); $('pwCard').hidden = true; });
+
+  // ── 보안 — 2단계 인증·접근 기록 (2026-11-23) ───────────────────────────────
+  async function totpState(){
+    try{
+      const r = await loginApi(post({ action:'totp-status' }));
+      $('totpState').textContent = r.enabled
+        ? `켜져 있습니다. 로그인할 때 인증 앱의 6자리를 함께 넣어야 합니다. (남은 백업 코드 ${r.backupLeft}개)`
+        : '꺼져 있습니다. 비밀번호 하나만 알면 들어올 수 있습니다.';
+      $('totpStartBtn').hidden = !!r.enabled;
+      $('totpOffBtn').hidden = !r.enabled;
+    }catch(e){ if(!authLost(e)) $('totpState').textContent = e.message; }
+  }
+  $('secToggleBtn').addEventListener('click', () => {
+    $('secCard').hidden = !$('secCard').hidden;
+    if(!$('secCard').hidden) totpState();
+  });
+  $('totpStartBtn').addEventListener('click', async () => {
+    $('totpMsg').textContent = '';
+    try{
+      const r = await loginApi(post({ action:'totp-setup' }));
+      $('totpSecret').textContent = r.secret;
+      $('totpBackup').textContent = r.backupCodes.join('   ');
+      $('totpSetup').hidden = false;
+      $('totpCode').focus();
+    }catch(e){ if(!authLost(e)) $('totpMsg').textContent = e.message; }
+  });
+  $('totpForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    $('totpMsg').textContent = '확인 중…';
+    try{
+      await loginApi(post({ action:'totp-enable', code: $('totpCode').value.trim() }));
+      $('totpSetup').hidden = true;
+      $('totpSecret').textContent = ''; $('totpBackup').textContent = ''; $('totpCode').value = '';
+      $('totpMsg').textContent = '켰습니다. 다음 로그인부터 6자리를 함께 넣어야 합니다.';
+      totpState();
+    }catch(err){ if(!authLost(err)) $('totpMsg').textContent = err.message; }
+  });
+  $('totpOffBtn').addEventListener('click', async () => {
+    const pw = prompt('2단계 인증을 끄려면 관리자 비밀번호를 입력하세요.');
+    if(!pw) return;
+    try{
+      await loginApi(post({ action:'totp-disable', password: pw }));
+      $('totpMsg').textContent = '껐습니다.';
+      totpState();
+    }catch(e){ if(!authLost(e)) $('totpMsg').textContent = e.message; }
+  });
+  $('logLoadBtn').addEventListener('click', async () => {
+    const box = $('accessLog');
+    box.textContent = '불러오는 중…';
+    try{
+      const r = await loginApi(post({ action:'access-log', limit: 50 }));
+      if(!r.items.length){ box.textContent = '기록이 없습니다.'; return; }
+      const kind = { login:'로그인', logout:'로그아웃', change:'비밀번호 변경', totp:'2단계 인증' };
+      box.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px">'
+        + r.items.map(x => `<tr style="border-top:1px solid var(--line)">
+            <td style="padding:4px 6px">${new Date(x.at).toLocaleString('ko-KR')}</td>
+            <td style="padding:4px 6px">${kind[x.kind] || x.kind}</td>
+            <td style="padding:4px 6px;color:${x.ok ? 'var(--green,#0a7)' : 'var(--red)'}">${x.ok ? '성공' : '실패'}</td>
+            <td style="padding:4px 6px;color:var(--muted)">${x.note || ''}</td>
+            <td style="padding:4px 6px;color:var(--muted);font-family:monospace">${(x.ip || '').slice(0, 8)}</td>
+          </tr>`).join('') + '</table>';
+    }catch(e){ if(!authLost(e)) box.textContent = e.message; }
+  });
   $('pwForm').addEventListener('submit', async e => {
     e.preventDefault();
     const msg = $('pwMsg');

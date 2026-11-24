@@ -8,6 +8,7 @@
 //   · 어디서 왔는지    blog.naver.com / cafe.naver.com / 직접
 //   · utm_source      블로그 링크에 ?utm_source=naverblog 를 붙였을 때만
 //   · 휴대폰/PC        화면 폭으로만 가름
+//   · 어느 화면        첫화면 / 단지 / 자치구 — 주소 전체가 아니라 갈래만
 // IP·접속기록·사용자 문자열(UA)은 **저장하지 않습니다.** 그래서 한 사람이 몇 번 왔는지는 알 수 없고,
 // 알 필요도 없습니다. 알고 싶은 건 「네이버 블로그에서 몇 명이 왔나」뿐입니다.
 //
@@ -53,10 +54,27 @@ export function utmSource(url) {
   } catch { return null; }
 }
 
+/**
+ * 어느 화면으로 들어왔나 — 검색으로 바로 들어오는 정적 페이지와 첫 화면을 가릅니다.
+ * 주소 전체가 아니라 **몇 갈래로만** 셉니다(단지 2,000곳을 각각 세면 파일만 커지고 읽히지도 않습니다).
+ */
+export function areaKind(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '기타';            // 주소를 안 보냈으면 모르는 것 — '/' 로 쳐서 첫화면으로 세면 안 됩니다
+  let p;
+  try { p = new URL(raw, 'https://x').pathname; } catch { return '기타'; }
+  try { p = decodeURIComponent(p); } catch { /* 깨진 인코딩이면 그대로 */ }
+  if (p === '/apt/' || p === '/apt') return '단지목록';
+  if (p.startsWith('/apt/')) return '단지';
+  if (p.startsWith('/gu/')) return '자치구';
+  if (p === '/' || p === '/index.html' || p === '/index.htm') return '첫화면';
+  return '기타';
+}
+
 /** 휴대폰인지 — 화면 폭만 봅니다(사용자 문자열은 저장하지 않습니다) */
 export const deviceKind = width => (Number(width) > 0 && Number(width) < 768 ? 'mobile' : 'desktop');
 
-export const emptyMonth = month => ({ month, total: 0, days: {}, refs: {}, utm: {}, device: {} });
+export const emptyMonth = month => ({ month, total: 0, days: {}, refs: {}, utm: {}, device: {}, areas: {} });
 
 const add = (map, key, max) => {
   if (!key) return;
@@ -66,7 +84,7 @@ const add = (map, key, max) => {
 
 /**
  * 한 번 방문한 것을 더합니다. 원본을 바꾸지 않고 새 묶음을 돌려줍니다.
- * hit = { day, ref, utm, device }
+ * hit = { day, ref, utm, device, area }
  */
 export function bump(stats, hit) {
   const s = stats && stats.month ? stats : emptyMonth(String(hit?.day || dayKey()).slice(0, 7));
@@ -74,11 +92,14 @@ export function bump(stats, hit) {
     month: s.month,
     total: (s.total | 0) + 1,
     days: { ...s.days }, refs: { ...s.refs }, utm: { ...s.utm }, device: { ...s.device },
+    // areas 는 나중에 더한 칸이라 예전 달 파일에는 없습니다 — 없으면 빈 것으로 시작합니다
+    areas: { ...(s.areas || {}) },
   };
   add(out.days, clean(hit?.day, 10) || dayKey());
   add(out.refs, clean(hit?.ref, 80), MAX_REFS);
   add(out.utm, clean(hit?.utm, UTM_MAX), MAX_REFS);
   add(out.device, hit?.device === 'mobile' ? 'mobile' : 'desktop');
+  add(out.areas, clean(hit?.area, 16) || '기타', 8);
   return out;
 }
 
@@ -103,6 +124,7 @@ export function summarize(months, limit = 25) {
     refs: sortDesc(merge('refs'), limit),
     utm: sortDesc(merge('utm'), limit),
     device: sortDesc(merge('device'), 4),
+    areas: sortDesc(merge('areas'), 8),
   };
 }
 

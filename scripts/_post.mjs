@@ -15,6 +15,15 @@
 export const MIN_DONG_COMPLEXES = 2;   // 이만큼은 있어야 「동네 평균」으로 씁니다
 export const MIN_PARK_PER = 1;         // 세대당 이 아래라야 「빠듯한 곳」입니다
 
+/**
+ * 국토부 K-apt 와 KB부동산이 「세대당 1대」를 같은 쪽으로 보는가 — 한쪽을 모르면 null.
+ * 이름을 짚는 목록은 true 일 때만 올립니다(_pages.mjs 의 같은 이름 함수와 규칙이 같습니다).
+ */
+export function sourcesAgree(kaptPer, kbPer) {
+  if (kaptPer == null || kbPer == null) return null;
+  return (kaptPer < 1) === (kbPer < 1);
+}
+
 export const GU_ORDER = [
   '강남구', '강동구', '강북구', '강서구', '관악구', '광진구', '구로구', '금천구', '노원구',
   '도봉구', '동대문구', '동작구', '마포구', '서대문구', '서초구', '성동구', '성북구', '송파구',
@@ -70,21 +79,28 @@ export function guFacts(guName, data, opts = {}) {
 
   const big = all.filter(c => (c.households || 0) >= minHh);
   const kapt = data.kapt || {};
-  const withKapt = big.map(c => ({ ...c, k: kapt[String(c.id)] || null })).filter(c => c.k);
+  const kbPark = data.kbPark || {};
+  const withKapt = big.map(c => ({ ...c, k: kapt[String(c.id)] || null, kbPark: kbPark[String(c.id)] || null })).filter(c => c.k);
 
   // ── 시세 (구·동별 평당가)
   const guRow = (data.gu || {})[guName] || null;
   const seoulAvg = num(data.seoul && data.seoul.avgPerPyeong);
   // 단지 한 곳뿐인 동은 「동네 평균」이라 부를 수 없습니다 — 종로구 평동(1곳)이 구 전체를 8배 차이로 보이게 했습니다
   const dongs = ((guRow && guRow.dongs) || []).filter(d => num(d.avgPerPyeong) > 0 && num(d.count) >= MIN_DONG_COMPLEXES);
+  const top5 = [...dongs].sort((a, b) => b.avgPerPyeong - a.avgPerPyeong).slice(0, 5);
   const price = guRow && num(guRow.avgPerPyeong) ? {
     perPyeong: num(guRow.avgPerPyeong),
     count: num(guRow.count),
     households: num(guRow.households),
     vsSeoul: seoulAvg ? Math.round((guRow.avgPerPyeong / seoulAvg) * 1000) / 10 : null,
     seoulAvg,
-    topDongs: [...dongs].sort((a, b) => b.avgPerPyeong - a.avgPerPyeong).slice(0, 5),
-    lowDongs: [...dongs].sort((a, b) => a.avgPerPyeong - b.avgPerPyeong).slice(0, 3),
+    dongCount: dongs.length,
+    topDongs: top5,
+    // 「싼 쪽」에는 **위에 이미 적은 동을 다시 올리지 않습니다.**
+    // 동이 몇 곳뿐인 구(관악구는 3곳)에서는 위아래 목록이 통째로 겹쳐,
+    // 가장 비싸다고 적은 동이 바로 밑에 「싼 쪽」으로 또 나왔습니다.
+    lowDongs: [...dongs].sort((a, b) => a.avgPerPyeong - b.avgPerPyeong)
+      .filter(d => !top5.some(t => t.name === d.name)).slice(0, 3),
     spread: dongs.length >= 2
       ? Math.round((Math.max(...dongs.map(d => d.avgPerPyeong)) / Math.min(...dongs.map(d => d.avgPerPyeong))) * 10) / 10
       : null,
@@ -131,18 +147,27 @@ export function guFacts(guName, data, opts = {}) {
       if (u == null && g == null) return null;
       const total = (u || 0) + (g || 0);
       const hh = num(c.k.households) || c.households;
-      return hh > 0 ? { ...c, per: Math.round((total / hh) * 100) / 100, under: u, ground: g } : null;
+      const kbPer = num(c.kbPark && c.kbPark.per);
+      return hh > 0 ? { ...c, per: Math.round((total / hh) * 100) / 100, under: u, ground: g, kbPer } : null;
     })
     .filter(Boolean);
   // 「빠듯한 곳」은 **세대당 1대 미만만** 넣습니다. 1.2대를 빠듯하다고 적으면 거짓이고,
   // 자료가 적은 구에서는 넉넉한 곳과 같은 단지가 양쪽에 다 올라옵니다(종로구에서 실제로 그랬습니다).
-  const tight = parks.filter(p => p.per < MIN_PARK_PER);
+  //
+  // 그리고 **단지 이름을 짚는 목록은 두 출처가 같은 쪽을 가리킬 때만** 올립니다.
+  // 국토부 K-apt 신고값과 KB부동산 단지정보는 서울 1,035곳 중 603곳에서 대수가 다르고,
+  // 73곳은 「세대당 1대」 판정까지 엇갈립니다. 2026-11-12 에 명일 신동아(K-apt 0.62 · KB 1.05)로
+  // 지적을 받았습니다 — 읽는 분이 KB 앱을 켜면 바로 어긋나는 숫자를 단정해서 적은 탓입니다.
+  const agreed = parks.filter(p => sourcesAgree(p.per, p.kbPer) === true);
+  const disputed = parks.filter(p => sourcesAgree(p.per, p.kbPer) === false);
+  const tight = agreed.filter(p => p.per < MIN_PARK_PER);
   const parking = parks.length ? {
     count: parks.length,
-    under1: tight.length,
-    best: top(parks, p => p.per, 5),
+    under1: parks.filter(p => p.per < MIN_PARK_PER).length,
+    best: top(agreed.filter(p => p.per >= MIN_PARK_PER), p => p.per, 5),
     worst: bottom(tight, p => p.per, 5),
     noUnder: parks.filter(p => p.under === 0).length,
+    disputed: disputed.length,
   } : null;
 
   // ── 지하철 (국토부 공식 — 도보 시간 문자열 그대로)
@@ -155,6 +180,9 @@ export function guFacts(guName, data, opts = {}) {
   return {
     gu: guName,
     asOf: data.asOf || null,
+    priceSource: data.priceSource || 'KB시세',
+    priceNote: data.priceNote || null,
+    dongUnit: data.dongUnit || '개 단지',
     minHouseholds: minHh,
     scale, price, age, rebuild, rent, parking,
     subway: subway.length ? { count: subway.length, lines: lines.sort(), kaptTotal: withKapt.length } : null,

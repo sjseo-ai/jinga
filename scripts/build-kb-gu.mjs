@@ -12,10 +12,31 @@ import { aggregate, compactForCompare, attachChange, withRetry } from '../site/p
 export { aggregate, compactForCompare, attachChange, withRetry } from '../site/public/api/_weekly.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = path.join(ROOT, 'site', 'public', 'kb-seoul-gu.json');
+// 2026-11-20 — **배포 폴더 밖**으로 옮겼습니다. site/public 에 두면 그대로 공개 URL 이 되어
+// KB 평당가 집계가 누구나 내려받을 수 있는 파일이 됩니다(그 상태로 두 달 열려 있었습니다).
+// 지금 이 파일을 쓰는 곳은 블로그 연재 글감뿐이고, 그것도 실거래로 옮겨 가는 중입니다.
+const OUT = path.join(ROOT, 'data', 'kb-seoul-gu.json');
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 const log = msg => console.log(`[${new Date().toLocaleTimeString('ko-KR', { hour12: false })}] ${msg}`);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/**
+ * 변동률을 붙여도 되는 최대 간격(일).
+ * 화면은 「전주 대비」가 아니라 **실제 비교 기준일**을 적으므로(index.html) 꼭 7일일 필요는 없습니다.
+ * 한 달 남짓까지는 「직전 집계 대비」로 읽을 만하고, 그보다 벌어지면 집계 사이에 표본이 달라졌을 수
+ * 있어 붙이지 않습니다 — 2026-09-11 집계(조회 3천여 건 실패)와 견주었다가 종로구 +30.9% 가 나왔습니다.
+ */
+export const MAX_COMPARE_DAYS = 35;
+
+/** 'YYYY.MM.DD' 두 개 사이 일수 — 하나라도 읽히지 않으면 null */
+export function daysBetween(a, b) {
+  const t = s => {
+    const m = /^(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})$/.exec(String(s || '').trim());
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : null;
+  };
+  const x = t(a), y = t(b);
+  return x == null || y == null ? null : Math.round(Math.abs(y - x) / 86400000);
+}
 
 // 조회한 단지·주택형 시세를 주간 보고서가 다시 쓰도록 남김(구독자 조건별 보고서가 같은 날 KB에 또 수천 건을 요청하지 않게)
 export const KB_TYPES_CACHE = path.join(ROOT, 'reports', 'cache', 'kb-types.json');
@@ -59,8 +80,16 @@ export async function main() {
   const old = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : null;
   // 같은 KB 기준일에 다시 돌리면 이전 비교 기준을 그대로 유지(주간 변동률이 0으로 덮이지 않게)
   const base = old ? (old.asOf && old.asOf !== asOf ? compactForCompare(old) : old.previous || null) : null;
-  attachChange(data, base);
+  // 기준이 오래 벌어졌으면 변동률을 붙이지 않습니다.
+  // 화면은 이 값을 「전주 대비」로 내보내는데, 몇 주 벌어진 기준과 견주면 그 말부터 거짓입니다.
+  // 더 나쁜 것은 조회 실패가 많았던 회차가 기준일 때입니다 — 2026-09-11 이 그랬습니다(위 주석 참고).
+  // 그러면 숫자는 시세가 아니라 「이번엔 어떤 단지가 잡혔나」가 됩니다.
+  // 실제로 그 기준과 견주니 종로구 +30.9%, 역삼동 +70% 가 나왔습니다. 오른 게 아니라 9월에 덜 잡힌 것입니다.
+  const gapDays = daysBetween(base && base.asOf, asOf);
+  const tooOld = gapDays == null || gapDays > MAX_COMPARE_DAYS;
+  attachChange(data, tooOld ? null : base);
   data.previous = base;
+  if (tooOld && base) data.compareSkipped = { prevAsOf: base.asOf, gapDays, maxDays: MAX_COMPARE_DAYS };
   fs.writeFileSync(OUT, JSON.stringify(data));
   fs.mkdirSync(path.dirname(KB_TYPES_CACHE), { recursive: true });
   fs.writeFileSync(KB_TYPES_CACHE, JSON.stringify({ generatedAt: data.generatedAt, asOf, complexes }));
@@ -69,6 +98,10 @@ export async function main() {
   log(`완료 — KB ${asOf} 기준 · ${data.seoul.count}개 단지 · 서울 평균 평당 ${data.seoul.avgPerPyeong.toLocaleString('ko-KR')}만 · 실패 ${failed}곳 · ${Math.round((Date.now() - t0) / 1000)}초`);
   log(`  평당가 상위: ${top.slice(0, 3).map(([g, v]) => `${g} ${v.avgPerPyeong.toLocaleString('ko-KR')}만`).join(', ')} / 하위: ${top.slice(-2).map(([g, v]) => `${g} ${v.avgPerPyeong.toLocaleString('ko-KR')}만`).join(', ')}`);
   if (data.prevAsOf) log(`  비교 기준 ${data.prevAsOf}`);
+  if (data.compareSkipped) {
+    const s = data.compareSkipped;
+    log(`  변동률 생략 — 비교 기준 ${s.prevAsOf} 이 ${s.gapDays}일 전(최대 ${s.maxDays}일). 다음 회차부터 ${asOf} 과 견줍니다`);
+  }
   return data;
 }
 

@@ -37,6 +37,10 @@
     {
       "source": "/r/:date/:file",
       "destination": "/api/report?date=:date&file=:file"
+    },
+    {
+      "source": "/decision",
+      "destination": "/decision/index.html"
     }
   ],
   "headers": [

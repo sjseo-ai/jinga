@@ -22,16 +22,39 @@ const OUT_DIR = path.join(process.env.USERPROFILE || process.env.HOME || ROOT,
 
 const read = f => JSON.parse(fs.readFileSync(path.join(PUB, f), 'utf8'));
 
-function loadData() {
+/**
+ * 시세 원천 고르기 — 기본은 KB, --source=trade 를 주면 **국토교통부 실거래**로 바꿉니다.
+ * 실거래로 바꾸면 KB 자료를 블로그에 다시 싣지 않게 되고, 사이트 자치구 페이지와 숫자가 맞습니다.
+ * 다만 **같은 「평당가」라도 재는 것이 다릅니다** — KB 는 전 단지 시세 조사값, 실거래는 실제 팔린 것의 중앙값입니다.
+ * 거래는 상대적으로 싼 물건에서 더 자주 일어나므로 실거래 쪽이 낮게 나옵니다. 글에도 그렇게 적습니다.
+ */
+function loadData(source = 'kb') {
   const kb = read('kb-seoul-complexes.json');
-  const gu = read('kb-seoul-gu.json');
+  const gu = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'kb-seoul-gu.json'), 'utf8'));
   let kapt = { byComplex: {} }, union = { sites: [] };
   try { kapt = read('kapt-seoul.json'); } catch { /* 아직 없으면 그 꼭지만 빠집니다 */ }
-  try { union = read('seoul-union.json'); } catch { /* 같음 */ }
+  // 사업장 원자료(sites)는 배포본에서 빠졌습니다(이용허락 확인 전) — 내부본을 먼저 봅니다
+  try { union = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'work', 'seoul-union.json'), 'utf8')); }
+  catch { try { union = read('seoul-union.json'); } catch { /* 없으면 그 꼭지만 빠집니다 */ } }
+  // KB 가 보는 주차 — 국토부 신고값과 자주 다릅니다. 이름을 짚는 목록은 둘이 일치할 때만 올립니다
+  let kbPark = { byComplex: {} };
+  try { kbPark = read('kb-seoul-parking.json'); } catch { /* 없으면 그 대조만 빠집니다 */ }
   return {
     complexes: kb.complexes,
-    gu: gu.gu, seoul: gu.seoul, asOf: gu.asOf,
+    ...(source === 'trade' ? (() => {
+      const tp = read('trade-price-seoul.json');
+      const r = tp.region;
+      const toRow = v => ({ avgPerPyeong: v.perPyeong, count: v.n, households: null,
+        dongs: (v.dongs || []).map(d => ({ name: d.name, avgPerPyeong: d.perPyeong, count: d.n })) });
+      return { gu: Object.fromEntries(Object.entries(r.gu).map(([g, v]) => [g, toRow(v)])),
+        seoul: { avgPerPyeong: r.seoul.perPyeong, count: r.seoul.n },
+        asOf: `${String(tp.asOfYM).slice(0, 4)}.${String(tp.asOfYM).slice(4)}`,
+        priceNote: `최근 ${r.months}개월 실거래 ${r.seoul.n.toLocaleString('ko-KR')}건의 중앙값`,
+        dongUnit: '건',
+        priceSource: '국토교통부 실거래가' };
+    })() : { gu: gu.gu, seoul: gu.seoul, asOf: gu.asOf, priceSource: 'KB시세' }),
     kapt: kapt.byComplex || {},
+    kbPark: kbPark.byComplex || {},
     union,
   };
 }
@@ -48,8 +71,8 @@ function draft(f) {
 
   // ── 제목 후보
   const titles = [
-    f.price ? `${G} 아파트 평당 ${man(f.price.perPyeong)}만원 — ${year}년 ${f.asOf ? f.asOf.split('.')[1] : ''}월 KB시세로 본 ${G}` : `${G} 아파트, 숫자로 보기`,
-    f.parking && f.parking.under1 ? `${G}에서 주차 걱정 없는 아파트 ${f.parking.best.length}곳 (국토부 공식 자료)` : null,
+    f.price ? `${G} 아파트 평당 ${man(f.price.perPyeong)}만원 — ${year}년 ${f.asOf ? f.asOf.split('.')[1] : ''}월 ${f.priceSource}로 본 ${G}` : `${G} 아파트, 숫자로 보기`,
+    f.parking && f.parking.best.length ? `${G}에서 주차 걱정 없는 아파트 ${f.parking.best.length}곳 — 국토부·KB 두 자료로 교차 확인` : null,
     f.rebuild.lowFarCount ? `${G} 재건축 여력 있는 단지 — 용적률 180% 이하 ${f.rebuild.lowFarCount}곳` : null,
     `오늘은 ${G}입니다 — 아파트 ${man(f.scale.total)}곳을 숫자로 훑어봤습니다`,
   ].filter(Boolean);
@@ -72,14 +95,17 @@ function draft(f) {
     add('■ 평당 얼마인가', '',
       `${G} 아파트 평당가는 **${man(p.perPyeong)}만원**입니다.` + (vs ? ` ${vs} 수준입니다.` : ''),
       '',
-      p.topDongs.length >= 2 ? `동네별로 보면 이렇습니다. (단지가 2곳 이상인 동만 셉니다)\n`
-        + p.topDongs.map((d, i) => `  ${i + 1}. ${d.name} ${man(d.avgPerPyeong)}만원 (${man(d.count)}개 단지)`).join('\n') : null,
+      p.topDongs.length >= 2 ? `동네별로 보면 이렇습니다. ${f.dongUnit === '건' ? '(거래가 10건 이상인 동만 셉니다)' : '(단지가 2곳 이상인 동만 셉니다)'}\n`
+        + p.topDongs.map((d, i) => `  ${i + 1}. ${d.name} ${man(d.avgPerPyeong)}만원 (${man(d.count)}${f.dongUnit})`).join('\n') : null,
       '',
       p.spread && p.spread >= 1.3
         ? `가장 비싼 동과 가장 싼 동이 **${p.spread}배** 차이 납니다. 같은 "${G}"라도 어디냐에 따라 전혀 다른 동네입니다.`
         : (p.spread ? `동네별 차이는 ${p.spread}배 정도로, 구 안에서 비교적 고른 편입니다.` : null),
       p.lowDongs.length && p.spread >= 1.3
-        ? `\n싼 쪽은 ${p.lowDongs.map(d => `${d.name} ${man(d.avgPerPyeong)}만원`).join(' · ')} 입니다.` : null);
+        ? `\n싼 쪽은 ${p.lowDongs.map(d => `${d.name} ${man(d.avgPerPyeong)}만원`).join(' · ')} 입니다.` : null,
+      // 실거래로 쓸 때는 **무엇을 잰 값인지** 한 줄 적습니다 — 시세표와 같은 말이 아닙니다.
+      f.priceNote ? `\n※ ${f.priceNote}입니다. 시세 조사값이 아니라 **실제로 팔린 집들의 평당가**라,`
+        + ' 매물 호가나 시세표의 숫자와는 다릅니다. 거래가 드문 동네일수록 흔들립니다.' : null);
   }
 
   // ── 2. 나이
@@ -105,7 +131,7 @@ function draft(f) {
   // ── 4. 주차 (국토부 공식) — 이게 이 연재의 무기입니다
   if (f.parking) {
     const p = f.parking;
-    add('■ 주차 — 국토교통부 공식 자료', '',
+    add('■ 주차', '',
       '시세표에는 안 나오지만 살아 보면 매일 겪는 것이 주차입니다.',
       p.under1
         ? `${G}에서 공식 주차 자료가 있는 단지 **${p.count}곳** 중 **세대당 1대가 안 되는 곳이 ${p.under1}곳**입니다. 저녁에 자리 찾기 어렵다는 뜻입니다.`
@@ -118,7 +144,11 @@ function draft(f) {
         `  ${i + 1}. ${nm(c)} 세대당 ${c.per}대`).join('\n') : null,
       p.noUnder ? `\n지하주차장이 아예 없는 단지도 **${p.noUnder}곳** 있습니다. 비 오는 날을 생각하면 큰 차이입니다.` : null,
       '',
-      '※ 국토교통부 공동주택관리정보시스템(K-apt)에 관리주체가 신고한 숫자입니다.');
+      '',
+      '※ 국토교통부 공동주택관리정보시스템(K-apt)에 관리주체가 신고한 숫자입니다.',
+      '※ 같은 단지라도 **KB부동산 단지정보와 주차 대수가 다른 경우가 많습니다**(서울 기준 절반 이상).',
+      '  어느 쪽이 맞다고 저희가 고르지 않습니다. 그래서 위 두 목록에는 **두 자료가 모두 같은 쪽을 가리키는 단지만** 올렸습니다.',
+      p.disputed ? `  ${G}에서 두 자료가 엇갈리는 단지 ${p.disputed}곳은 목록에서 뺐습니다. 단지별 두 숫자는 진가 단지 페이지에서 나란히 보실 수 있습니다.` : null);
   }
 
   // ── 5. 재건축 여력
@@ -170,17 +200,24 @@ function draft(f) {
 
   // ── 꼬리말(발행 도움말)
   L.push('═══════════════ 본문 끝 ═══════════════');
-  L.push(['【사진 넣을 자리】',
-    `  · "평당 얼마인가" 아래 — 사이트에서 ${G} 검색한 결과 화면`,
-    '  · "주차" 아래 — 커뮤니티 창의 국토부 공식 자료 블록',
-    '  · 맨 아래 — 지도가 보이는 검색 결과',
+  L.push([`【사진】 같은 폴더의 「사진_${G}」 안에 있습니다 — 아래 자리에 차례로 넣으세요`,
+    '  2_주차.png       → "■ 주차" 바로 아래',
+    '  3_단지.png       → "빠듯한 곳" 목록 바로 아래 (그 구에서 주차가 가장 빠듯한 단지)',
+    '  4_검색결과.png   → "■ 직접 조건 넣어 보기" 바로 위',
+    `  ※ 폴더가 없으면:  node scripts/shot-gu.mjs ${G}`,
+    '  ※ 가로 882px 이라 네이버에서 줄어들지 않습니다. 정렬은 「문서 너비」로.',
+    '',
+    '【올릴 때는 .txt 말고 같은 이름의 .html 을 쓰세요】',
+    '  이 .txt 를 그대로 복사하면 굵게 표시하려던 **별표가 글자로 나옵니다**(1회차에서 겪었습니다).',
+    '  같은 폴더의 .html 을 브라우저로 열어 복사하면 굵게·소제목·목록이 그대로 넘어갑니다.',
+    '  .html 이 없으면:  node scripts/build-post-html.mjs',
     '',
     '【태그】',
-    `  ${f.gu}, ${f.gu}아파트, ${f.gu}아파트시세, 아파트시세, KB시세, 부동산, 아파트비교, 내집마련, 임장, 재건축, 서울아파트`,
+    `  ${f.gu}, ${f.gu}아파트, ${f.gu}아파트시세, 아파트시세, ${f.priceSource}, 부동산, 아파트비교, 내집마련, 임장, 재건축, 서울아파트`,
     '',
     '【확인】',
     f.kaptCoverage ? `  · 국토부 공식 자료는 ${f.minHouseholds}세대 이상 ${f.kaptCoverage.of}곳 중 ${f.kaptCoverage.have}곳(${f.kaptCoverage.pct}%)에 있습니다.` : null,
-    f.asOf ? `  · KB시세 기준 시점: ${f.asOf}` : null,
+    f.asOf ? `  · ${f.priceSource} 기준 시점: ${f.asOf}` : null,
     '  · 숫자는 자료에서 뽑은 것이라 고치지 마세요. 느낌·경험만 보태시면 됩니다.',
   ].filter(Boolean).join('\n'));
 
@@ -204,19 +241,33 @@ function main() {
     const start = args[1] && !args[1].startsWith('--') ? args[1] : new Date().toISOString().slice(0, 10);
     // --first 노원구,강서구,성북구  → 그 셋을 앞으로, 나머지는 가나다순
     const firstArg = args.find(a => a.startsWith('--first='));
-    const order = firstArg ? orderWithFirst(firstArg.slice(8).split(',').map(s => s.trim())) : GU_ORDER;
+    // --done 노원구:2026-10-20,강서구:2026-10-23  → 이미 올린 회차. 남은 구만 새 날짜에 배치하고,
+    // 올린 회차는 올린 날짜 그대로 위에 남깁니다. 번호가 이어져야 알림창의 「n회차 / 25」가 맞습니다.
+    // (일정이 한 번 밀리면 앞 회차까지 날짜가 통째로 다시 잡혀, 올린 글과 일정표가 어긋났습니다)
+    const doneArg = args.find(a => a.startsWith('--done='));
+    const done = doneArg ? doneArg.slice(7).split(',').map(s => s.trim()).filter(Boolean)
+      .map(s => { const [gu, date] = s.split(':'); return { gu: gu.trim(), date: (date || '').trim() }; }) : [];
+    const unknown = done.map(d => d.gu).filter(g => !GU_ORDER.includes(g));
+    if (unknown.length) throw new Error(`자치구 이름이 아닙니다: ${unknown.join(' ')}`);
+    const doneSet = new Set(done.map(d => d.gu));
+    const order = (firstArg ? orderWithFirst(firstArg.slice(8).split(',').map(s => s.trim())) : GU_ORDER)
+      .filter(g => !doneSet.has(g));
     const rows = schedule(start, order);
-    console.log(`주 2회(화·금) 연재 일정 — ${start} 부터\n`);
+    console.log(`주 2회(화·금) 연재 일정 — ${done.length ? `${done.length}편은 올렸고 남은 ${rows.length}편은 ` : ''}${start} 부터\n`);
     const W = ['일', '월', '화', '수', '목', '금', '토'];
-    rows.forEach((r, i) => {
-      const d = new Date(r.date + 'T00:00:00Z');
-      console.log(`${String(i + 1).padStart(2)}. ${r.date}(${W[d.getUTCDay()]})  ${r.gu}`);
-    });
-    console.log(`\n모두 ${rows.length}편 · 마지막 ${rows[rows.length - 1].date}`);
+    const line = (n, date, gu, mark) => {
+      const d = date ? new Date(date + 'T00:00:00Z') : null;
+      const when = d && !Number.isNaN(d.getTime()) ? `${date}(${W[d.getUTCDay()]})` : '(날짜 모름)  ';
+      console.log(`${String(n).padStart(2)}. ${when}  ${gu}${mark || ''}`);
+    };
+    done.forEach((d, i) => line(i + 1, d.date, d.gu, '   ← 올림'));
+    rows.forEach((r, i) => line(done.length + i + 1, r.date, r.gu));
+    console.log(`\n모두 ${done.length + rows.length}편 · 마지막 ${rows[rows.length - 1].date}`);
     return;
   }
 
-  const data = loadData();
+  const source = args.find(a => a.startsWith('--source='))?.slice(9) || 'kb';
+  const data = loadData(source);
   const save = args.includes('--save') || args[0] === '--all';
   const list = args[0] === '--all' ? GU_ORDER : [args[0]];
 

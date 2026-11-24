@@ -168,8 +168,12 @@ function writeGroupReport({ cfg, criteria, today, asOf, complexes, result, diff,
   fs.writeFileSync(path.join(outDir, '주간보고서.html'), html);
   if (webFile) { fs.mkdirSync(path.dirname(webFile), { recursive: true }); fs.writeFileSync(webFile, html); }
 
-  const sheets = buildReportSheets({ cfg, criteria, today, asOf, complexes, result, diff, news });
-  fs.writeFileSync(path.join(outDir, '진가_주간데이터.xlsx'), buildXlsx(sheets));
+  // 2026-11-19 — 「진가_주간데이터.xlsx」를 더 만들지 않습니다.
+  // 구독자에게 매주 KB 시세 전수를 파일로 보내는 것은 대량 재배포입니다(KB 약관 제12조 제4항·저작권법 제93조).
+  // 보고서 본문의 요약·순위·해석은 저희가 만든 것이라 그대로 보냅니다. 첨부만 뺍니다.
+  // 메일 쪽(send-weekly-mail.mjs)은 파일이 없으면 첨부 없이 보내므로 따로 고칠 것이 없습니다.
+  // 실거래 기반으로 옮긴 뒤에는 저희 자료이므로 다시 넣을 수 있습니다.
+  void buildReportSheets; void buildXlsx; void complexes;
 }
 
 const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase();

@@ -1,0 +1,651 @@
+{
+  "generatedAt": "2026-11-24T05:33:42.395Z",
+  "method": "시간순 분할 — 맞히려는 달의 거래는 비교 거래·지수 어디에도 쓰지 않음(lag=1)",
+  "targetMonths": [
+    "202608",
+    "202609",
+    "202610"
+  ],
+  "overall": {
+    "label": "전체",
+    "n": 9764,
+    "mdape": 4.1,
+    "mae": 6,
+    "p90": 12,
+    "within5": 57.8,
+    "within10": 84.7,
+    "inRange": 87.5,
+    "baselineMdape": 4.3
+  },
+  "byGrade": [
+    {
+      "label": "등급 A",
+      "n": 3773,
+      "mdape": 3.6,
+      "mae": 5.1,
+      "p90": 10,
+      "within5": 63.4,
+      "within10": 90,
+      "inRange": 86.1,
+      "baselineMdape": 3.9
+    },
+    {
+      "label": "등급 B",
+      "n": 3468,
+      "mdape": 4.2,
+      "mae": 5.7,
+      "p90": 11.6,
+      "within5": 57.3,
+      "within10": 85.2,
+      "inRange": 87.1,
+      "baselineMdape": 4.2
+    },
+    {
+      "label": "등급 D",
+      "n": 1385,
+      "mdape": 5.4,
+      "mae": 8.2,
+      "p90": 16.6,
+      "within5": 47.9,
+      "within10": 73.9,
+      "inRange": 92.1,
+      "baselineMdape": 5.5
+    },
+    {
+      "label": "등급 C",
+      "n": 1138,
+      "mdape": 4.7,
+      "mae": 7.2,
+      "p90": 15.7,
+      "within5": 52.3,
+      "within10": 78.6,
+      "inRange": 87.3,
+      "baselineMdape": 4.9
+    }
+  ],
+  "byWindow": [
+    {
+      "label": " 3개월 창",
+      "n": 3773,
+      "mdape": 3.6,
+      "mae": 5.1,
+      "p90": 10,
+      "within5": 63.4,
+      "within10": 90,
+      "inRange": 86.1,
+      "baselineMdape": 3.9
+    },
+    {
+      "label": " 6개월 창",
+      "n": 3468,
+      "mdape": 4.2,
+      "mae": 5.7,
+      "p90": 11.6,
+      "within5": 57.3,
+      "within10": 85.2,
+      "inRange": 87.1,
+      "baselineMdape": 4.2
+    },
+    {
+      "label": " 12개월 창",
+      "n": 2523,
+      "mdape": 5,
+      "mae": 7.7,
+      "p90": 16,
+      "within5": 49.9,
+      "within10": 76.1,
+      "inRange": 89.9,
+      "baselineMdape": 5.2
+    }
+  ],
+  "byN": [
+    {
+      "label": "표본 3~4건",
+      "n": 5270,
+      "mdape": 4.2,
+      "mae": 6.3,
+      "p90": 12.8,
+      "within5": 57.1,
+      "within10": 83.5,
+      "inRange": 88.8,
+      "baselineMdape": 4.4
+    },
+    {
+      "label": "표본 5~9건",
+      "n": 3390,
+      "mdape": 4,
+      "mae": 5.7,
+      "p90": 11.5,
+      "within5": 58.6,
+      "within10": 85.8,
+      "inRange": 85.9,
+      "baselineMdape": 4.1
+    },
+    {
+      "label": "표본 10건 이상",
+      "n": 1104,
+      "mdape": 4.2,
+      "mae": 5.5,
+      "p90": 10.9,
+      "within5": 58.2,
+      "within10": 87,
+      "inRange": 85.9,
+      "baselineMdape": 4.3
+    }
+  ],
+  "byAge": [
+    {
+      "label": "연식 26년 이상",
+      "n": 4981,
+      "mdape": 4.4,
+      "mae": 6.3,
+      "p90": 12.6,
+      "within5": 54.3,
+      "within10": 82.8,
+      "inRange": 84.6,
+      "baselineMdape": 4.5
+    },
+    {
+      "label": "연식 11~25년",
+      "n": 3358,
+      "mdape": 4,
+      "mae": 5.8,
+      "p90": 11.9,
+      "within5": 59.6,
+      "within10": 85.5,
+      "inRange": 89.9,
+      "baselineMdape": 4.3
+    },
+    {
+      "label": "연식 10년 이하",
+      "n": 1425,
+      "mdape": 3.5,
+      "mae": 5.3,
+      "p90": 10.4,
+      "within5": 65.2,
+      "within10": 89.1,
+      "inRange": 91.6,
+      "baselineMdape": 3.7
+    }
+  ],
+  "byArea": [
+    {
+      "label": "전용 60㎡ 이하",
+      "n": 4487,
+      "mdape": 4.1,
+      "mae": 5.9,
+      "p90": 11.9,
+      "within5": 57.6,
+      "within10": 84.8,
+      "inRange": 86.5,
+      "baselineMdape": 4.2
+    },
+    {
+      "label": "전용 60~85㎡",
+      "n": 4128,
+      "mdape": 4,
+      "mae": 6,
+      "p90": 12,
+      "within5": 59.2,
+      "within10": 85.6,
+      "inRange": 88.2,
+      "baselineMdape": 4.2
+    },
+    {
+      "label": "전용 85~135㎡",
+      "n": 961,
+      "mdape": 4.5,
+      "mae": 6.3,
+      "p90": 12.7,
+      "within5": 54.3,
+      "within10": 81.2,
+      "inRange": 88.2,
+      "baselineMdape": 4.7
+    },
+    {
+      "label": "전용 135㎡ 초과",
+      "n": 188,
+      "mdape": 5.3,
+      "mae": 7.4,
+      "p90": 15.3,
+      "within5": 47.3,
+      "within10": 78.2,
+      "inRange": 90.4,
+      "baselineMdape": 5.4
+    }
+  ],
+  "byFloor": [
+    {
+      "label": " 3층 이상",
+      "n": 8613,
+      "mdape": 4.1,
+      "mae": 6,
+      "p90": 12,
+      "within5": 57.8,
+      "within10": 84.8,
+      "inRange": 87.3,
+      "baselineMdape": 4.2
+    },
+    {
+      "label": " 2층",
+      "n": 643,
+      "mdape": 3.7,
+      "mae": 5.8,
+      "p90": 12,
+      "within5": 60.7,
+      "within10": 86.3,
+      "inRange": 90.2,
+      "baselineMdape": 4.4
+    },
+    {
+      "label": " 1층",
+      "n": 508,
+      "mdape": 4.8,
+      "mae": 6.7,
+      "p90": 13.4,
+      "within5": 52.6,
+      "within10": 81.1,
+      "inRange": 87.4,
+      "baselineMdape": 5.9
+    }
+  ],
+  "byGu": [
+    {
+      "label": " 노원구",
+      "n": 1396,
+      "mdape": 5.1,
+      "mae": 6.6,
+      "p90": 12.8,
+      "within5": 48.8,
+      "within10": 81.4,
+      "inRange": 78.9,
+      "baselineMdape": 5.2
+    },
+    {
+      "label": " 강서구",
+      "n": 685,
+      "mdape": 4.2,
+      "mae": 6.4,
+      "p90": 12.4,
+      "within5": 57.1,
+      "within10": 83.9,
+      "inRange": 86.4,
+      "baselineMdape": 4.5
+    },
+    {
+      "label": " 도봉구",
+      "n": 623,
+      "mdape": 4.5,
+      "mae": 6.3,
+      "p90": 12.5,
+      "within5": 54.1,
+      "within10": 82.2,
+      "inRange": 82.8,
+      "baselineMdape": 5
+    },
+    {
+      "label": " 구로구",
+      "n": 607,
+      "mdape": 4.6,
+      "mae": 6.1,
+      "p90": 12.4,
+      "within5": 54.7,
+      "within10": 85,
+      "inRange": 87,
+      "baselineMdape": 4.5
+    },
+    {
+      "label": " 송파구",
+      "n": 521,
+      "mdape": 3.4,
+      "mae": 5,
+      "p90": 10.4,
+      "within5": 66,
+      "within10": 88.5,
+      "inRange": 92.5,
+      "baselineMdape": 3.4
+    },
+    {
+      "label": " 은평구",
+      "n": 508,
+      "mdape": 3.4,
+      "mae": 4.6,
+      "p90": 10.4,
+      "within5": 65,
+      "within10": 89.4,
+      "inRange": 91.7,
+      "baselineMdape": 3.7
+    },
+    {
+      "label": " 성북구",
+      "n": 491,
+      "mdape": 4.3,
+      "mae": 6.4,
+      "p90": 12.7,
+      "within5": 56.4,
+      "within10": 83.9,
+      "inRange": 85.3,
+      "baselineMdape": 4.4
+    },
+    {
+      "label": " 강동구",
+      "n": 453,
+      "mdape": 3.8,
+      "mae": 8.5,
+      "p90": 16,
+      "within5": 62,
+      "within10": 82.1,
+      "inRange": 88.3,
+      "baselineMdape": 4
+    },
+    {
+      "label": " 중랑구",
+      "n": 409,
+      "mdape": 4.9,
+      "mae": 6.5,
+      "p90": 13.3,
+      "within5": 50.6,
+      "within10": 80.7,
+      "inRange": 81.7,
+      "baselineMdape": 4.8
+    },
+    {
+      "label": " 영등포구",
+      "n": 384,
+      "mdape": 3.7,
+      "mae": 5.4,
+      "p90": 11.1,
+      "within5": 60.9,
+      "within10": 85.7,
+      "inRange": 90.9,
+      "baselineMdape": 4
+    },
+    {
+      "label": " 동대문구",
+      "n": 373,
+      "mdape": 3.9,
+      "mae": 6.2,
+      "p90": 13.6,
+      "within5": 60.1,
+      "within10": 84.2,
+      "inRange": 86.3,
+      "baselineMdape": 4
+    },
+    {
+      "label": " 관악구",
+      "n": 370,
+      "mdape": 4.3,
+      "mae": 5.5,
+      "p90": 10.6,
+      "within5": 55.4,
+      "within10": 87.8,
+      "inRange": 90.5,
+      "baselineMdape": 4.1
+    },
+    {
+      "label": " 서대문구",
+      "n": 353,
+      "mdape": 3.6,
+      "mae": 5.1,
+      "p90": 10.4,
+      "within5": 63.2,
+      "within10": 89,
+      "inRange": 91.2,
+      "baselineMdape": 3.5
+    },
+    {
+      "label": " 강남구",
+      "n": 325,
+      "mdape": 4.5,
+      "mae": 6.6,
+      "p90": 14.3,
+      "within5": 55.4,
+      "within10": 79.4,
+      "inRange": 90.5,
+      "baselineMdape": 4.5
+    },
+    {
+      "label": " 양천구",
+      "n": 322,
+      "mdape": 4,
+      "mae": 5.9,
+      "p90": 11.7,
+      "within5": 58.4,
+      "within10": 84.5,
+      "inRange": 90.4,
+      "baselineMdape": 4.1
+    },
+    {
+      "label": " 동작구",
+      "n": 295,
+      "mdape": 3.3,
+      "mae": 4.1,
+      "p90": 9.2,
+      "within5": 74.2,
+      "within10": 91.9,
+      "inRange": 98,
+      "baselineMdape": 3.3
+    },
+    {
+      "label": " 금천구",
+      "n": 288,
+      "mdape": 3.8,
+      "mae": 4.8,
+      "p90": 10,
+      "within5": 62.5,
+      "within10": 89.9,
+      "inRange": 94.4,
+      "baselineMdape": 4.4
+    },
+    {
+      "label": " 마포구",
+      "n": 280,
+      "mdape": 4,
+      "mae": 6,
+      "p90": 12.8,
+      "within5": 60.7,
+      "within10": 84.3,
+      "inRange": 91.1,
+      "baselineMdape": 4
+    },
+    {
+      "label": " 서초구",
+      "n": 250,
+      "mdape": 4.3,
+      "mae": 6.4,
+      "p90": 14.2,
+      "within5": 56.4,
+      "within10": 80,
+      "inRange": 90,
+      "baselineMdape": 4.5
+    },
+    {
+      "label": " 강북구",
+      "n": 243,
+      "mdape": 4.3,
+      "mae": 5.6,
+      "p90": 10.4,
+      "within5": 55.1,
+      "within10": 89.3,
+      "inRange": 88.1,
+      "baselineMdape": 4.7
+    },
+    {
+      "label": " 성동구",
+      "n": 179,
+      "mdape": 2.8,
+      "mae": 4.1,
+      "p90": 9,
+      "within5": 72.1,
+      "within10": 92.2,
+      "inRange": 93.9,
+      "baselineMdape": 3.9
+    },
+    {
+      "label": " 용산구",
+      "n": 125,
+      "mdape": 4.3,
+      "mae": 6,
+      "p90": 12.3,
+      "within5": 56,
+      "within10": 84,
+      "inRange": 92.8,
+      "baselineMdape": 4.3
+    },
+    {
+      "label": " 광진구",
+      "n": 124,
+      "mdape": 3.6,
+      "mae": 6.5,
+      "p90": 14.5,
+      "within5": 58.9,
+      "within10": 81.5,
+      "inRange": 87.9,
+      "baselineMdape": 4.5
+    },
+    {
+      "label": " 중구",
+      "n": 99,
+      "mdape": 4.6,
+      "mae": 6.3,
+      "p90": 12.2,
+      "within5": 56.6,
+      "within10": 84.8,
+      "inRange": 84.8,
+      "baselineMdape": 5.2
+    },
+    {
+      "label": " 종로구",
+      "n": 61,
+      "mdape": 4.6,
+      "mae": 5.9,
+      "p90": 12,
+      "within5": 54.1,
+      "within10": 78.7,
+      "inRange": 90.2,
+      "baselineMdape": 4
+    }
+  ],
+  "worst": [
+    {
+      "name": "중앙하이츠강동",
+      "dong": "길동",
+      "gu": "강동구",
+      "area": 41.89,
+      "date": "2026-08-04",
+      "grade": "D",
+      "n": 1,
+      "actual": 2264,
+      "pred": 4695,
+      "err": 107.4
+    },
+    {
+      "name": "주공1단지",
+      "dong": "번동",
+      "gu": "강북구",
+      "area": 41.3,
+      "date": "2026-10-07",
+      "grade": "A",
+      "n": 7,
+      "actual": 2445,
+      "pred": 4784,
+      "err": 95.7
+    },
+    {
+      "name": "극동",
+      "dong": "가락동",
+      "gu": "송파구",
+      "area": 120.4,
+      "date": "2026-08-10",
+      "grade": "D",
+      "n": 1,
+      "actual": 3531,
+      "pred": 6674,
+      "err": 89
+    },
+    {
+      "name": "삼성래미안",
+      "dong": "창동",
+      "gu": "도봉구",
+      "area": 84.87,
+      "date": "2026-08-03",
+      "grade": "A",
+      "n": 5,
+      "actual": 1920,
+      "pred": 3627,
+      "err": 88.9
+    },
+    {
+      "name": "중앙하이츠강동",
+      "dong": "길동",
+      "gu": "강동구",
+      "area": 46.68,
+      "date": "2026-08-04",
+      "grade": "D",
+      "n": 1,
+      "actual": 2490,
+      "pred": 4695,
+      "err": 88.6
+    },
+    {
+      "name": "중앙하이츠강동",
+      "dong": "길동",
+      "gu": "강동구",
+      "area": 46.68,
+      "date": "2026-08-04",
+      "grade": "D",
+      "n": 1,
+      "actual": 2495,
+      "pred": 4695,
+      "err": 88.2
+    },
+    {
+      "name": "중앙하이츠강동",
+      "dong": "길동",
+      "gu": "강동구",
+      "area": 44.07,
+      "date": "2026-08-04",
+      "grade": "D",
+      "n": 1,
+      "actual": 2505,
+      "pred": 4695,
+      "err": 87.4
+    },
+    {
+      "name": "중앙하이츠강동",
+      "dong": "길동",
+      "gu": "강동구",
+      "area": 44.28,
+      "date": "2026-08-04",
+      "grade": "D",
+      "n": 1,
+      "actual": 2505,
+      "pred": 4695,
+      "err": 87.4
+    },
+    {
+      "name": "중앙하이츠강동",
+      "dong": "길동",
+      "gu": "강동구",
+      "area": 46.68,
+      "date": "2026-08-04",
+      "grade": "D",
+      "n": 1,
+      "actual": 2505,
+      "pred": 4695,
+      "err": 87.4
+    },
+    {
+      "name": "중앙하이츠강동",
+      "dong": "길동",
+      "gu": "강동구",
+      "area": 44.07,
+      "date": "2026-08-04",
+      "grade": "D",
+      "n": 1,
+      "actual": 2510,
+      "pred": 4695,
+      "err": 87.1
+    }
+  ]
+}

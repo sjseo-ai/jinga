@@ -1,5 +1,5 @@
 import { waitUntil } from '@vercel/functions';
-import { createHandlers, recordPath } from './_core.mjs';
+import { createHandlers, recordPath, scrub } from './_core.mjs';
 import { blobStore } from './_blob.mjs';
 import { mailConfigFromEnv, canSend, createTransport, confirmMail, changeMail, fromHeader } from './_mail.mjs';
 
@@ -18,7 +18,7 @@ export async function POST(request) {
         const cur = await store.get(recordPath(record.id));
         if (cur) await store.put(recordPath(record.id), { ...cur, [kind === 'change' ? 'changeMailSentAt' : 'confirmMailSentAt']: new Date().toISOString() });
       } catch (e) {
-        console.error(`[subscribe] ${kind} 메일 발송 실패 — 매일 크론이 다시 시도:`, e.message);
+        console.error(`[subscribe] ${kind} 메일 발송 실패 — 매일 크론이 다시 시도:`, scrub(e.message));
       }
     })());
   };

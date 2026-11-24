@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { evaluate, compactKbTypes, buildSearchSheets, complexOk, listingCandidates, criteriaText } from '../site/public/jinga-kb.mjs';
 import { buildXlsx } from '../site/public/xlsx-lite.mjs';
 import { makeSnapshot, diffSnapshots, parseNewsRss, classifyNews, isSameStory, planGroups, toKbCriteria, groupDirName, snapshotView } from './weekly-report.mjs';
-import { aggregate, attachChange, compactForCompare } from './build-kb-gu.mjs';
+import { aggregate, attachChange, compactForCompare, daysBetween, MAX_COMPARE_DAYS } from './build-kb-gu.mjs';
 
 test('KB 구·동 집계: 세대수 가중 평당가와 주간 변동률', () => {
   const t = (excl, price, hh, provided = true) => ({ excl, price, hh, provided });
@@ -289,4 +289,26 @@ test('보고서: 임대세대 조건이 실제로 빠지고, 조건 칩에도 �
       macro: { housing: { error: 'x' }, mortgage: { error: 'x' }, base: { error: 'x' } },
       news: { byGu: {}, policy: [], errors: [] }, ask: { rows: [], count: 0, medGap: null, excluded: 0 },
     }), /임대세대/, '조건이 없으면 칩도 없음');
+});
+
+test('비교 기준이 오래되면 변동률을 붙이지 않습니다', () => {
+  // 화면은 이 값을 「전주 대비」로 내보냅니다. 몇 주 벌어진 기준과 견주면 그 말부터 거짓이고,
+  // 조회 실패가 많았던 회차가 기준이면 숫자는 시세가 아니라 표본 차이가 됩니다
+  // (2026-09-11 집계가 그랬습니다 — 그 기준과 견주니 종로구 +30.9%, 역삼동 +70% 가 나왔습니다).
+  assert.equal(daysBetween('2026.09.11', '2026.10.30'), 49);
+  assert.equal(daysBetween('2026.10.23', '2026.10.30'), 7, '매주 돌리면 7일');
+  assert.equal(daysBetween('2026-10-23', '2026.10.30'), 7, '구분자가 달라도');
+  assert.equal(daysBetween('', '2026.10.30'), null, '기준일을 모르면 null');
+  assert.equal(daysBetween('2026.10.30', ''), null);
+  assert.equal(daysBetween(null, null), null);
+
+  assert.ok(daysBetween('2026.10.23', '2026.10.30') <= MAX_COMPARE_DAYS, '주간 간격은 붙입니다');
+  assert.ok(daysBetween('2026.09.11', '2026.10.30') > MAX_COMPARE_DAYS, '49일은 생략합니다');
+
+  // base 가 null 이면 attachChange 는 아무것도 손대지 않습니다 — 생략은 그렇게 이뤄집니다
+  const cur = { gu: { 강남구: { avgPerPyeong: 12619, dongs: [{ name: '역삼동', avgPerPyeong: 11685 }] } } };
+  attachChange(cur, null);
+  assert.equal(cur.prevAsOf, undefined);
+  assert.equal(cur.gu['강남구'].pct, undefined);
+  assert.equal(cur.gu['강남구'].dongs[0].pct, undefined);
 });

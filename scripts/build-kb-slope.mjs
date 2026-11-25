@@ -70,7 +70,13 @@ export function slopeText(s) {
   return `역에서 집까지 ${dir} ${Math.abs(s.rise).toFixed(0)}m · ${level}(평균 ${g.toFixed(1)}%)`;
 }
 
-async function fetchElevations(points, fetchImpl) {
+/**
+ * 표고를 묶음으로 받아 옵니다. onProgress 가 있으면 묶음마다 불러 줍니다.
+ *
+ * 2026-11-24 에 이것을 7분 돌리고 세션이 끊겨 **아무것도 남지 않았습니다.** 전부 받은 뒤에야
+ * 한 번 저장했기 때문입니다. 이제 묶음마다 알려 주고, 부르는 쪽이 중간 저장을 합니다.
+ */
+async function fetchElevations(points, fetchImpl, onProgress = null) {
   const out = [];
   for (let i = 0; i < points.length; i += BATCH) {
     const chunk = points.slice(i, i + BATCH);
@@ -87,6 +93,7 @@ async function fetchElevations(points, fetchImpl) {
         done = true;
       } catch (e) { if (t === 2) throw e; await sleep(2000 * (t + 1)); }
     }
+    if (onProgress) onProgress(out, points.length);          // 누적 배열을 그대로 넘깁니다
     await sleep(GAP_MS);
   }
   return out;
@@ -119,9 +126,35 @@ export async function main(regionKey = 'seoul', { fetchImpl = (...a) => fetch(..
   const points = jobs.flatMap(j => samplePath(j.lat, j.lng, j.stLat, j.stLng));
   const calls = Math.ceil(points.length / BATCH);
   log(`표고 지점 ${points.length.toLocaleString('ko-KR')}개 · 요청 ${calls}회(초당 1회, 약 ${Math.ceil(calls * GAP_MS / 1000 / 60)}분) — OpenTopoData SRTM 30m`);
-  const elevs = await fetchElevations(points, fetchImpl);
+  // 받은 표고를 묶음마다 셈해 **중간 저장**합니다. 끊겨도 받은 단지까지는 남고, 다시 돌리면
+  // 거기서부터 이어서 돕니다(위 byId[id] 검사). 한 단지는 표고 SAMPLES+1 개가 모두 와야 셀 수 있습니다.
+  const perJob = SAMPLES + 1;
+  const snapshot = () => ({
+    generatedAt: new Date().toISOString(),
+    region: regionKey, regionLabel: region.label,
+    source: 'OpenTopoData SRTM 30m — 단지에서 가장 가까운 지하철역까지 직선 경로를 5등분한 표고. 실제 보행 경로가 아니며 30m 격자라 좁은 골목의 급경사는 뭉개집니다. 역 좌표는 국가철도공단 전국도시철도역사정보표준데이터.',
+    fields: ['rise', 'grade', 'up', 'maxGrade'],
+    samples: SAMPLES,
+    count: Object.keys(byId).length,
+    byId,
+  });
+  let saved = Object.keys(byId).length, nextJob = 0;
+  const save = () => { fs.writeFileSync(dest, JSON.stringify(snapshot())); saved = Object.keys(byId).length; };
+  const elevs = await fetchElevations(points, fetchImpl, acc => {
+    const ready = Math.floor(acc.length / perJob);                // 표고가 전부 온 단지까지만 셉니다
+    for (; nextJob < ready; nextJob++) {
+      const j = jobs[nextJob];
+      if (!j) continue;
+      const s = slopeOf(acc.slice(nextJob * perJob, (nextJob + 1) * perJob), j.m);
+      if (s) byId[j.id] = [s.rise, s.grade, s.up, s.maxGrade];
+    }
+    if (Object.keys(byId).length - saved >= 300) { save(); log(`  ${ready}/${jobs.length} 단지 (중간 저장)`); }
+  });
   if (elevs.length !== points.length) throw new Error(`표고 개수가 맞지 않습니다(${elevs.length}/${points.length})`);
 
+  // 끝까지 받았으면 **전부 다시 셉니다.** 중간 저장은 묶음이 꽉 찬 단지까지만 세기 때문에
+  // 마지막 묶음의 단지들이 빠집니다. 같은 값을 덮어쓰는 것이라 결과는 달라지지 않고,
+  // 「중간에 끊겼을 때 남는 양」만 늘어납니다.
   let ok = 0;
   jobs.forEach((j, i) => {
     const seg = elevs.slice(i * (SAMPLES + 1), (i + 1) * (SAMPLES + 1));
@@ -131,15 +164,7 @@ export async function main(regionKey = 'seoul', { fetchImpl = (...a) => fetch(..
     ok++;
   });
 
-  const out = {
-    generatedAt: new Date().toISOString(),
-    region: regionKey, regionLabel: region.label,
-    source: 'OpenTopoData SRTM 30m — 단지에서 가장 가까운 지하철역까지 직선 경로를 5등분한 표고. 실제 보행 경로가 아니며 30m 격자라 좁은 골목의 급경사는 뭉개집니다. 역 좌표는 국가철도공단 전국도시철도역사정보표준데이터.',
-    fields: ['rise', 'grade', 'up', 'maxGrade'],
-    samples: SAMPLES,
-    count: Object.keys(byId).length,
-    byId,
-  };
+  const out = snapshot();
   fs.writeFileSync(dest, JSON.stringify(out));
   const gr = Object.values(byId).map(v => Math.abs(v[1])).sort((a, b) => a - b);
   const med = gr[gr.length >> 1];

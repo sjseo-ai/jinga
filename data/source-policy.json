@@ -272,23 +272,23 @@
       "name": "전국도시철도역사정보표준데이터",
       "datasetId": "15013205",
       "org": "국가철도공단 (소관 국토교통부)",
-      "endpoint": "파일(XLSX) 제공 — 오픈API 없음",
-      "license": "공공데이터포털 표준데이터 — 이용허락범위를 원문으로 아직 확인하지 못했습니다",
+      "endpoint": "파일(XLSX) 제공 — 오픈API 없음. 원본 data.kric.go.kr/rips/M_01_01/detail.do?id=32",
+      "license": "이용허락범위 제한 없음 (2026-11-24 포털 페이지 확인) — 비용부과유무 무료, 공공누리 유형 표기는 없음",
       "cost": "무료",
       "checkedUrl": "https://www.data.go.kr/data/15013205/standard.do",
       "allows": {
-        "commercial": null,
-        "redistribute": null,
-        "derive": null,
-        "cache": null
+        "commercial": true,
+        "redistribute": true,
+        "derive": true,
+        "cache": true
       },
-      "cacheNote": "파일을 아직 받지 않았습니다 — 받을 때 포털 페이지의 이용허락범위 표기를 함께 적을 것",
-      "status": "**대기** — 사람이 한 번 내려받아 data/stations.csv 로 두면 npm run stations 가 만듭니다",
+      "cacheNote": "이용허락 제한 없음 — site/public/station-*.json 으로 저장·배포",
+      "status": "사용 중 — 전체_도시철도역사정보_20260630.xlsx(1,099행)에서 서울 392곳·경기 558곳. 갱신 연 1회",
       "role": "KB 역 좌표 대체 — 추천 지도의 역 핀 · 경사(slope) · 길상권(sangga) 재생성",
       "publicPrefixes": [
         "station-"
       ],
-      "note": "역 좌표가 들어오기 전까지 역세권 점수는 K-apt 도보시간 구간만으로 납니다(경사 감점·길상권 가산은 비어 있음).",
+      "note": "좌표는 역사 대표 좌표이고 출입구 위치가 아닙니다. 환승역은 호선별로 한 줄씩 와서 이름으로 묶었고, 이름이 같아도 1km 넘게 떨어진 역은 다른 역으로 보고 따로 뒀습니다. 「제한 없음」의 세부 조건은 포털 정책 페이지에만 있고 데이터셋별 조건은 없습니다 — 법적 해석이 필요하면 국가철도공단 철도산업정보센터에 확인.",
       "publicDerivedPrefixes": []
     },
     {

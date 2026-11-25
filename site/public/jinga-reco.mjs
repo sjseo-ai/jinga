@@ -228,6 +228,30 @@ export function attachSlope(infra, ...files) {
   return { ...infra, slope };
 }
 
+/**
+ * 역 좌표 파일(station-<지역>.json)을 붙임 — 지도의 「도보 10분 안 역」 핀과
+ * 역까지의 직선거리가 되살아납니다. 원천은 국가철도공단 표준데이터(이용허락 제한 없음).
+ * 행 모양은 옛 KB 파일과 같습니다 — [이름, '2호선|8호선', 위도, 경도].
+ */
+export function attachStations(infra, ...files) {
+  if (!infra) return infra;
+  const stations = [...(infra.stations || [])];
+  for (const f of files) {
+    if (!f || !f.stations) continue;
+    for (const r of f.stations) {
+      // 서울·경기 파일의 사각이 겹쳐 같은 역이 두 번 올 수 있습니다 — 이름이 같고 1km 안이면 한 번만
+      const hit = stations.find(x => x[0] === r[0] && distM(x[2], x[3], r[2], r[3]) <= 1000);
+      if (hit) {
+        const lines = [...new Set([...String(hit[1] || '').split('|').filter(Boolean), ...String(r[1] || '').split('|').filter(Boolean)])];
+        hit[1] = lines.join('|');
+        continue;
+      }
+      stations.push([...r]);
+    }
+  }
+  return { ...infra, stations };
+}
+
 /** 학교 좌표 파일(school-<지역>.json)을 붙임 — 붙어 있으면 배정 학교 이름으로 좌표를 찾아 줍니다 */
 export function attachSchools(infra, ...files) {
   if (!infra) return infra;
@@ -335,8 +359,8 @@ export function nearbyInfra(infra, lat, lng, { minutes = 10, limit = 4, assigned
     return [...by.values()].sort((a, b) => a.m - b.m).slice(0, limit);
   };
 
-  // 역 좌표는 KB 꿀세권에서 받던 것이어서 2026-11-24 로 빠졌습니다(공공 표준데이터로 복원 예정).
-  // 좌표가 없으면 역 핀은 **그리지 않습니다** — 추측한 위치를 지도에 찍는 것보다 비어 있는 게 낫습니다.
+  // 역 좌표는 국가철도공단 표준데이터(station-<지역>.json) — attachStations() 로 붙습니다.
+  // 붙지 않았으면 역 핀은 **그리지 않습니다** — 추측한 위치를 지도에 찍는 것보다 비어 있는 게 낫습니다.
   const stations = near(infra.stations, {
     lat: r => r[2], lng: r => r[3],
     row: r => ({ name: r[0], lines: r[1] ? String(r[1]).split('|') : [], lat: r[2], lng: r[3], kind: 'station' }),

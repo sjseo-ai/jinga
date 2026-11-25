@@ -549,3 +549,28 @@ test('K-apt 입지 자료: 전년 기록과 단위가 다르면 비교를 건너
   const notes = m.annualNotes({ prevInfra: [800, 300, 1, 700, 200], inf: m.infraOf(KAPT_INFRA, 10) });
   assert.deepEqual(notes.map(n => n.key), [], '단위가 다른 값을 빼서 「가까워졌다」고 말하지 않습니다');
 });
+
+test('역 좌표 붙이기 — 겹친 역은 한 번만, 노선은 합침', () => {
+  const kapt = { basis: 'kapt-walk-band', byComplex: { 1: { sw: 0, st: '대치' } } };
+  const seoul = { stations: [['대치', '3호선', 37.4949, 127.0631], ['사당', '2호선|4호선', 37.4765, 126.9816]] };
+  // 경기 파일은 서울을 품도록 일부러 겹쳐 담습니다 — 대치가 두 번 오고, 노선이 하나 더 붙어 옵니다
+  const gg = { stations: [['대치', '수인분당선', 37.4950, 127.0632], ['야탑', '수인분당선', 37.4113, 127.1287]] };
+  const withSt = m.attachStations(m.mergeInfra(kapt), seoul, gg);
+  assert.equal(withSt.stations.length, 3, '겹친 대치역은 한 번만');
+  const daechi = withSt.stations.find(s => s[0] === '대치');
+  assert.deepEqual(String(daechi[1]).split('|').sort(), ['3호선', '수인분당선'], '노선은 합쳐짐');
+  assert.equal(daechi[2], 37.4949, '좌표는 처음 나온 것');
+
+  // 이름이 같아도 1km 넘게 떨어지면 다른 역입니다(서울 양평역 ↔ 경기 양평역)
+  const far = m.attachStations(m.mergeInfra(kapt),
+    { stations: [['양평', '5호선', 37.5257, 126.8856]] },
+    { stations: [['양평', '경의중앙선', 37.4917, 127.4889]] });
+  assert.equal(far.stations.length, 2, '멀리 떨어진 동명 역은 합치지 않음');
+
+  // 붙이면 지도용 「도보 10분 안 역」이 나옵니다
+  const near = m.nearbyInfra(withSt, 37.49764, 127.065056, { minutes: 10 });
+  assert.deepEqual(near.stations.map(s => s.name), ['대치']);
+  assert.ok(near.stations[0].m > 0 && near.stations[0].m <= 700);
+  // 안 붙이면 핀이 없어야 합니다 — 추측 위치를 찍지 않습니다
+  assert.equal(m.nearbyInfra(m.mergeInfra(kapt), 37.49764, 127.065056, { minutes: 10 }).stations.length, 0);
+});

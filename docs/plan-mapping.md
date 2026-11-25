@@ -26,7 +26,7 @@
 | T007 | 시점·면적·**층** 보정 비교거래 기준선 | T012 | **done(v3)** | `scripts/_avm.mjs` `FLOOR_FACTOR`, `scripts/exp-floor.mjs`, `docs/model-card.md` |
 | T008 | 시간분할 백테스트·코호트별 수치 | T013 | **done** | `research/metrics.json`, `research/avm-backtest.md` — 등급·연식·면적대·층대·자치구 코호트 · v3 로 갱신(2026-11-23) |
 | T009 | 반응형 의사결정 화면 `/decision` | — (㉯ 고유) | **done** | `site/public/decision/index.html`, `scripts/build-decision.mjs`, `scripts/smoke-decision.mjs`(13건) |
-| T010 | 교통·학교·생활 어댑터 | T009·T011 | **대부분 done(2026-11-24)** | `scripts/build-kapt-infra.mjs`·`build-school-coords.mjs`·`build-stations.mjs`·`build-complex-coords.mjs`, `jinga-reco.mjs` 구간 점수, `smoke-no-unlicensed.mjs`(12건)·`smoke-reco.mjs`(20건). KB 파생 8개 파일 배포 제거(약 2.6MB). **남은 것: 역 좌표 CSV·카카오 REST 키(사람)** → `docs/mitigation-plan.md` 7절 |
+| T010 | 교통·학교·생활 어댑터 | T009·T011 | **대부분 done(2026-11-24)** | `scripts/build-kapt-infra.mjs`·`build-school-coords.mjs`·`build-stations.mjs`·`build-complex-coords.mjs`, `jinga-reco.mjs` 구간 점수, `smoke-no-unlicensed.mjs`(12건)·`smoke-reco.mjs`(20건). KB 파생 8개 파일 배포 제거(약 2.6MB). 역 좌표는 2026-11-24 에 들어왔습니다(표준데이터 15013205, XLSX 직접 읽기). **남은 것: 카카오 REST 키(사람)** → `docs/mitigation-plan.md` 7절 |
 | T011 | 출처 추적 가능한 보고서 | T017 | 대기 | T009 의 보고서 미리보기가 목차·상태까지 와 있음 |
 | T012 | 유료 의향 시범 테스트 | T019·T020 | 대기(사람) | |
 | T013 | B2B 시범·투자설명 자료 | T028~ | 대기(사람) | |
@@ -48,9 +48,8 @@
 
 1. ~~㉯ T008~~ — 2026-11-23 완료. v3 로 갱신, 기준선을 처음으로 이김(4.1% vs 4.3%).
 2. ~~㉯ T004~~ — 2026-11-24 완료. 대장에 권리 칸과 **어떤 공개 파일로 나가는지**까지 적고 테스트가 지킵니다.
-3. ~~㉯ T010~~ — 2026-11-24 대부분 완료. 남은 두 칸은 **사람 손이 한 번** 필요합니다:
-   · 역 좌표 — 표준데이터 15013205 를 내려받아 `data/stations.csv` 로 (오픈API 가 없습니다)
-   · 단지 좌표 — 카카오 **REST API** 키를 `.scriptskakao-rest-key.cmd` 로
-   둘이 들어오면 지도 역 핀 · 경사 감점 · 길상권 가산 · `kb-*-complexes` 정리가 함께 풀립니다.
+3. ~~㉯ T010~~ — 2026-11-24 대부분 완료. 역 좌표까지 들어와 **지도 역 핀·경사 감점이 되살아났습니다**.
+   남은 한 칸: **단지 좌표** — 카카오 **REST API** 키를 `.scriptskakao-rest-key.cmd` 로 넣으면
+   `npm run geocode` 가 K-apt 주소를 좌표로 바꿔, 마지막 KB 파일 2개(`kb-*-complexes`)를 정리할 수 있습니다.
 4. **㉯ T011** 보고서 — ㉮ T006 인터뷰가 구성을 정합니다.
 5. ㉮ T006 인터뷰 — 여기서 ㉯ T011 보고서 구성과 ㉮ T008 요구사항 동결이 함께 풀립니다.

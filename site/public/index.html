@@ -3222,8 +3222,9 @@ let MAP_MOD = null;
 const mapModule = () => (MAP_MOD = MAP_MOD || import(`./jinga-map.mjs?v=${APP_VERSION}`));
 /**
  * 추천 단지 둘레의 도보 10분 안 지하철역·초등학교
- * 학교 좌표는 school-<지역>.json(학교알리미), 단지별 지표는 kapt-<지역>-infra.json(K-apt).
- * **역 좌표는 2026-11-24 로 빠졌습니다**(KB 꿀세권 자료였음) — 그동안 역은 핀 대신 K-apt 도보시간 구간으로만 알려 줍니다.
+ * 단지별 지표는 kapt-<지역>-infra.json(K-apt), 역 좌표는 station-<지역>.json(국가철도공단 표준데이터).
+ * 역 좌표가 없으면(파일을 아직 안 넣었으면) 핀 대신 K-apt 도보시간 구간을 글로 알려 줍니다.
+ * 학교 핀은 school-<지역>.json 이 붙을 때만 — 지금은 이용허락 확인 전이라 비어 있습니다.
  * → { extras: 지도에 찍을 시설(중복 제거) · rows: 단지별 요약 · radiusM }
  */
 async function nearbyFor(points){
@@ -3624,8 +3625,10 @@ async function loadAnnualFor(ids){
   }
 }
 // 역세권·학군 단지별 지표 — 2026-11-24 원천 교체:
-//   kapt-<지역>-infra.json  국토교통부 K-apt 신고값(지하철·버스 도보시간 구간 · 배정 초등·중학교 · 주차)
-// 예전 KB 꿀세권 파일(kb-*-infra.json)과 그 좌표로 계산했던 경사·길상권(slope-*·sangga-*)은 함께 빠졌습니다.
+//   kapt-<지역>-infra.json     국토교통부 K-apt 신고값(지하철·버스 도보시간 구간 · 배정 초등·중학교 · 주차)
+//   station-<지역>.json        국가철도공단 표준데이터 역 좌표(이용허락 제한 없음) — 지도의 역 핀
+// 예전 KB 꿀세권 파일(kb-*-infra.json)은 빠졌습니다. 그 좌표로 계산했던 경사·길상권(slope-*·sangga-*)도
+// 함께 빠졌고, 공공 역 좌표로 다시 만들면 attachSlope·attachSangga 가 그대로 받습니다.
 //
 // 학교 좌표(school-*.json)는 **일부러 넣지 않았습니다** — 학교알리미 OpenAPI 는 공공누리 제3유형
 // (출처표시·변경금지)으로 표기돼 있어, 가공물을 공개 배포하기 전에 확인이 필요합니다.
@@ -3635,10 +3638,14 @@ async function loadAnnualFor(ids){
 async function loadInfra(){
   if(INFRA_DATA) return INFRA_DATA;
   const get = async name => { try{ const r = await fetch(name); return r.ok ? await r.json() : null; }catch(e){ return null; } };
-  const [seoul, gyeonggi, m] = await Promise.all([
-    get('kapt-seoul-infra.json'), get('kapt-gyeonggi-infra.json'), recoModule(),
+  const [seoul, gyeonggi, stS, stG, slopeS, slopeG, sgS, sgG, m] = await Promise.all([
+    get('kapt-seoul-infra.json'), get('kapt-gyeonggi-infra.json'),
+    get('station-seoul.json'), get('station-gyeonggi.json'),
+    get('slope-seoul.json'), get('slope-gyeonggi.json'),
+    get('sangga-seoul.json'), get('sangga-gyeonggi.json'), recoModule(),
   ]);
-  INFRA_DATA = m.mergeInfra(seoul, gyeonggi);
+  // 경사·길상권은 다시 만들기 전까지 없습니다 — attach* 는 없는 파일을 건너뛰므로 그대로 둡니다
+  INFRA_DATA = m.attachSangga(m.attachSlope(m.attachStations(m.mergeInfra(seoul, gyeonggi), stS, stG), slopeS, slopeG), sgS, sgG);
   return INFRA_DATA;
 }
 const recoModule = () => (RECO_MOD = RECO_MOD || import(`./jinga-reco.mjs?v=${APP_VERSION}`));

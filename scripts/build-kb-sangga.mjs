@@ -123,21 +123,10 @@ export async function main(regionKey = 'seoul', { fetchImpl = (...a) => fetch(..
   log(`${region.label} — 상가를 셀 단지 ${todo.length}곳(이미 있는 ${Object.keys(byId).length}곳은 건너뜀) · 단지당 1회 호출`);
   if (!todo.length) { log('새로 셀 단지가 없습니다'); return prev; }
 
-  let done = 0, failed = 0;
-  for (const j of todo) {
-    try {
-      const { items, total } = await fetchStores(key, { lat: j.lat, lng: j.lng, radius: j.radius }, fetchImpl);
-      const s = summarize(items, { radius: j.radius, total });
-      byId[j.id] = [s.n, s.dens, s.mix, s.top];
-    } catch (e) {
-      if (e.fatal) { log(`중단 — ${e.message}. 지금까지 받은 것만 저장합니다`); break; }
-      failed++;
-    }
-    if (++done % 200 === 0) log(`  ${done}/${todo.length}`);
-    await sleep(GAP_MS);
-  }
-
-  const out = {
+  // 결과를 **중간중간 저장**합니다. 2026-11-24 에 경사 생성기를 7분 돌리고 세션이 끊겨
+  // 아무것도 안 남은 일이 있었습니다 — 이 작업은 6,000회 호출로 10분이 넘으니 더 위험합니다.
+  // 파일이 남아 있으면 다시 돌릴 때 받은 곳은 건너뛰고 이어서 돕니다(위 byId[id] 검사).
+  const snapshot = () => ({
     generatedAt: new Date().toISOString(),
     region: regionKey, regionLabel: region.label,
     source: `소상공인시장진흥공단 상가(상권)정보(공공데이터포털) — 단지에서 가장 가까운 역까지 가는 길을 덮는 원(반경 = 거리÷2+${PAD_M}m) 안의 점포. dens 는 ㎢당 점포 수. 상권의 유무·구성이며 간판·보도 같은 정비 상태를 재는 값이 아닙니다. 역 좌표는 국가철도공단 전국도시철도역사정보표준데이터.`,
@@ -145,7 +134,23 @@ export async function main(regionKey = 'seoul', { fetchImpl = (...a) => fetch(..
     fields: ['n', 'dens', 'mix', 'top'],
     count: Object.keys(byId).length,
     byId,
-  };
+  });
+  const save = () => { fs.writeFileSync(dest, JSON.stringify(snapshot())); };
+  let done = 0, failed = 0;
+  for (const j of todo) {
+    try {
+      const { items, total } = await fetchStores(key, { lat: j.lat, lng: j.lng, radius: j.radius }, fetchImpl);
+      const s = summarize(items, { radius: j.radius, total });
+      byId[j.id] = [s.n, s.dens, s.mix, s.top];
+    } catch (e) {
+      if (e.fatal) { log(`중단 — ${e.message}. 지금까지 받은 것만 저장합니다`); save(); break; }
+      failed++;
+    }
+    if (++done % 200 === 0) { save(); log(`  ${done}/${todo.length} (중간 저장)`); }
+    await sleep(GAP_MS);
+  }
+
+  const out = snapshot();
   fs.writeFileSync(dest, JSON.stringify(out));
   const ds = Object.values(byId).map(v => v[1]).sort((a, b) => a - b);
   log(`${done - failed}곳 계산(실패 ${failed}) → ${path.relative(process.cwd(), dest)} (${(fs.statSync(dest).size / 1024).toFixed(0)}KB) · 전체 ${out.count}곳 · ㎢당 점포 중앙값 ${ds[ds.length >> 1]}곳 · ${Math.round((Date.now() - t0) / 1000)}초`);

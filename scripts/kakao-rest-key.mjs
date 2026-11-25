@@ -23,7 +23,7 @@ export async function checkKey(key, fetchImpl = (...a) => fetch(...a)) {
       headers: { Authorization: `KakaoAK ${key}` }, signal: AbortSignal.timeout(15000),
     });
     if (r.status === 401) return { ok: false, reason: '카카오가 키를 거부했습니다(401) — JavaScript 키를 넣으신 게 아닌지 확인해 주세요' };
-    if (r.status === 403) return { ok: false, reason: '카카오가 권한을 거부했습니다(403) — 앱 설정에서 「카카오맵」 또는 「로컬」 사용을 켜 주세요' };
+    if (r.status === 403) return { ok: false, reason: '카카오가 권한을 거부했습니다(403) — 앱 관리 페이지에서 [카카오맵] → [사용 설정] → [상태] 를 ON 으로 바꿔 주세요(이걸 켜야 주소 검색이 열립니다)' };
     if (!r.ok) return { ok: false, reason: `카카오 응답 HTTP ${r.status}` };
     const j = await r.json();
     const d = j && j.documents && j.documents[0];
@@ -50,8 +50,14 @@ async function run() {
   console.log(`
 카카오 REST API 키를 넣습니다 — 단지 주소를 좌표로 바꾸는 데만 씁니다(npm run geocode).
 
-  https://developers.kakao.com → 내 애플리케이션 → 앱 선택 → 앱 키 → 「REST API 키」
-  (지도에 쓰는 JavaScript 키와 다른 키입니다)
+  아직 카카오 앱이 없으면 먼저 —
+    1) https://developers.kakao.com 로그인 → 개발자 계정 「회원가입」
+    2) https://developers.kakao.com/console/app → 「앱 생성」
+    3) 그 앱에서 [카카오맵] → [사용 설정] → [상태] ON   ← 켜야 주소 검색이 열립니다
+
+  키 보는 곳 —
+    [앱] → [플랫폼 키] → 「REST API 키」
+    (지도에 쓰는 JavaScript 키와 다른 키입니다. 같은 화면에 나란히 있습니다)
 `);
   const key = await ask('REST API 키 (입력해도 화면에 보이지 않습니다): ');
   if (!looksLikeKey(key)) {

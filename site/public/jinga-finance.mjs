@@ -1,4 +1,4 @@
-// ⚠ 이 파일은 `npm run build:decision` 이 `scripts/_finance.mjs` 에서 복사한 것입니다.
+// ⚠ 이 파일은 `npm run build:decision` 이 `scripts/` 의 원본에서 복사한 것입니다.
 //   직접 고치지 마십시오 — 원본을 고치고 다시 빌드하십시오.
 //   `scripts/smoke-decision.mjs` 가 원본과 다르면 테스트를 깨뜨립니다.
 // 진가 의사결정 엔진 — 대출·비용 및 시나리오 계산(T016). 순수 함수만, 바깥을 읽지 않습니다.

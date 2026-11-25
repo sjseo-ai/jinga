@@ -141,6 +141,35 @@ td .note{display:block;font-size:14px;color:var(--ink-faint);font-weight:400}
 .t-confirmed{background:var(--teal-soft);color:var(--teal-text)}
 
 /* 6. ReportPreview */
+/* 보고서 — 주장 한 줄에 성격 배지·값·출처 각주가 함께 */
+.claims{margin:0 0 18px;padding:0;list-style:none}
+.claims li{display:flex;flex-wrap:wrap;align-items:baseline;gap:7px;padding:9px 0;
+  border-bottom:1px solid var(--line);font-size:15px;line-height:1.6}
+.claims li:last-child{border-bottom:none}
+.claims .v{font-variant-numeric:tabular-nums;font-weight:700;color:var(--navy)}
+.claims .note{flex:1 1 100%;font-size:14px;color:var(--ink-faint)}
+.claims .conf{font-size:13px;color:var(--accent);font-weight:600}
+.claims .fn{font-size:13px;color:var(--teal-text);cursor:help}
+.fns{margin:0 0 16px;padding-left:22px;font-size:14px;color:var(--ink-soft);line-height:1.6}
+/* 출처는 긴 URL 이라 그냥 두면 휴대전화에서 가로로 밀립니다 — 어디서든 끊어 줍니다 */
+.fns li{padding:7px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere;word-break:break-word}
+.fns li:last-child{border-bottom:none}
+.fns .note{display:block;font-size:13px;color:var(--ink-faint)}
+.claims li,.claims .note{overflow-wrap:anywhere;word-break:break-word}
+#report{max-width:100%}
+.rsum{font-weight:700;margin:4px 0 0}
+.rsum.bad{color:#b4232a}
+
+/* 인쇄 — 화면용 칸을 숨기고 보고서만 남깁니다. PDF 는 브라우저 인쇄로 저장합니다(㉮ T017 에서 조판) */
+@media print{
+  header,nav,.hero,form,.row,button,#candidates,#metrics,#breakdown{display:none !important}
+  section:not([aria-labelledby="h-report"]):not([aria-labelledby="h-src"]){display:none !important}
+  body{background:#fff;color:#000;font-size:11pt}
+  .card{border:none;box-shadow:none;padding:0;margin:0 0 14pt;break-inside:avoid}
+  .claims li,.fns li{break-inside:avoid}
+  .bq{border:1px solid #999 !important;background:#fff !important;color:#000 !important}
+  a[href]::after{content:" (" attr(href) ")";font-size:9pt;color:#555}
+}
 .toc{counter-reset:s;margin:0;padding:0;list-style:none}
 .toc li{counter-increment:s;display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
 .toc li:last-child{border-bottom:none}
@@ -315,14 +344,19 @@ dl.meth dd{margin:4px 0 0}
   <section aria-labelledby="h-report">
     <div class="card">
       <div class="hd">
-        <h2 id="h-report">⑥ 보고서 미리보기</h2>
-        <span class="sub">PDF 보고서는 아직 준비 중입니다</span>
+        <h2 id="h-report">⑥ 보고서</h2>
+        <span class="sub" id="reportSub">숫자마다 출처가 붙습니다</span>
       </div>
-      <p>지금 화면에 나온 값으로 보고서가 어디까지 채워졌는지 그대로 보여 드립니다.
-        <b>준비 중인 칸은 준비 중이라고 적습니다</b> — 빈칸을 그럴듯한 문장으로 메우지 않습니다.</p>
+      <p>숫자 한 줄마다 <b>어디서 온 값인지</b>와 <b>어떤 성격인지</b>를 함께 적습니다 —
+        공공 신고값·법·규칙 계산·추정·가정을 섞지 않습니다.
+        출처 없는 주장은 보고서를 짜는 단계에서 아예 만들어지지 않습니다.</p>
+      <div id="report"><p class="empty">「계산하기」를 누르면 채워집니다.</p></div>
+      <h3>아직 못 채우는 칸</h3>
+      <p class="note">빈칸을 그럴듯한 문장으로 메우지 않습니다. 왜 못 채우는지 적어 둡니다.</p>
       <ol class="toc" id="toc"></ol>
       <div class="row">
-        <button class="btn btn-2" type="button" disabled title="보고서 생성은 아직 준비 중입니다">PDF 내려받기 (준비 중)</button>
+        <button class="btn btn-2" type="button" id="printReport">보고서 인쇄 · PDF 저장</button>
+        <span class="note">브라우저 인쇄 창에서 「PDF로 저장」을 고르시면 됩니다. 조판은 ㉮ T017 에서 다듬습니다.</span>
       </div>
     </div>
   </section>
@@ -416,6 +450,8 @@ dl.meth dd{margin:4px 0 0}
 import {
   plan, scenarios, acquisitionCost, loanLimit, holdingCost, rulesAge,
 } from '/jinga-finance.mjs';
+// 보고서 — 출처 없는 주장을 구조로 막는 모듈(㉯ T011). scripts/_report*.mjs 의 복사본입니다.
+import { composeReport } from '/jinga-report-compose.mjs';
 
 const $ = s => document.querySelector(s);
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
@@ -460,7 +496,7 @@ async function boot() {
   for (const g of gus) { const o = el('option', null, g); o.value = g; gu.append(o); }
 
   restore();
-  renderToc();
+  renderReport(null);
 }
 
 // ── 단지 고르기 ─────────────────────────────────────────────────────────────
@@ -663,6 +699,18 @@ function inputs(cur) {
 
 $('#calc').addEventListener('click', () => { save(); renderBreakdown(); });
 
+// PDF 는 브라우저 인쇄로 저장합니다 — 조판 라이브러리를 들이지 않았습니다(의존성 0 을 지킴).
+// 출처 없는 주장이 하나라도 있으면 **내보내지 않습니다.** 내보내면 안 되는 보고서입니다.
+$('#printReport').addEventListener('click', () => {
+  if (!REPORT) { alert('먼저 단지와 면적을 고르고 「계산하기」를 눌러 주세요.'); return; }
+  if (REPORT.violations.length) {
+    const lines = REPORT.violations.slice(0, 3).map(v => `· ${v.where} — ${v.reason}`);
+    alert([`출처 없는 주장이 ${REPORT.violations.length}건 있어 내보내지 않습니다.`, '', ...lines].join('\n'));
+    return;
+  }
+  window.print();
+});
+
 function renderBreakdown() {
   const box = $('#breakdown');
   box.innerHTML = '';
@@ -672,7 +720,9 @@ function renderBreakdown() {
   if (!p.amount) {
     box.append(el('p', 'empty', '이 면적은 거래가 너무 적어 추정 대표값이 없습니다. 값이 있는 면적을 고르거나, 거래가 더 쌓일 때까지 기다려 주세요.'));
     $('#breakSub').textContent = '';
-    renderToc();
+    REPORT = null;
+    renderReport(null);
+    $('#reportSub').textContent = '대표값이 없는 면적은 보고서를 내지 않습니다';
     return;
   }
 
@@ -794,35 +844,97 @@ function renderBreakdown() {
     box.append(w);
   }
 
-  renderToc(out);
+  // ── 보고서 짜기 — 지금 화면의 값 그대로, 숫자마다 출처를 달아
+  REPORT = composeReport({
+    complex: cur.c, area: cur.a, index: IDX,
+    finance: out.base, scen: out, rules: RULES,
+  });
+  renderReport(REPORT);
+  $('#reportSub').textContent = REPORT.violations.length
+    ? `출처 없는 주장 ${REPORT.violations.length}건 — 내보내면 안 됩니다`
+    : `주장 ${REPORT.sections.reduce((a, x) => a + x.claims.length, 0)}줄 · 출처 ${REPORT.sources.length}종 · 출처 없는 주장 0건`;
 }
 
 // ── 6. ReportPreview ───────────────────────────────────────────────────────
-// 채워진 칸은 지금 값을 그대로 적고, 안 된 칸은 **안 됐다고 적습니다.**
-function renderToc(out) {
-  const cur = IDX ? current() : null;
-  const p = cur ? priced(cur) : null;
-  const rows = [
-    ['요약', out ? `${cur.c.name} 전용 ${cur.a.m2}㎡ · 추정 ${amtKr(p.amount)}원` : '단지를 고르고 계산하면 채워집니다', !!out],
-    ['가정과 기준일', RULES ? `실거래 ${ymKr(IDX.asOfYM)} · 규칙집 ${RULES.version}` : '—', !!RULES],
-    ['후보 비교', CANDS.length ? `${CANDS.length}곳 담김` : '후보를 담으면 채워집니다', CANDS.length > 0],
-    ['시세 근거표', p ? `표본 ${p.n}건 · ${p.grade}등급 · 범위 ${amtKr(p.low)}~${amtKr(p.high)}` : '—', !!p],
-    ['취득·보유·처분 비용', out ? `취득 ${만(out.base.acquisition.total)}원 · ${out.base.input.holdYears}년 보유 ${억(out.base.outflowDuringHold)}원` : '—', !!out],
-    ['시나리오', out ? `${out.cases.length}갈래(가정)` : '—', !!out],
-    ['리스크·경고', out ? `${out.warnings.length}건` : '—', !!out],
-    ['체크리스트', '준비 중 — 고객 인터뷰에서 항목을 정한 뒤 넣습니다', false],
-    ['PDF 조판·출처 각주', '준비 중', false],
-    ['사람 검수', '준비 중 — 유료 전환 전에는 사람이 한 번 봅니다', false],
-  ];
+// 2026-11-25: 손으로 쓴 목차를 **실제 보고서**로 바꿨습니다(㉯ T011).
+// 숫자 한 줄마다 성격(공공 신고값·법계산·추정·가정)과 출처가 붙습니다.
+// 출처 없는 주장은 jinga-report.mjs 의 claim() 이 아예 만들지 않으므로, 여기서 샐 수 없습니다.
+const BASIS_BADGE = { fact: 'bq-official', official: 'bq-real', estimate: 'bq-est', assumption: 'bq-assume' };
+let REPORT = null;                      // 마지막으로 짠 보고서 — PDF(인쇄)가 이것을 씁니다
+
+/** 출처 문구를 각주 번호로 — 같은 출처가 여러 줄에 걸리므로 번호로 묶습니다 */
+function footnoteIndex(report) {
+  const map = new Map();
+  report.sources.forEach((s, i) => map.set(s.source, i + 1));
+  return map;
+}
+
+function renderReport(report) {
+  const box = $('#report');
+  box.innerHTML = '';
+  if (!report) {
+    box.append(el('p', 'empty', '단지와 면적을 고르고 「계산하기」를 누르면 보고서가 채워집니다.'));
+    renderPending(null);
+    return;
+  }
+  const fn = footnoteIndex(report);
+
+  for (const sec of report.sections) {
+    box.append(el('h3', null, sec.title));
+    const ul = el('ul', 'claims');
+    for (const c of sec.claims) {
+      const li = el('li');
+      li.append(el('span', `bq ${BASIS_BADGE[c.basis] || 'bq-assume'}`, c.basisLabel));
+      li.append(el('b', null, c.label));
+      if (c.value != null) li.append(el('span', 'v', ` ${Number(c.value).toLocaleString('ko-KR')}${c.unit}`));
+      if (c.confidence && c.confidence !== 'confirmed') li.append(el('span', 'conf', ` ${c.confidence === 'uncertain' ? '확인 필요' : '추정 확신도 보통'}`));
+      if (c.note) li.append(el('span', 'note', c.note));
+      const sup = el('sup', 'fn', `[${fn.get(c.source)}]`);
+      sup.title = c.source;
+      li.append(sup);
+      if (c.asOf) li.append(el('span', 'note', `기준 ${c.asOf}`));
+      ul.append(li);
+    }
+    box.append(ul);
+  }
+
+  // 출처 각주 — 보고서에 쓰인 출처를 번호째로. 「숫자마다 출처」가 여기서 닫힙니다
+  box.append(el('h3', null, '출처'));
+  const ol = el('ol', 'fns');
+  for (const s of report.sources) {
+    const li = el('li');
+    li.append(el('span', 'note', `${s.count}줄 · ${s.basis.map(b => (({ fact: '공공 신고값', official: '법·규칙 계산', estimate: '추정', assumption: '가정' })[b] || b)).join('·')}`));
+    li.append(el('div', null, s.source));
+    ol.append(li);
+  }
+  box.append(ol);
+
+  const sum = el('p', 'rsum');
+  const total = report.sections.reduce((a, s) => a + s.claims.length, 0);
+  sum.textContent = `주장 ${total}줄 · 출처 ${report.sources.length}종 · 출처 없는 주장 ${report.violations.length}건`;
+  if (report.violations.length) sum.classList.add('bad');
+  box.append(sum);
+  box.append(el('p', 'note', report.meta.notice));
+  renderPending(report);
+}
+
+/** 못 채우는 칸은 **왜 못 채우는지**와 함께. 빈칸을 그럴듯한 문장으로 메우지 않습니다 */
+function renderPending(report) {
   const ol = $('#toc');
   ol.innerHTML = '';
-  for (const [name, detail, ready] of rows) {
+  const rows = (report && report.pending) || [
+    { title: '현장 체크리스트', why: '고객 인터뷰에서 항목을 정한 뒤 넣습니다' },
+    { title: '학원가', why: '대체 공공 원천을 아직 붙이지 않았습니다' },
+    { title: 'PDF 조판·출처 각주', why: '칸 목록이 동결된 뒤 조판합니다' },
+    { title: '사람 검수', why: '유료로 넘기기 전에는 사람이 한 번 봅니다' },
+  ];
+  for (const p of rows) {
     const li = el('li');
     const d = el('div');
-    d.append(el('b', null, name));
-    d.append(el('span', 'note', detail));
+    d.append(el('b', null, p.title));
+    d.append(el('span', 'note', p.why));
     li.append(d);
-    li.append(el('span', `st ${ready ? 'st-ready' : 'st-wip'}`, ready ? '채워짐' : '준비 중'));
+    li.append(el('span', 'st st-wip', '준비 중'));
     ol.append(li);
   }
 }

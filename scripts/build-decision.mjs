@@ -26,21 +26,44 @@ const SRC = {
   prices: path.join(PUB, 'trade-price-seoul.json'),
   kapt: path.join(PUB, 'kapt-list-seoul.json'),
   engine: path.join(ROOT, 'scripts', '_finance.mjs'),
+  report: path.join(ROOT, 'scripts', '_report.mjs'),
+  compose: path.join(ROOT, 'scripts', '_report-compose.mjs'),
   rules: path.join(ROOT, 'data', 'finance-rules.json'),
 };
 const OUT = {
   index: path.join(PUB, 'decision-index.json'),
   engine: path.join(PUB, 'jinga-finance.mjs'),
+  report: path.join(PUB, 'jinga-report.mjs'),
+  compose: path.join(PUB, 'jinga-report-compose.mjs'),
   rules: path.join(PUB, 'finance-rules.json'),
 };
 
 /** 복사본 머리에 붙이는 안내 — 이 파일을 직접 고치려는 사람을 막습니다. */
 export const ENGINE_HEADER = [
-  '// ⚠ 이 파일은 `npm run build:decision` 이 `scripts/_finance.mjs` 에서 복사한 것입니다.',
+  '// ⚠ 이 파일은 `npm run build:decision` 이 `scripts/` 의 원본에서 복사한 것입니다.',
   '//   직접 고치지 마십시오 — 원본을 고치고 다시 빌드하십시오.',
   '//   `scripts/smoke-decision.mjs` 가 원본과 다르면 테스트를 깨뜨립니다.',
   '',
 ].join('\n');
+
+/**
+ * 모듈을 공개 폴더로 복사. **import 주소만** 바꿉니다 —
+ * 원본은 `./_report.mjs` 를 부르지만 복사본 이름은 `jinga-report.mjs` 입니다.
+ * 그 한 줄 말고는 글자 하나 건드리지 않으므로, `smoke-decision.mjs` 가
+ * 「머리글과 import 주소를 뺀 나머지가 원본과 같은지」로 검사할 수 있습니다.
+ */
+export const IMPORT_REWRITE = [
+  [/from '\.\/_report\.mjs'/g, "from './jinga-report.mjs'"],
+  [/from '\.\/_finance\.mjs'/g, "from './jinga-finance.mjs'"],
+];
+export function rewriteImports(code) {
+  let out = String(code);
+  for (const [re, to] of IMPORT_REWRITE) out = out.replace(re, to);
+  return out;
+}
+export function copyModule(src, dest) {
+  fs.writeFileSync(dest, ENGINE_HEADER + rewriteImports(fs.readFileSync(src, 'utf8')));
+}
 
 export function buildIndex({ prices, kapt }) {
   const names = kapt.byCode || {};
@@ -84,13 +107,17 @@ function run() {
   const idx = buildIndex({ prices, kapt });
 
   fs.writeFileSync(OUT.index, JSON.stringify(idx));
-  fs.writeFileSync(OUT.engine, ENGINE_HEADER + fs.readFileSync(SRC.engine, 'utf8'));
+  copyModule(SRC.engine, OUT.engine);
+  copyModule(SRC.report, OUT.report);
+  copyModule(SRC.compose, OUT.compose);
   fs.writeFileSync(OUT.rules, fs.readFileSync(SRC.rules, 'utf8'));
 
   const kb = p => `${Math.round(fs.statSync(p).size / 1024)}KB`;
   console.log(`decision-index.json  단지 ${idx.counts.complexes.toLocaleString('ko-KR')}곳 · 면적 ${idx.counts.areas.toLocaleString('ko-KR')}칸 · ${kb(OUT.index)}`);
   if (idx.counts.skippedNoName) console.log(`  공식 단지목록에 이름이 없어 뺀 곳 ${idx.counts.skippedNoName}곳`);
   console.log(`jinga-finance.mjs    ${kb(OUT.engine)} (scripts/_finance.mjs 복사)`);
+  console.log(`jinga-report.mjs     ${kb(OUT.report)} (scripts/_report.mjs 복사)`);
+  console.log(`jinga-report-compose.mjs ${kb(OUT.compose)} (scripts/_report-compose.mjs 복사)`);
   console.log(`finance-rules.json   ${kb(OUT.rules)} (data/finance-rules.json 복사)`);
 }
 

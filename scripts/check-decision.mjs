@@ -99,7 +99,13 @@ async function main() {
       await wait(200);
     }
     ok('자료를 내려받아 화면이 떴다', booted, await ev(send, `document.querySelector('#countComplex').textContent`));
-    if (!booted) throw new Error('첫 화면이 뜨지 않았습니다');
+    if (!booted) {
+      // 「안 떴다」만 보면 원인을 못 찾습니다 — 콘솔을 함께 찍습니다
+      const why = cdp.logs.length
+        ? ['', '  브라우저 콘솔:', ...cdp.logs.map(l => `    ${l}`)].join('\n')
+        : '\n  (콘솔에 아무것도 없습니다 — 자료 파일 404 를 보세요)';
+      throw new Error(`첫 화면이 뜨지 않았습니다${why}`);
+    }
 
     ok('실거래 기준월 표시', !!(await ev(send, `!document.querySelector('#asofTrade').textContent.includes('…')`)),
       await ev(send, `document.querySelector('#asofTrade').textContent`));
@@ -154,10 +160,39 @@ async function main() {
     ok('숫자에 NaN·undefined 가 없다', !/NaN|undefined|Infinity/.test(bd), /NaN|undefined|Infinity/.test(bd) ? bd.slice(0, 200) : '');
 
     // ⑥ 보고서 미리보기
+    // 2026-11-25: 손으로 쓴 목차가 **실제 보고서**로 바뀌었습니다(㉯ T011).
+    // 이제 #report 에 주장이 줄줄이 들어가고, #toc 에는 **못 채우는 칸만** 남습니다.
+    const claims = await ev(send, `document.querySelectorAll('#report .claims li').length`);
+    const badges = await ev(send, `new Set([...document.querySelectorAll('#report .claims .bq')].map(e=>e.className)).size`);
+    const fns = await ev(send, `document.querySelectorAll('#report .fns li').length`);
+    ok('보고서에 주장이 줄마다 성격 배지를 달고 들어갔다', claims >= 25 && badges >= 3, `주장 ${claims}줄 · 배지 ${badges}종`);
+    ok('출처 각주가 붙었다', fns >= 5, `출처 ${fns}종`);
+
+    // 「출처 없는 주장 0건」이 화면에 그대로 적혀야 합니다 — 숨기면 지키는 의미가 없습니다
+    const rsum = await ev(send, `document.querySelector('#report .rsum')?.textContent || ''`);
+    ok('출처 없는 주장 수를 화면에 적는다', /출처 없는 주장 0건/.test(rsum), rsum);
+    const bad = await ev(send, `document.querySelectorAll('#report .rsum.bad').length`);
+    ok('위반이 0건이라 빨간 표시가 없다', bad === 0, `${bad}건`);
+
+    // 각주마다 출처 원문이 붙어 있고, 번호가 아래 출처 목록 안을 가리키는지.
+    // 글자 수로 재면 안 됩니다 — 「이용자 입력값」처럼 짧고 정당한 출처가 있습니다.
+    const fnOk = await ev(send, `(() => {
+      const fns = [...document.querySelectorAll('#report .claims .fn')];
+      const n = document.querySelectorAll('#report .fns li').length;
+      if (!fns.length || !n) return 'none';
+      for (const e of fns) {
+        if (!(e.title || '').trim()) return 'empty:' + e.textContent;
+        const num = Number((e.textContent.match(/\\d+/) || [])[0]);
+        if (!(num >= 1 && num <= n)) return 'range:' + e.textContent;
+      }
+      return 'ok';
+    })()`);
+    ok('각주마다 출처 원문이 붙고 번호가 출처 목록을 가리킨다', fnOk === 'ok', String(fnOk));
+
     const toc = await ev(send, `document.querySelectorAll('#toc li').length`);
-    const ready = await ev(send, `document.querySelectorAll('#toc .st-ready').length`);
     const wip = await ev(send, `document.querySelectorAll('#toc .st-wip').length`);
-    ok('보고서 목차가 채워짐/준비중을 구분한다', toc > 0 && ready > 0 && wip > 0, `${toc}칸 중 채워짐 ${ready} · 준비중 ${wip}`);
+    const why = await ev(send, `[...document.querySelectorAll('#toc .note')].every(e=>e.textContent.trim().length >= 10)`);
+    ok('못 채우는 칸은 왜 못 채우는지 함께 적는다', toc >= 3 && wip === toc && !!why, `${toc}칸 전부 준비 중`);
 
     // 모바일 폭에서 가로 스크롤이 생기지 않아야 합니다
     await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });

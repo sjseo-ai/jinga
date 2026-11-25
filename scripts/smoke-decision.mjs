@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { buildIndex, ENGINE_HEADER, SRC, OUT } from './build-decision.mjs';
+import { buildIndex, ENGINE_HEADER, SRC, OUT, rewriteImports } from './build-decision.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PAGE = path.join(ROOT, 'site', 'public', 'decision', 'index.html');
@@ -23,6 +23,42 @@ test('브라우저가 쓰는 계산 엔진은 저장소 원본과 똑같다', ()
   assert.ok(copy.startsWith(ENGINE_HEADER), '복사본임을 알리는 머리말이 있어야 합니다');
   assert.equal(copy.slice(ENGINE_HEADER.length), origin,
     '복사본이 scripts/_finance.mjs 와 다릅니다 — npm run build:decision 을 다시 돌리십시오');
+});
+
+test('보고서 모듈 복사본도 원본과 똑같다 — import 주소만 다름', () => {
+  for (const [srcKey, outKey] of [['report', 'report'], ['compose', 'compose']]) {
+    assert.ok(fs.existsSync(OUT[outKey]), `${OUT[outKey]} 가 없습니다 — npm run build:decision`);
+    const copy = read(OUT[outKey]);
+    assert.ok(copy.startsWith(ENGINE_HEADER), `${outKey}: 복사본 머리말이 없습니다`);
+    assert.equal(copy.slice(ENGINE_HEADER.length), rewriteImports(read(SRC[srcKey])),
+      `${outKey}: 복사본이 원본과 다릅니다 — npm run build:decision 을 다시 돌리십시오`);
+  }
+  // 복사본이 형제 파일을 부르는지 — 원본 이름(_report.mjs)을 그대로 두면 브라우저에서 404 입니다
+  const compose = read(OUT.compose);
+  assert.ok(compose.includes("from './jinga-report.mjs'"), '복사본이 형제 파일을 불러야 합니다');
+  assert.ok(!compose.includes("from './_report.mjs'"), '원본 이름이 남아 있으면 브라우저에서 404 입니다');
+});
+
+test('보고서 모듈도 브라우저에서 돌 수 있어야 한다 — node 전용 기능 금지', () => {
+  for (const key of ['report', 'compose']) {
+    const src = read(SRC[key]);
+    assert.ok(!src.includes("from " + String.fromCharCode(39) + "node:"), key + ": node: 모듈을 import 하면 브라우저에서 깨집니다");
+    assert.ok(!src.includes("require("), key + ": require 를 쓰면 브라우저에서 깨집니다");
+    assert.ok(!src.includes("process."), key + ": process 를 쓰면 브라우저에서 깨집니다");
+  }
+});
+
+test('화면이 보고서를 쓰고, 출처 없는 주장은 내보내지 않는다', () => {
+  const html = read(PAGE);
+  assert.ok(html.includes("/jinga-report-compose.mjs"), "보고서 모듈을 불러야 합니다");
+  assert.ok(html.includes("composeReport("), "보고서를 짜는 호출이 있어야 합니다");
+  // 인쇄(PDF)는 위반이 있으면 막아야 합니다 — 내보내면 안 되는 보고서입니다
+  assert.ok(html.includes("REPORT.violations.length"), "위반이 있을 때 막는 코드가 있어야 합니다");
+  assert.ok(html.includes("window.print()"), "인쇄로 PDF 를 저장합니다");
+  assert.ok(html.includes("@media print"), "인쇄용 스타일이 있어야 합니다");
+  // 성격 배지 네 종류가 주장 줄에 쓰이는지
+  assert.ok(html.includes("BASIS_BADGE"), "성격 배지를 쓰는 코드가 있어야 합니다");
+  for (const b of ['bq-official', 'bq-real', 'bq-est', 'bq-assume']) assert.ok(html.includes(b), b);
 });
 
 test('엔진은 브라우저에서 돌 수 있어야 한다 — node 전용 기능 금지', () => {

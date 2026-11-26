@@ -35,7 +35,7 @@
 | T009 공공 API 이용조건·데이터 사전 | **done(일부 미확인)** | `data/source-policy.json`, `data/data-dictionary.md` | K-apt·학교알리미·OpenTopoData 이용허락범위 원문 확인 |
 | T010 수집·정규화 파이프라인 | **done(2026-11-26)** | `scripts/_trades.mjs`, `build-trades.mjs`, `refresh-trades.mjs`, `match-trades.mjs`, `smoke-trades-ingest.mjs`(16건), `docs/schema.md` | 서울 12개월 **63,319건** · 단지 매칭 74.7% · 일별 갱신 75회/22초(전체 수집은 300회) · 스키마·갱신규칙 문서화 완료 |
 | T011 KB 의존 교체 | **done** | `scripts/build-kapt-list.mjs`, `scripts/smoke-no-unlicensed.mjs`(6건), 공식 단지목록 교체·지역 지도 실거래 전환 | 용적률은 건축물대장(15134735) 연결 시 복원 |
-| T012 기초 J-AVM | **done(v1)** | `scripts/_avm.mjs`, `scripts/run-avm.mjs`, `scripts/smoke-avm.mjs`(8건), `docs/model-card.md` | 층 보정·전월세 결합은 다음 판 |
+| T012 기초 J-AVM | **done(v3)** | `scripts/_avm.mjs`, `scripts/run-avm.mjs`, `scripts/smoke-avm.mjs`(8건), `docs/model-card.md` | 층 보정 v3 반영 · **전세가율 2026-11-26 연결**(`_rents.mjs`, `build-rents.mjs`, `build-rent-prices.mjs`, `smoke-rents.mjs`(17건)) · 전월세전환율은 다음 판 |
 | T013 백테스트 | **done** | `scripts/backtest-avm.mjs`, `scripts/exp-avm.mjs`, `research/metrics.json`, `research/avm-backtest.md` | 중앙오차 4.3% · 범위 적중 85% · **기준선과 동률**(정확도 개선은 층·향 자료 필요) |
 | T014 개인정보·보안 기본체계 | **done** | `security/privacy-checklist.md`, `security/threat-model.md`, `scripts/smoke-privacy.mjs`(8건) | 2FA·접근기록·자동 취약점 점검은 P4 진입 조건으로 미룸 |
 

@@ -119,6 +119,30 @@ function sectionPrice({ area, index, model }) {
       note: ymKr(area.last), asOf,
     }));
   }
+
+  // 전세가율 — **분모가 매매 추정치이므로 전세가율도 추정입니다.** 여기서 fact 로 적으면 안 됩니다.
+  // 전세 자료를 아직 안 실었으면 출처가 없어 아예 적지 않습니다 — claim() 이 출처 없는 주장을 거부합니다.
+  if (area.jr != null && index.rentSource) {
+    claims.push(claim({
+      label: '전세가율(추정)', value: Math.round(area.jr * 1000) / 10, unit: '%',
+      basis: 'estimate', asOf,
+      source: `${index.rentSource} · 분모는 이 칸 위의 매매 추정가입니다`,
+      note: '신규 전세 보증금 중앙값을 위 매매 추정가로 나눈 값입니다. 갱신 계약은 전월세상한제에 묶여 시세가 아니므로 빼고 셈했습니다. '
+        + '전세가율이 낮다고 전세가 싼 것은 아닙니다 — 재건축 기대가 매매가에만 실린 단지에서 낮게 나옵니다',
+      extra: { grade: area.g },
+    }));
+    claims.push(claim({
+      label: '전세 보증금 중앙값(신규 계약)', value: KRW(area.jd * 1e4), unit: '원',
+      basis: 'fact', asOf, source: index.rentSource,
+      note: '신고된 신규 전세 계약들의 중앙값입니다. 한 건의 값이 아닙니다',
+    }));
+    claims.push(claim({
+      label: '전세가율에 쓰인 신규 전세 건수', value: area.jn, unit: '건',
+      basis: 'fact', asOf, source: index.rentSource,
+      note: '갱신 계약과 월세는 여기에 들어가지 않습니다',
+    }));
+  }
+
   return { key: 'price', title: '② 추정 시세와 그 근거', claims };
 }
 

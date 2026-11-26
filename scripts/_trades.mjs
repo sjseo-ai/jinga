@@ -132,15 +132,15 @@ export const cellOf = (gu, ym) => `${gu}||${ym}`;
 /** 같은 거래로 볼 열쇠. 같은 열쇠가 여러 벌일 수 있어 세어서 비교합니다. */
 export const tradeKey = t => [t.seq, t.date, t.amount, t.area, t.floor].join('|');
 
-const multiset = list => {
+const multiset = (list, keyOf) => {
   const m = new Map();
-  for (const t of list) { const k = tradeKey(t); m.set(k, (m.get(k) || 0) + 1); }
+  for (const t of list) { const k = keyOf(t); m.set(k, (m.get(k) || 0) + 1); }
   return m;
 };
 
 /** 두 거래 묶음의 차이 — 새로 생긴 건, 사라진 건, 그대로인 건 */
-export function diffTrades(before, after) {
-  const a = multiset(before), b = multiset(after);
+export function diffTrades(before, after, keyOf = tradeKey) {
+  const a = multiset(before, keyOf), b = multiset(after, keyOf);
   let added = 0, removed = 0, same = 0;
   for (const [k, n] of b) { const o = a.get(k) || 0; added += Math.max(0, n - o); same += Math.min(n, o); }
   for (const [k, n] of a) { const w = b.get(k) || 0; removed += Math.max(0, n - w); }
@@ -160,7 +160,7 @@ const resultCell = r => cellOf(r.gu != null ? r.gu : r.stat.gu, r.ym != null ? r
  * 기존 파일에 다시 받은 결과를 합칩니다. 네트워크도 파일도 건드리지 않습니다.
  * results: [{ gu, ym, trades, stat }] — build-trades.mjs 의 fetchGuMonth 가 주는 모양.
  */
-export function mergeRefresh({ trades = [], stats = [], results = [], fetchedAt = null }) {
+export function mergeRefresh({ trades = [], stats = [], results = [], fetchedAt = null, keyOf = tradeKey }) {
   const ok = new Map(), failures = [];
   for (const r of results) {
     if (!r || !r.stat) continue;
@@ -186,10 +186,10 @@ export function mergeRefresh({ trades = [], stats = [], results = [], fetchedAt 
     gus: [...new Set(nextStats.map(s => s.gu))].sort((a, b) => String(a).localeCompare(String(b), 'ko')),
     counts: {
       trades: next.length,
-      complexes: byComplex(next).length,
+      complexes: new Set(next.map(t => t.seq).filter(Boolean)).size,
       cancelled: nextStats.reduce((n, s) => n + (s.cancelled || 0), 0),
       failedQueries: nextStats.filter(s => !s.ok).length,
     },
-    summary: { cells: ok.size, ...diffTrades(before, incoming), failures },
+    summary: { cells: ok.size, ...diffTrades(before, incoming, keyOf), failures },
   };
 }

@@ -1,6 +1,6 @@
 {
   "_": "T009 — 상용 서비스에 쓸 원천의 이용조건. 각 항목은 '확인 URL'을 그날 직접 읽고 적은 것이며, 읽히지 않은 값은 null 로 둡니다(추정으로 채우지 않습니다). 허용 칸(allows)은 commercial·redistribute·derive·cache 네 가지이며, null 은 「확인하지 못했다」는 뜻입니다. 공개 파일은 두 칸으로 가릅니다 — publicPrefixes 는 **원자료**가 그대로 나가는 파일(redistribute 가 true 여야 함), publicDerivedPrefixes 는 **집계·파생값만** 나가는 파일(derive 가 true 여야 하고 무엇을 뺐는지 derivedNote 에 적음)입니다.",
-  "checkedAt": "2026-11-24",
+  "checkedAt": "2026-11-26",
   "recheckEvery": "6개월 또는 원천의 수정일이 바뀔 때",
   "sources": [
     {
@@ -74,25 +74,32 @@
       "params": [
         "LAWD_CD",
         "DEAL_YMD",
-        "serviceKey"
+        "serviceKey",
+        "pageNo",
+        "numOfRows"
       ],
       "license": "이용허락범위 제한 없음",
       "cost": "무료",
       "updatedAt": "2026-07-29",
       "checkedUrl": "https://www.data.go.kr/data/15126474/openapi.do",
-      "dailyQuota": null,
+      "dailyQuota": "개발계정 10,000건/일 (운영계정은 활용사례 등록 시 증액 신청 가능). 전체 수집 1회 = 300건 호출",
       "allows": {
         "commercial": true,
         "redistribute": true,
         "derive": true,
         "cache": true
       },
-      "status": "사용 가능 — 승인 확인. 아직 수집하지 않음",
+      "status": "사용 중 — 서울 12개월 227,789건 수집(2026-11-26). 전세 112,077 · 월세 115,712 · 그중 시세로 쓰는 신규 전세 52,310",
       "note": "동·호 정보는 제공되지 않음(페이지 설명). 전세가율·갭 계산에 씀",
-      "role": "전세 시세",
-      "cacheNote": "이용허락 제한 없음 — 아직 저장하지 않음(전세가율은 다음 판)",
+      "role": "전세가율의 분자 — 매매와 같은 aptSeq 를 주므로 단지가 그대로 맞물립니다",
+      "cacheNote": "이용허락 제한 없음 — 저장·재가공 가능. 원천 기록은 data/rents-seoul.json(배포 안 함, git 제외), 배포물은 집계값만",
       "publicPrefixes": [],
-      "publicDerivedPrefixes": []
+      "publicDerivedPrefixes": [
+        "rent-price-",
+        "rent-gu-"
+      ],
+      "checkedNote": "이용허락범위는 2026-11-26 에 페이지 원문에서 다시 확인했습니다. 매매(15126468)가 제한 없음이라고 전월세도 같다고 가정하지 않았습니다",
+      "derivedNote": "rent-price-seoul.json 은 개별 계약이 아니라 **집계값**입니다 — 단지·면적대별 신규 전세 보증금의 중앙값·25~75 백분위·건수와 전세가율만 담습니다. 계약 한 건을 그대로 내보내지 않습니다. rent-gu-seoul.json 은 자치구·법정동 단위 전세가율 중앙값만 담은 더 작은 집계입니다"
     },
     {
       "key": "molit-apt-list",

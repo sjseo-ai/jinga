@@ -30,6 +30,10 @@ const SRC = {
   compose: path.join(ROOT, 'scripts', '_report-compose.mjs'),
   rules: path.join(ROOT, 'data', 'finance-rules.json'),
 };
+/** 전세가율은 **있으면 싣고 없으면 넘깁니다** — rents:prices 를 아직 안 돌렸다고 빌드를 세우지는 않습니다. */
+const OPTIONAL = {
+  rents: path.join(PUB, 'rent-price-seoul.json'),
+};
 const OUT = {
   index: path.join(PUB, 'decision-index.json'),
   engine: path.join(PUB, 'jinga-finance.mjs'),
@@ -65,8 +69,9 @@ export function copyModule(src, dest) {
   fs.writeFileSync(dest, ENGINE_HEADER + rewriteImports(fs.readFileSync(src, 'utf8')));
 }
 
-export function buildIndex({ prices, kapt }) {
+export function buildIndex({ prices, kapt, rents = null }) {
   const names = kapt.byCode || {};
+  const rentOf = rents && rents.byComplex ? rents.byComplex : {};
   const rows = [];
   let noName = 0;
 
@@ -74,10 +79,21 @@ export function buildIndex({ prices, kapt }) {
     const meta = names[c.kaptCode];
     // 공식 단지목록에 없으면 **넣지 않습니다.** 이름 없는 단지를 검색에 띄울 수는 없습니다.
     if (!meta || !meta.name) { noName++; continue; }
-    const areas = (c.areas || []).map(a => ({
-      m2: a.area, pp: a.perPyeong, amt: a.amount, lo: a.low, hi: a.high,
-      n: a.n, g: a.grade, last: a.last,
-    }));
+    // 전세가율은 같은 id·같은 반올림 면적으로 맞물립니다(rent-price-seoul.json 이 매매 파일의 id 를 씁니다)
+    const rc = rentOf[id];
+    const jeonseAt = m2 => {
+      const row = rc && (rc.areas || []).find(r => r.area === m2);
+      return row && row.ratio != null ? row : null;
+    };
+    const areas = (c.areas || []).map(a => {
+      const out = {
+        m2: a.area, pp: a.perPyeong, amt: a.amount, lo: a.low, hi: a.high,
+        n: a.n, g: a.grade, last: a.last,
+      };
+      const j = jeonseAt(a.area);
+      if (j) { out.jr = j.ratio; out.jd = j.dep; out.jn = j.n; }   // 전세가율 · 보증금 중앙값(만원) · 쓴 건수
+      return out;
+    });
     if (!areas.length) continue;
     rows.push({ id, name: meta.name, gu: meta.gu, dong: meta.dong, areas });
   }
@@ -88,9 +104,15 @@ export function buildIndex({ prices, kapt }) {
     asOfYM: prices.asOfYM,
     source: prices.source,
     names: kapt.source,
+    rentSource: rents ? rents.source : null,
     model: prices.model,
     region: prices.region,          // 서울 전체·자치구·법정동 평당가(실거래 집계)
-    counts: { complexes: rows.length, areas: rows.reduce((s, r) => s + r.areas.length, 0), skippedNoName: noName },
+    counts: {
+      complexes: rows.length,
+      areas: rows.reduce((s, r) => s + r.areas.length, 0),
+      withJeonse: rows.reduce((s, r) => s + r.areas.filter(a => a.jr != null).length, 0),
+      skippedNoName: noName,
+    },
     complexes: rows,
   };
 }
@@ -104,7 +126,10 @@ function run() {
   }
   const prices = JSON.parse(fs.readFileSync(SRC.prices, 'utf8'));
   const kapt = JSON.parse(fs.readFileSync(SRC.kapt, 'utf8'));
-  const idx = buildIndex({ prices, kapt });
+  let rents = null;
+  if (fs.existsSync(OPTIONAL.rents)) rents = JSON.parse(fs.readFileSync(OPTIONAL.rents, 'utf8'));
+  else console.log('rent-price-seoul.json 이 없어 전세가율은 싣지 않습니다 — npm run rents:prices');
+  const idx = buildIndex({ prices, kapt, rents });
 
   fs.writeFileSync(OUT.index, JSON.stringify(idx));
   copyModule(SRC.engine, OUT.engine);
@@ -115,6 +140,7 @@ function run() {
   const kb = p => `${Math.round(fs.statSync(p).size / 1024)}KB`;
   console.log(`decision-index.json  단지 ${idx.counts.complexes.toLocaleString('ko-KR')}곳 · 면적 ${idx.counts.areas.toLocaleString('ko-KR')}칸 · ${kb(OUT.index)}`);
   if (idx.counts.skippedNoName) console.log(`  공식 단지목록에 이름이 없어 뺀 곳 ${idx.counts.skippedNoName}곳`);
+  console.log(`  전세가율이 실린 면적 칸 ${idx.counts.withJeonse.toLocaleString('ko-KR')}칸`);
   console.log(`jinga-finance.mjs    ${kb(OUT.engine)} (scripts/_finance.mjs 복사)`);
   console.log(`jinga-report.mjs     ${kb(OUT.report)} (scripts/_report.mjs 복사)`);
   console.log(`jinga-report-compose.mjs ${kb(OUT.compose)} (scripts/_report-compose.mjs 복사)`);

@@ -30,6 +30,7 @@ site/public/sitemap.xml
 
 # 실거래 수집본 — 공공데이터지만 13MB 라 저장소에 넣지 않습니다(npm run trades:seoul 로 다시 받습니다)
 data/trades-*.json
+data/rents-*.json
 data/trade-match.json
 
 # 이용허락이 확정되지 않은 원천의 내부 작업 사본 — 배포도 커밋도 하지 않습니다

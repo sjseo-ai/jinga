@@ -14,7 +14,7 @@
     "dev:site": "wrangler dev --config site/wrangler.toml",
     "dev:macro": "wrangler dev --config workers/jinga-korea-macro/wrangler.toml",
     "check": "node --check workers/jinga-yahoo-proxy/src/index.js && node --check workers/jinga-korea-macro/src/index.js && node --check workers/jinga-policy-proxy/src/index.js && node --check site/public/sw.js",
-    "test": "node --test scripts/smoke-workers.mjs scripts/smoke-report.mjs scripts/smoke-report-source.mjs scripts/smoke-mail.mjs scripts/smoke-job.mjs scripts/smoke-auth.mjs scripts/smoke-market.mjs scripts/smoke-analysis.mjs scripts/smoke-flow.mjs scripts/smoke-reco.mjs scripts/smoke-annual.mjs scripts/smoke-peers.mjs scripts/smoke-universe.mjs scripts/smoke-port.mjs scripts/smoke-modes.mjs scripts/smoke-union.mjs scripts/smoke-community.mjs scripts/smoke-trades.mjs scripts/smoke-history.mjs scripts/smoke-ratelimit.mjs scripts/smoke-board.mjs scripts/smoke-hub.mjs scripts/smoke-outside.mjs scripts/smoke-album.mjs scripts/smoke-kapt.mjs scripts/smoke-stats.mjs scripts/smoke-post.mjs scripts/smoke-pages.mjs scripts/smoke-trades-ingest.mjs scripts/smoke-avm.mjs scripts/smoke-no-unlicensed.mjs scripts/smoke-privacy.mjs scripts/smoke-totp.mjs scripts/smoke-finance.mjs scripts/smoke-decision.mjs",
+    "test": "node --test scripts/smoke-workers.mjs scripts/smoke-report.mjs scripts/smoke-report-source.mjs scripts/smoke-mail.mjs scripts/smoke-job.mjs scripts/smoke-auth.mjs scripts/smoke-market.mjs scripts/smoke-analysis.mjs scripts/smoke-flow.mjs scripts/smoke-reco.mjs scripts/smoke-annual.mjs scripts/smoke-peers.mjs scripts/smoke-universe.mjs scripts/smoke-port.mjs scripts/smoke-modes.mjs scripts/smoke-union.mjs scripts/smoke-community.mjs scripts/smoke-trades.mjs scripts/smoke-history.mjs scripts/smoke-ratelimit.mjs scripts/smoke-board.mjs scripts/smoke-hub.mjs scripts/smoke-outside.mjs scripts/smoke-album.mjs scripts/smoke-kapt.mjs scripts/smoke-stats.mjs scripts/smoke-post.mjs scripts/smoke-pages.mjs scripts/smoke-trades-ingest.mjs scripts/smoke-rents.mjs scripts/smoke-avm.mjs scripts/smoke-no-unlicensed.mjs scripts/smoke-privacy.mjs scripts/smoke-totp.mjs scripts/smoke-finance.mjs scripts/smoke-decision.mjs",
     "build:site": "node scripts/build-site.mjs",
     "vercel:env": "node scripts/vercel-env.mjs",
     "admin:password": "node scripts/admin-password.mjs",
@@ -39,6 +39,9 @@
     "molit:key": "node scripts/molit-key.mjs",
     "trades:seoul": "node scripts/build-trades.mjs",
     "trades:refresh": "node scripts/refresh-trades.mjs",
+    "rents:seoul": "node scripts/build-rents.mjs",
+    "rents:refresh": "node scripts/build-rents.mjs --refresh",
+    "rents:prices": "node scripts/build-rent-prices.mjs",
     "trades:match": "node scripts/match-trades.mjs",
     "avm": "node scripts/run-avm.mjs",
     "avm:backtest": "node scripts/backtest-avm.mjs",
@@ -51,6 +54,7 @@
     "finance": "node scripts/run-finance.mjs",
     "build:decision": "node scripts/build-decision.mjs",
     "check:decision": "node scripts/check-decision.mjs --headless",
+    "check:home": "node scripts/check-home.mjs --headless",
     "report": "node scripts/run-report.mjs"
   },
   "devDependencies": {

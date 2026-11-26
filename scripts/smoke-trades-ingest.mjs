@@ -116,3 +116,111 @@ test('애매하면 붙이지 않는다', () => {
   assert.equal(matchOne({ name: '없는단지', dong: '중계동' }, index).status, 'miss');
   assert.equal(matchOne({ name: '중계그린', dong: '상계동' }, index).status, 'miss', '법정동이 다르면 다른 단지');
 });
+
+// ── 일별 갱신(refresh-trades.mjs) ────────────────────────────────────────────
+// 갱신은 **조용히 자료를 망가뜨리기 쉬운** 일입니다. 셋을 못 지키면 눈에 띄지 않게 틀립니다.
+//   ① 다시 받은 달을 통째로 갈지 않으면 그동안 해제된 허위 고가가 영원히 남습니다.
+//   ② 실패한 조회를 0건으로 치면 멀쩡한 달이 지워집니다.
+//   ③ stats 가 trades 와 어긋나면 「몇 건이 왜 없는지」를 더는 알 수 없습니다.
+import { monthOf, cellOf, tradeKey, diffTrades, mergeRefresh } from './_trades.mjs';
+import { pushHistory, DEFAULT_WINDOW } from './refresh-trades.mjs';
+
+const tr = (over = {}) => ({
+  seq: '11740-2609', name: '늘푸른아파트', gu: '강동구', dong: '천호동', jibun: '52-16', sggCd: '11740',
+  date: '2026-10-31', amount: 60700, area: 74.41, perPyeong: 2697, floor: 2, year: 2006, kind: '중개거래', ...over,
+});
+const okStat = (gu, ym, kept, over = {}) => ({ gu, ym, ok: true, total: kept, kept, cancelled: 0, broken: 0, ...over });
+const errStat = (gu, ym, error) => ({ gu, ym, ok: false, error });
+
+test('달 열쇠', () => {
+  assert.equal(monthOf(tr()), '202610');
+  assert.equal(monthOf({ date: '2026-01-05' }), '202601');
+  assert.equal(monthOf({}), '');
+  assert.equal(cellOf('강동구', '202610'), '강동구||202610');
+  assert.equal(tradeKey(tr()), '11740-2609|2026-10-31|60700|74.41|2');
+});
+
+// 가장 중요한 한 가지 — 해제된 건이 사라지지 않으면 허위 고가가 평균에 남습니다.
+test('다시 받은 달은 통째로 교체 — 그동안 해제된 건이 사라진다', () => {
+  const fake = tr({ amount: 999999, date: '2026-10-15', perPyeong: 44420 });
+  const real = tr();
+  const before = { trades: [fake, real], stats: [okStat('강동구', '202610', 2)] };
+  // 다시 받으니 해제된 fake 는 응답에서 빠져 있습니다(parseTrades 가 걸러 냄)
+  const after = mergeRefresh({ ...before, results: [{ gu: '강동구', ym: '202610', trades: [real], stat: okStat('강동구', '202610', 1) }] });
+
+  assert.equal(after.trades.length, 1, '교체했으니 한 건');
+  assert.ok(!after.trades.some(t => t.amount > 100000), '허위 고가가 남지 않았는지');
+  assert.equal(after.summary.removed, 1);
+  assert.equal(after.summary.added, 0);
+  assert.equal(after.summary.same, 1);
+  assert.equal(after.counts.trades, 1, 'counts 도 같이 고쳐집니다');
+});
+
+// 실패를 0건으로 치면 API 가 한 번 흔들릴 때마다 한 달이 지워집니다.
+test('조회가 실패한 달은 손대지 않는다 — 이전 자료 그대로', () => {
+  const keep = [tr({ date: '2026-10-05' }), tr({ date: '2026-10-20', amount: 61000 })];
+  const before = { trades: keep, stats: [okStat('강동구', '202610', 2)] };
+  const after = mergeRefresh({ ...before, results: [{ gu: '강동구', ym: '202610', trades: [], stat: errStat('강동구', '202610', '서비스 일시 중단') }] });
+
+  assert.equal(after.trades.length, 2, '실패했으니 지우지 않습니다');
+  assert.equal(after.summary.cells, 0, '갈아 끼운 칸이 없습니다');
+  assert.equal(after.summary.removed, 0);
+  assert.equal(after.summary.failures.length, 1);
+  assert.equal(after.summary.failures[0].error, '서비스 일시 중단');
+  assert.equal(after.stats.length, 1);
+  assert.equal(after.stats[0].ok, true, 'stats 는 trades 에 실제로 든 것을 설명합니다 — 실패로 덮지 않습니다');
+  assert.equal(after.counts.failedQueries, 0);
+});
+
+test('갱신 창 밖의 달은 건드리지 않는다', () => {
+  const old = tr({ date: '2026-08-11', amount: 58000 });
+  const now = tr({ date: '2026-10-31' });
+  const before = { trades: [old, now], stats: [okStat('강동구', '202608', 1), okStat('강동구', '202610', 1)] };
+  const after = mergeRefresh({ ...before, results: [{ gu: '강동구', ym: '202610', trades: [tr({ date: '2026-10-31', amount: 62000 })], stat: okStat('강동구', '202610', 1) }] });
+
+  assert.equal(after.trades.length, 2);
+  assert.ok(after.trades.some(t => t.date === '2026-08-11'), '8월은 그대로');
+  assert.ok(after.trades.some(t => t.amount === 62000), '10월은 새 값으로');
+  assert.ok(!after.trades.some(t => t.amount === 60700), '10월 옛 값은 없어야');
+  assert.deepEqual(after.months, ['202610', '202608'], '최근 달이 앞 — build-trade-prices 가 months[0] 을 기준월로 씁니다');
+});
+
+// 0건과 모름은 다릅니다. 정상 응답에 0건이면 그 달은 **정말로** 비어야 합니다.
+test('정상인데 0건이면 그 달을 비운다', () => {
+  const before = { trades: [tr()], stats: [okStat('강동구', '202610', 1)] };
+  const after = mergeRefresh({ ...before, results: [{ gu: '강동구', ym: '202610', trades: [], stat: okStat('강동구', '202610', 0, { total: 0 }) }] });
+  assert.equal(after.trades.length, 0);
+  assert.equal(after.summary.removed, 1);
+  assert.equal(after.stats[0].kept, 0);
+});
+
+test('여러 자치구를 한 번에 갱신해도 서로 섞이지 않는다', () => {
+  const gangdong = tr({ gu: '강동구' });
+  const nowon = tr({ gu: '노원구', seq: '11350-1', dong: '중계동', sggCd: '11350', amount: 55000 });
+  const before = { trades: [gangdong, nowon], stats: [okStat('강동구', '202610', 1), okStat('노원구', '202610', 1)] };
+  const after = mergeRefresh({
+    ...before,
+    results: [{ gu: '강동구', ym: '202610', trades: [tr({ gu: '강동구', amount: 63000 })], stat: okStat('강동구', '202610', 1) }],
+  });
+  assert.equal(after.trades.length, 2);
+  assert.ok(after.trades.some(t => t.gu === '노원구' && t.amount === 55000), '노원구는 손대지 않았습니다');
+  assert.ok(after.trades.some(t => t.gu === '강동구' && t.amount === 63000));
+  assert.deepEqual(after.gus, ['강동구', '노원구']);
+});
+
+test('같은 거래가 여러 벌이어도 개수로 센다', () => {
+  const a = tr(), b = tr();                       // 열쇠가 같은 두 건
+  assert.deepEqual(diffTrades([a, b], [a]), { added: 0, removed: 1, same: 1 });
+  assert.deepEqual(diffTrades([a], [a, b]), { added: 1, removed: 0, same: 1 });
+  assert.deepEqual(diffTrades([], []), { added: 0, removed: 0, same: 0 });
+});
+
+test('갱신 이력은 최근 것만 남긴다', () => {
+  let r = { history: [] };
+  for (let i = 0; i < 35; i++) r = pushHistory(r, { at: `t${i}`, window: 3, added: i }, 30);
+  assert.equal(r.history.length, 30, '파일이 이력으로 부풀지 않게 잘라 냅니다');
+  assert.equal(r.history[0].at, 't34', '최근 것이 앞');
+  assert.equal(r.lastRunAt, 't34');
+  assert.equal(pushHistory(undefined, { at: 'x', window: 3 }).history.length, 1, '이력이 없던 파일도 됩니다');
+  assert.equal(DEFAULT_WINDOW, 3, '기본 창 3개월 — 신고 기한 30일을 감싸는 길이');
+});

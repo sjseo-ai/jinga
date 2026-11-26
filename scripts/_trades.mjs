@@ -116,3 +116,80 @@ export function byComplex(trades) {
   }
   return [...map.values()].sort((a, b) => b.n - a.n);
 }
+
+// ── 일별 갱신(T010) ─────────────────────────────────────────────────────────
+// 전체를 다시 받지 않고 **최근 몇 달만** 다시 받아 갈아 끼웁니다. 지켜야 할 것 셋 —
+//   ① 다시 받은 달은 **통째로 교체**합니다. 새 건만 더하면 그동안 해제된 건이 영원히 남습니다.
+//   ② 조회가 **실패한 달은 손대지 않습니다.** 실패를 0건으로 치면 멀쩡한 달이 지워집니다.
+//   ③ stats 는 언제나 trades 에 실제로 든 것을 설명합니다 — 실패는 stats 가 아니라 따로 적습니다.
+
+/** 거래가 속한 달(YYYYMM) — stats 의 ym 과 같은 모양 */
+export const monthOf = t => String((t && t.date) || '').slice(0, 7).replace('-', '');
+
+/** 자치구·달 한 칸의 이름. 자치구명·YYYYMM 에는 '||' 가 들어갈 수 없어 안전합니다. */
+export const cellOf = (gu, ym) => `${gu}||${ym}`;
+
+/** 같은 거래로 볼 열쇠. 같은 열쇠가 여러 벌일 수 있어 세어서 비교합니다. */
+export const tradeKey = t => [t.seq, t.date, t.amount, t.area, t.floor].join('|');
+
+const multiset = list => {
+  const m = new Map();
+  for (const t of list) { const k = tradeKey(t); m.set(k, (m.get(k) || 0) + 1); }
+  return m;
+};
+
+/** 두 거래 묶음의 차이 — 새로 생긴 건, 사라진 건, 그대로인 건 */
+export function diffTrades(before, after) {
+  const a = multiset(before), b = multiset(after);
+  let added = 0, removed = 0, same = 0;
+  for (const [k, n] of b) { const o = a.get(k) || 0; added += Math.max(0, n - o); same += Math.min(n, o); }
+  for (const [k, n] of a) { const w = b.get(k) || 0; removed += Math.max(0, n - w); }
+  return { added, removed, same };
+}
+
+/** 파일을 다시 써도 같은 순서가 나오게 — 자치구 → 날짜 → 단지 → 금액 → 면적 → 층 */
+const sortTrades = list => list.slice().sort((x, y) =>
+  String(x.gu).localeCompare(String(y.gu), 'ko')
+  || String(x.date).localeCompare(String(y.date))
+  || String(x.seq).localeCompare(String(y.seq))
+  || (x.amount - y.amount) || (x.area - y.area) || (x.floor - y.floor));
+
+const resultCell = r => cellOf(r.gu != null ? r.gu : r.stat.gu, r.ym != null ? r.ym : r.stat.ym);
+
+/**
+ * 기존 파일에 다시 받은 결과를 합칩니다. 네트워크도 파일도 건드리지 않습니다.
+ * results: [{ gu, ym, trades, stat }] — build-trades.mjs 의 fetchGuMonth 가 주는 모양.
+ */
+export function mergeRefresh({ trades = [], stats = [], results = [], fetchedAt = null }) {
+  const ok = new Map(), failures = [];
+  for (const r of results) {
+    if (!r || !r.stat) continue;
+    if (r.stat.ok) ok.set(resultCell(r), r);
+    else failures.push({ gu: r.stat.gu, ym: r.stat.ym, error: r.stat.error || '알 수 없는 실패' });
+  }
+
+  const touched = t => ok.has(cellOf(t.gu, monthOf(t)));
+  const before = trades.filter(touched);          // 갈아 끼울 칸의 이전 거래
+  const kept = trades.filter(t => !touched(t));   // 손대지 않는 칸 — 실패한 칸도 여기 남습니다
+  const incoming = [];
+  for (const r of ok.values()) incoming.push(...(r.trades || []));
+
+  const statMap = new Map(stats.map(s => [cellOf(s.gu, s.ym), s]));
+  for (const [cell, r] of ok) statMap.set(cell, fetchedAt ? { ...r.stat, fetchedAt } : { ...r.stat });
+  const nextStats = [...statMap.values()];
+
+  const next = sortTrades(kept.concat(incoming));
+  return {
+    trades: next,
+    stats: nextStats,
+    months: [...new Set(nextStats.map(s => s.ym))].sort().reverse(),
+    gus: [...new Set(nextStats.map(s => s.gu))].sort((a, b) => String(a).localeCompare(String(b), 'ko')),
+    counts: {
+      trades: next.length,
+      complexes: byComplex(next).length,
+      cancelled: nextStats.reduce((n, s) => n + (s.cancelled || 0), 0),
+      failedQueries: nextStats.filter(s => !s.ok).length,
+    },
+    summary: { cells: ok.size, ...diffTrades(before, incoming), failures },
+  };
+}

@@ -38,6 +38,7 @@
     "build:pages": "node scripts/build-pages.mjs",
     "molit:key": "node scripts/molit-key.mjs",
     "trades:seoul": "node scripts/build-trades.mjs",
+    "trades:refresh": "node scripts/refresh-trades.mjs",
     "trades:match": "node scripts/match-trades.mjs",
     "avm": "node scripts/run-avm.mjs",
     "avm:backtest": "node scripts/backtest-avm.mjs",

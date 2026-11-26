@@ -21,7 +21,7 @@
 | T002 | KB 관련 엔드포인트·저장·작업·내보내기 추적 | T002 | **done** | `docs/data-lineage.md`, `artifacts/source-register.csv` |
 | T003 | 무허가 유료 배포 경로 차단 | T003 | **done(2회차)** | `docs/mitigation-plan.md` 3·6·7절, `scripts/smoke-no-unlicensed.mjs`(12건). 11-19 에 가격 7경로, 11-24 에 **가격이 아닌 KB 자료 8파일**을 추가로 차단 |
 | T004 | 출처 이용허락 대장 | T009 | **done** | `data/source-policy.json`(원천 12건 · 원문URL·검토일·캐시/재배포/파생 권리 · 어떤 공개 파일로 나가는지까지), `scripts/smoke-no-unlicensed.mjs` 가 빈 칸·권리 없는 배포를 막음 |
-| T005 | 실거래 서버측 어댑터 | T010 | **done** | `scripts/_trades.mjs`, `scripts/build-trades.mjs`, `scripts/smoke-trades-ingest.mjs`(8건) · 서울 62,335건 |
+| T005 | 실거래 서버측 어댑터 | T010 | **done** | `scripts/_trades.mjs`, `build-trades.mjs`, `refresh-trades.mjs`, `smoke-trades-ingest.mjs`(16건), `docs/schema.md` · 서울 **63,319건** · 일별 갱신 75회/22초(2026-11-26) |
 | T006 | 단지 표준 식별자·매칭 진단 | T010·T011 | **done** | `scripts/match-trades.mjs`, `scripts/build-kapt-list.mjs` · 74.7% 매칭, **후보가 여럿이면 합치지 않고 포기** |
 | T007 | 시점·면적·**층** 보정 비교거래 기준선 | T012 | **done(v3)** | `scripts/_avm.mjs` `FLOOR_FACTOR`, `scripts/exp-floor.mjs`, `docs/model-card.md` |
 | T008 | 시간분할 백테스트·코호트별 수치 | T013 | **done** | `research/metrics.json`, `research/avm-backtest.md` — 등급·연식·면적대·층대·자치구 코호트 · v3 로 갱신(2026-11-23) |

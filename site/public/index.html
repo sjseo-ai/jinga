@@ -2132,11 +2132,11 @@
         </select>
         <span class="dong-count tabular" id="dongCount"></span>
       </div>
-      <p class="dong-note">아래 표는 <b>국토교통부 실거래가</b>를 <b>법정동</b> 단위(예: 종로구 &lsquo;명륜2가&rsquo;)로 모은 전용 평당가 순위입니다. 평당가 지수는 서울 법정동 중 최저 0 ~ 최고 100으로 환산한 값입니다.</p>
+      <p class="dong-note">아래 표는 <b>국토교통부 실거래가</b>를 <b>법정동</b> 단위(예: 종로구 &lsquo;명륜2가&rsquo;)로 모은 전용 평당가 순위입니다. 평당가 지수는 서울 법정동 중 최저 0 ~ 최고 100으로 환산한 값입니다. <b>전세가율</b>은 <b>신규 전세 보증금의 중앙값 ÷ 매매 추정가</b>로, 갱신 계약은 전월세상한제에 묶여 시세가 아니므로 뺐습니다. 분모가 추정값이라 전세가율도 <b>추정</b>이고, 표본이 적은 동은 비워 둡니다. 전세가율이 낮다고 전세가 싼 것은 아닙니다 &mdash; 재건축 기대가 매매가에만 실린 동네에서 낮게 나옵니다.</p>
       <div class="dong-table-wrap">
         <table class="dong-table">
           <thead>
-            <tr><th style="width:44px;">순위</th><th>법정동</th><th>자치구</th><th style="width:70px;">단지 수</th><th style="width:120px;">평당가(만원)</th><th style="width:80px;">주간 변동</th><th style="width:150px;">평당가 지수</th></tr>
+            <tr><th style="width:44px;">순위</th><th>법정동</th><th>자치구</th><th style="width:70px;">거래 수</th><th style="width:120px;">평당가(만원)</th><th style="width:80px;">주간 변동</th><th style="width:92px;">전세가율</th><th style="width:150px;">평당가 지수</th></tr>
           </thead>
           <tbody id="dongTableBody"></tbody>
         </table>
@@ -2441,6 +2441,7 @@
         <li>주간 매매가격지수·변동률(서울·송파·강동) — <a href="https://www.reb.or.kr/r-one/" target="_blank" rel="noopener">한국부동산원 R-ONE Open API</a> · 30분 갱신</li>
         <li>주담대 금리 — <a href="https://finlife.fss.or.kr/" target="_blank" rel="noopener">금융감독원 금융상품 한눈에 Open API</a>(최신 공시월) · 30분 갱신</li>
         <li>지역 지도(구·법정동 평당가) — <b>국토교통부 아파트 매매 실거래가</b>(공공데이터포털, 이용허락범위 제한 없음) · 최근 3개월 거래의 중앙값</li>
+        <li>전세가율 — <b>국토교통부 아파트 전월세 실거래가</b>(공공데이터포털 15126474, 이용허락범위 제한 없음) · 신규 전세 보증금 중앙값 ÷ 매매 추정가 · 갱신 계약 제외</li>
         <li>단지 검색·진가 BEST 5 — KB부동산 KB시세(단지·주택형별, 공개 시세 참고 조회) · 조회 시점</li>
         <li>부동산 정책 뉴스 — Google·Bing 뉴스 검색 집계(최근 1개월) · 30분 갱신</li>
       </ul>
@@ -3166,11 +3167,30 @@ async function fetchMacro(){
    우리가 직접 만든 값을 쓸 수 있게 됐고, 남의 자료를 공개 파일로 내보내지 않아도 됩니다.
    **같은 「평당가」라도 재는 것이 다릅니다** — 시세 조사값이 아니라 실제로 팔린 집들의 중앙값입니다. */
 let KBGU_OK = false;
+
+/* 자치구·법정동 전세가율 — rent-gu-seoul.json (9KB, scripts/build-rent-prices.mjs).
+   단지별 파일(rent-price-seoul.json, 256KB)은 **메인에서 받지 않습니다** — 이 화면은 지역 단위이고,
+   단지별 전세가율은 /decision/ 이 씁니다. 검색만 하는 사람에게 256KB 를 더 내려받게 할 이유가 없습니다. */
+let RENTGU = null;
+window.jingaRentRatio = function(gu, dong){        // {ratio, cells} 또는 null — **없으면 null, 0 이 아닙니다**
+  const g = RENTGU && RENTGU.gu ? RENTGU.gu[gu] : null;
+  if(!g) return null;
+  if(dong){ const d = g.dongs && g.dongs[dong]; return d && d.ratio != null ? d : null; }
+  return g.ratio != null ? g : null;
+};
+window.jingaRentPct = function(v){ return v == null ? '—' : (v * 100).toFixed(1) + '%'; };
+window.jingaRentAsOf = function(){ return RENTGU ? RENTGU.asOfYM : null; };
+async function fetchRentGu(){
+  if(RENTGU) return RENTGU;
+  try{ const r = await fetch('rent-gu-seoul.json', { cache:'no-cache' }); if(r.ok){ const j = await r.json(); if(j && j.gu) RENTGU = j; } }catch(e){}
+  return RENTGU;
+}
 async function fetchKbGu(){
   try{
     const grab = url => fetch(url, { cache:'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null);
     const data = await grab('trade-gu-seoul.json');
     if(!data || !data.gu) throw new Error('실거래 집계를 불러오지 못했습니다');
+    await fetchRentGu();                                // 전세가율 — 못 받아도 지도는 그립니다(없으면 '—')
     KBGU_DATA = data;                                   // 매물 추천이 동별 평당가로 비교 지역을 고를 때 씀
     if(typeof window.jingaApplyKb !== 'function') throw new Error('지도 섹션 미초기화');
     const ok = window.jingaApplyKb(data);
@@ -3653,6 +3673,7 @@ const RECO = { target: null, types: [], typeIdx: -1, hint: null, busy: false, la
 async function loadKbGuData(){               // fetchKbGu()가 먼저 채우면 그것을, 아니면 배포된 정적 집계
   if(KBGU_DATA) return KBGU_DATA;                                 // 2026-11-20: 국토교통부 실거래 집계로 교체
   try{ const r = await fetch('trade-gu-seoul.json', { cache:'no-cache' }); if(r.ok) KBGU_DATA = await r.json(); }catch(e){}
+  await fetchRentGu();
   return KBGU_DATA;
 }
 const setRecoStatus = t => { document.getElementById('rStatus').textContent = t; };
@@ -6387,7 +6408,7 @@ function initMarketFlow(){
     .catch(e => { console.warn('시장 흐름 대시보드 초기화 실패:', e); fail('대시보드를 불러오지 못했습니다. 새로고침해 주세요.'); });
 }
 safeInit('initMarketFlow', initMarketFlow);
-window.addEventListener('load', ()=>{ fetchKbGu(); });    // 지도 섹션 스크립트가 끝난 뒤 KB시세 구·동 집계로 채움
+window.addEventListener('load', ()=>{ fetchKbGu(); });    // 지도 섹션 스크립트가 끝난 뒤 실거래 구·동 집계로 채움
 
 /* 자동 갱신 스케줄러
    · 탭이 백그라운드(document.hidden)면 주기 호출을 건너뜀 — 켜만 두고 안 보는 탭이 Worker 무료 한도(일 10만 요청)를 소모하지 않도록
@@ -6417,7 +6438,7 @@ autoRefresh('거시지표', ()=>fetchMacro().then(()=>{
   const curRange = document.querySelector('#rangeSeg button.on')?.dataset.range || '1y';
   drawIndex(curRange);
 }), MACRO_API.refreshMs);
-autoRefresh('KB 지역시세', fetchKbGu, 3600000);
+autoRefresh('실거래 지역시세', fetchKbGu, 3600000);
 autoRefresh('시장 흐름 지표', ()=>{ if(FLOW) return FLOW.load(); }, 3*3600000);   // 서버·CDN도 3시간 보관   // 집계 파일은 주 1회 바뀌지만 켜 둔 탭도 따라가도록 1시간마다 확인
 autoRefresh('정책 뉴스', ()=>fetchPolicy().then(renderPolicy), POLICY_API.refreshMs);
 autoRefresh('환율(ECB 대체값)', ()=>fetchFX().then(renderBench), 3600000);
@@ -6478,7 +6499,7 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
     }
     function fmtWon(v){ return Math.round(v).toLocaleString('ko-KR'); }
 
-    var TRADE_LABEL = '';                   // KB시세 기준일(표시용, 예: 2026.09.11) — jingaApplyKb()가 채움
+    var TRADE_LABEL = '';                   // 실거래 기준월(표시용, 예: 2026.11) — jingaApplyKb()가 채움
     var BREAKS = [4000,5500,7000,9000];     // 평당가 5단계 경계(만원) — 사람이 읽기 좋게 반올림한 임계값
     function tierLabel(i){
       if(i===0) return fmtWon(BREAKS[0])+'만원 미만';
@@ -6543,7 +6564,7 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
           g._valTspan.textContent = fmtWon(g.price);
         } else {
           g._path.style.fill = 'var(--jg-line-soft)';
-          g._path.setAttribute('aria-label', g.name + ' — KB시세 집계 없음');
+          g._path.setAttribute('aria-label', g.name + ' — 실거래 집계 없음');
           g._valTspan.textContent = '—';
         }
       });
@@ -6563,7 +6584,7 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
     function showTip(g, e){
       tip.textContent = hasData(g)
         ? g.name + ' · 평당 ' + fmtWon(g.price) + '만원' + (g.pct != null ? ' (' + (g.pct >= 0 ? '+' : '') + g.pct.toFixed(2) + '%)' : '')
-        : g.name + ' · KB시세 집계 없음';
+        : g.name + ' · 실거래 집계 없음';
       tip.classList.add('show');
       moveTip(e);
     }
@@ -6583,11 +6604,11 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
 
       if(!hasData(g)){
         detail.innerHTML =
-          '<div class="gd-eyebrow">선택한 자치구 · KB시세 평당가</div>'+
+          '<div class="gd-eyebrow">선택한 자치구 · 실거래 평당가(중앙값)</div>'+
           '<h3>'+g.name+'</h3>'+
           '<div class="gd-diff">'+(TRADE_LABEL
-            ? 'KB시세 ' + TRADE_LABEL + ' 기준 집계된 단지가 없습니다.'
-            : 'KB시세 집계를 불러오면 평당가와 법정동별 현황이 표시됩니다.')+'</div>';
+            ? '실거래 ' + TRADE_LABEL + ' 기준 집계된 거래가 없습니다.'
+            : '실거래 집계를 불러오면 평당가와 법정동별 현황이 표시됩니다.')+'</div>';
         return;
       }
 
@@ -6595,24 +6616,33 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
       var diff = g.price - avg;
       var diffLabel = (diff >= 0 ? '+' : '') + (avg ? diff / avg * 100 : 0).toFixed(1) + '%';
       var rows = g.dong.slice(0, 8).sort(function(a,b){ return b[1] - a[1]; }).map(function(d, i){
-        // d = [법정동, 평당가(만원), 단지 수, 0~100 지수] — 세대수 상위 8개 동을 평당가순으로
+        // d = [법정동, 평당가(만원), 거래 건수, 0~100 지수] — 평당가 상위 8개 동
         return '<div class="dong-mini-row">'+
           '<div class="dong-mini-top"><span class="drank tabular">'+(i+1)+'</span><span class="dname">'+d[0]+'</span><b class="tabular">'+d[1].toLocaleString('ko-KR')+'만원</b></div>'+
-          '<div class="dong-mini-bottom"><div class="meter"><i style="width:'+d[3]+'%;"></i></div><span class="dcount tabular">'+d[2]+'곳</span></div>'+
+          '<div class="dong-mini-bottom"><div class="meter"><i style="width:'+d[3]+'%;"></i></div><span class="dcount tabular">'+d[2]+'건</span></div>'+
         '</div>';
       }).join('');
 
       detail.innerHTML =
-        '<div class="gd-eyebrow">선택한 자치구 · KB시세 평당가</div>'+
+        '<div class="gd-eyebrow">선택한 자치구 · 실거래 평당가(중앙값)</div>'+
         '<h3>'+g.name+'</h3>'+
         '<div class="gd-diff">서울 평균 대비 <b class="tabular" style="color:'+(diff>=0?'var(--jg-good)':'var(--jg-warn)')+';">'+diffLabel+'</b></div>'+
         '<div class="gu-score-big tabular">'+fmtWon(g.price)+'</div>'+
         '<div class="gd-diff" style="margin-top:-14px;">전용 평당 <b class="tabular">'+fmtWon(g.price)+'만원</b>'+
           (g.pct != null ? ' · ' + (KB_GU_PREV_ASOF ? KB_GU_PREV_ASOF + ' 대비' : '직전 집계 대비') + ' <b class="tabular" style="color:'+(g.pct>=0?'var(--jg-good)':'var(--jg-warn)')+';">'+(g.pct>=0?'+':'')+g.pct.toFixed(2)+'%</b>' : '')+
-          ' · 단지 <b class="tabular">'+g.total+'곳</b> · '+(g.households || 0).toLocaleString('ko-KR')+'세대</div>'+
-        '<div class="gd-sub">법정동별 시세 현황 (KB시세 기준, 세대수 상위 8개 동)</div>'+
+          ' · 최근 3개월 거래 <b class="tabular">'+g.total+'건</b></div>'+
+        (function(){
+          // 전세가율 — 분모가 매매 추정치이므로 **추정**입니다. 낮은 값이 「전세가 싸다」는 뜻이 아니라
+          // 재건축 기대가 매매가에만 실렸다는 뜻일 수 있어, 그 주의를 같은 자리에 적습니다.
+          var jr = window.jingaRentRatio && window.jingaRentRatio(g.name);
+          if(!jr) return '';
+          return '<div class="gd-diff" style="margin-top:6px;">전세가율(추정) <b class="tabular">'+window.jingaRentPct(jr.ratio)+'</b>'+
+            ' · 면적 칸 <b class="tabular">'+jr.cells+'</b>개의 중앙값<br>'+
+            '<span style="color:var(--jg-ink-faint);">신규 전세 보증금 ÷ 매매 추정가. 갱신 계약은 상한제에 묶여 제외. 낮다고 전세가 싼 것이 아니라 재건축 기대가 매매가에 실린 곳에서 낮게 나옵니다</span></div>';
+        })()+
+        '<div class="gd-sub">법정동별 시세 현황 (실거래 중앙값, 평당가 상위 8개 동)</div>'+
         '<div class="dong-mini">'+rows+'</div>'+
-        '<button type="button" class="gd-drilldown" data-gu="'+g.name+'">'+g.name+' 법정동 KB시세 랭킹 보기 <span>→</span></button>';
+        '<button type="button" class="gd-drilldown" data-gu="'+g.name+'">'+g.name+' 법정동 실거래 랭킹 보기 <span>→</span></button>';
     }
 
     detail.addEventListener('click', function(e){
@@ -6657,16 +6687,22 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
           '<td class="rank">'+(i+1)+'</td>'+
           '<td class="dname">'+d.name+'</td>'+
           '<td>'+d.gu+'</td>'+
-          '<td class="tabular" style="color:var(--jg-ink-faint);">'+d.count+'곳</td>'+
+          '<td class="tabular" style="color:var(--jg-ink-faint);">'+d.count+'건</td>'+
           '<td class="tabular">'+d.price.toLocaleString('ko-KR')+'</td>'+
           '<td class="tabular" style="color:'+(d.pct == null ? 'var(--jg-ink-faint)' : d.pct >= 0 ? 'var(--jg-good)' : 'var(--jg-warn)')+';">'+(d.pct == null ? '—' : (d.pct >= 0 ? '+' : '') + d.pct.toFixed(2) + '%')+'</td>'+
+          (function(){
+            var jr = window.jingaRentRatio && window.jingaRentRatio(d.gu, d.name);
+            return '<td class="tabular" style="color:'+(jr ? 'var(--jg-ink-soft)' : 'var(--jg-ink-faint)')+';" title="'+
+              (jr ? '신규 전세 ' + jr.cells + '개 면적 칸의 중앙값 · 매매 추정가 기준이라 추정값입니다' : '전세 표본이 적어 내지 않습니다')+'">'+
+              (jr ? window.jingaRentPct(jr.ratio) : '—')+'</td>';
+          })()+
           '<td><div class="score-cell">'+
             '<div class="score-bar-track"><div class="score-bar-fill" style="width:'+d.score+'%; background:'+bgStyleFor(d.score)+';"></div></div>'+
             '<span class="score-num tabular">'+d.score+'</span>'+
           '</div></td>'+
         '</tr>';
-      }).join('') : '<tr><td colspan="7" style="padding:28px 0; text-align:center; color:var(--jg-ink-faint);">KB시세 집계 데이터가 아직 없습니다.</td></tr>';
-      countEl.textContent = rows.length ? '법정동 ' + rows.length + '개 · KB시세 ' + TRADE_LABEL + ' 기준' : '';
+      }).join('') : '<tr><td colspan="8" style="padding:28px 0; text-align:center; color:var(--jg-ink-faint);">실거래 집계 데이터가 아직 없습니다.</td></tr>';
+      countEl.textContent = rows.length ? '법정동 ' + rows.length + '개 · 실거래 ' + TRADE_LABEL + ' 기준' : '';
     }
     guFilter.addEventListener('change', renderDongTable);
 
@@ -6676,16 +6712,19 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
       renderLegend();
       var avg = cityAvg();
       document.getElementById('cityAvg').textContent = avg == null ? '서울 평균 —' : '서울 평균 평당 ' + fmtWon(avg) + '만원 · ' + TRADE_LABEL + ' 기준';
-      if(mapSourceEl) mapSourceEl.textContent = 'KB부동산 KB시세 집계(공개 시세 참고 조회)' + (TRADE_LABEL
-        ? ' · ' + TRADE_LABEL + ' 기준 · 서울 50세대 이상 아파트, 주택형별 매매 일반거래가를 전용 평당가로 환산해 세대수 가중평균 · 매주 월요일 재집계 · 5단계 구간은 사람이 읽기 좋게 반올림한 임계값'
+      if(mapSourceEl) mapSourceEl.textContent = '국토교통부 아파트 매매 실거래가(공공데이터포털, 이용허락범위 제한 없음)' + (TRADE_LABEL
+        ? ' · ' + TRADE_LABEL + ' 기준 · 최근 3개월에 실제로 거래된 값을 전용 평당가로 바꿔 낸 중앙값 · 거래가 자치구 30건·법정동 10건 미만이면 싣지 않습니다 · 5단계 구간은 사람이 읽기 좋게 반올림한 임계값'
         : '');
       selectGu(selected != null ? selected : GU.findIndex(function(g){ return g.name === '강동구'; }));
     }
     refreshMap();
     renderDongTable();
 
-    // ---- KB시세 구·동 집계 반영 (kb-seoul-gu.json → fetchKbGu() → 여기) ----
-    // KB 구 집계의 비교 기준일 — 「전주」라고 단정하지 않으려고 둡니다(간격이 늘 7일은 아닙니다)
+    // ---- 실거래 구·동 집계 반영 (trade-gu-seoul.json → fetchKbGu() → 여기) ----
+    // 2026-11-20 에 KB시세(kb-seoul-gu.json)에서 국토교통부 실거래로 갈아탔습니다.
+    // **count 는 단지 수가 아니라 거래 건수입니다**(강동구 432 = 최근 3개월 거래 건수).
+    // households 는 실거래 자료에 없어 늘 null 입니다 — 화면에 쓰지 않습니다.
+    // 비교 기준일 — 「전주」라고 단정하지 않으려고 둡니다(간격이 늘 7일은 아닙니다)
     var KB_GU_PREV_ASOF = '';
     // data = { asOf, prevAsOf?, seoul:{count, avgPerPyeong}, gu:{ '강남구':{count, households, avgPerPyeong, pct?, dongs:[{name, count, households, avgPerPyeong, pct?}]}, ... } }
     window.jingaApplyKb = function(data){
@@ -6699,7 +6738,7 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
         g.households = k.households || 0;
         KB_GU_PREV_ASOF = data.prevAsOf || '';
         g.pct = typeof k.pct === 'number' ? k.pct : null;
-        // [법정동, 평당가, 단지 수, 0~100 지수(아래에서 계산), 주간 변동률] — 세대수 많은 동부터
+        // [법정동, 평당가, 거래 건수, 0~100 지수(아래에서 계산), 직전 집계 대비 변동률] — 평당가 높은 동부터
         g.dong = (k.dongs || []).map(function(d){ return [d.name, Math.round(d.avgPerPyeong), d.count, 0, typeof d.pct === 'number' ? d.pct : null]; });
         applied++;
       });
@@ -6717,8 +6756,8 @@ setInterval(stampAsOf, 60*1000);   // 페이지를 오래 켜둬도 "기준 시�
       refreshMap();
       renderDongTable();
       var intro = document.getElementById('mapIntroLive');
-      if(intro) intro.innerHTML = '<span class="live-flag">● KB시세</span> ' + (TRADE_LABEL ? TRADE_LABEL + ' 기준 · ' : '') +
-        '서울 아파트 ' + (data.seoul ? data.seoul.count.toLocaleString('ko-KR') : '') + '개 단지(50세대 이상) 전용 평당가 집계' +
+      if(intro) intro.innerHTML = '<span class="live-flag">● 실거래</span> ' + (TRADE_LABEL ? TRADE_LABEL + ' 기준 · ' : '') +
+        '서울 아파트 실거래 ' + (data.seoul ? data.seoul.count.toLocaleString('ko-KR') : '') + '건의 전용 평당가 중앙값' +
         (data.prevAsOf ? ' · 직전 ' + data.prevAsOf + ' 대비 변동 표시' : ' · 주간 변동은 다음 집계부터') + '.';
       return true;
     };  })();

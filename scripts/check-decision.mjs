@@ -8,73 +8,16 @@
 // Chrome 이 필요하므로 `npm test` 에는 넣지 않았습니다(CI 에서 깨지면 안 되니까).
 import fs from 'node:fs';
 import path from 'node:path';
-import http from 'node:http';
-import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+// 서버·Chrome 붙이기는 check-home.mjs 와 **같은 뼈대**를 씁니다 — 붙이는 방식을 한 곳에서 고치도록.
+import { serve, connect, ev, wait, CHROME } from './_browser.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUB = path.join(ROOT, 'site', 'public');
 const PORT_CDP = 9333;
 const HEADLESS = process.argv.includes('--headless');
 const SHOT = process.argv.includes('--shot');
-const CHROME = ['C:/Program Files/Google/Chrome/Application/chrome.exe',
-  'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe'].find(p => fs.existsSync(p));
 
-const wait = ms => new Promise(r => setTimeout(r, ms));
-const TYPE = { '.html': 'text/html; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8',
-  '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml' };
-
-/** site/public 을 그대로 내주는 임시 서버 — 배포 환경과 같은 절대경로(/decision-index.json)를 쓰기 위해 */
-function serve() {
-  const srv = http.createServer((req, res) => {
-    let p = decodeURIComponent(req.url.split('?')[0]);
-    if (p === '/decision') p = '/decision/index.html';
-    if (p.endsWith('/')) p += 'index.html';
-    const f = path.join(PUB, p);
-    // 밖으로 새 나가지 않게
-    if (!f.startsWith(PUB) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end('no'); return; }
-    res.writeHead(200, { 'content-type': TYPE[path.extname(f)] || 'application/octet-stream' });
-    fs.createReadStream(f).pipe(res);
-  });
-  return new Promise(r => srv.listen(0, '127.0.0.1', () => r({ srv, port: srv.address().port })));
-}
-
-async function connect() {
-  if (!CHROME) throw new Error('Chrome 을 찾지 못했습니다');
-  const chrome = spawn(CHROME, [...(HEADLESS ? ['--headless=new'] : []), `--remote-debugging-port=${PORT_CDP}`,
-    '--disable-gpu', '--hide-scrollbars', '--window-size=1200,1000',
-    '--user-data-dir=' + (process.env.TEMP || '/tmp') + '/jinga-checkdecision', '--no-first-run', 'about:blank'],
-    { stdio: 'ignore' });
-  const get = async p => {
-    for (let i = 0; i < 60; i++) { try { return await (await fetch(`http://127.0.0.1:${PORT_CDP}${p}`)).json(); } catch { await wait(300); } }
-    throw new Error('Chrome 에 붙지 못했습니다');
-  };
-  const target = (await get('/json/list')).find(t => t.type === 'page');
-  const ws = new WebSocket(target.webSocketDebuggerUrl);
-  await new Promise(r => { ws.onopen = r; });
-  let id = 0; const pending = new Map(); const logs = [];
-  ws.onmessage = e => {
-    const m = JSON.parse(e.data);
-    if (m.id && pending.has(m.id)) { pending.get(m.id)(m); pending.delete(m.id); return; }
-    // 콘솔 오류는 하나라도 놓치면 안 됩니다 — 화면은 멀쩡해 보이면서 반쪽만 도는 일이 흔합니다
-    if (m.method === 'Runtime.consoleAPICalled' && ['error', 'warning'].includes(m.params.type)) {
-      logs.push(`[${m.params.type}] ${(m.params.args || []).map(a => a.value ?? a.description ?? '').join(' ')}`);
-    }
-    if (m.method === 'Runtime.exceptionThrown') {
-      logs.push(`[예외] ${m.params.exceptionDetails.text} ${m.params.exceptionDetails.exception?.description || ''}`);
-    }
-  };
-  const send = (method, params = {}) => new Promise(res => { const i = ++id; pending.set(i, res); ws.send(JSON.stringify({ id: i, method, params })); });
-  await send('Page.enable'); await send('Runtime.enable');
-  return { send, logs, close: () => { try { ws.close(); } catch { /* 이미 닫힘 */ } chrome.kill(); } };
-}
-
-const ev = async (send, expr) => {
-  const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
-  if (r.result && r.result.exceptionDetails) throw new Error(`스크립트 오류: ${r.result.exceptionDetails.text}`);
-  return r.result && r.result.result ? r.result.result.value : null;
-};
 
 const checks = [];
 const ok = (name, pass, detail = '') => { checks.push({ name, pass, detail }); console.log(`  ${pass ? '✔' : '✘'} ${name}${detail ? ` — ${detail}` : ''}`); };
@@ -83,10 +26,10 @@ async function main() {
   // --live 를 주면 **배포된 사이트**를 봅니다. 로컬 사본이 멀쩡해도 배포 과정에서
   // 압축·복사 누락으로 깨지는 일이 있어, 올린 뒤에 한 번 더 같은 점검을 돌립니다.
   const live = process.argv.includes('--live');
-  const { srv, port } = live ? { srv: { close() {} }, port: 0 } : await serve();
+  const { srv, port } = live ? { srv: { close() {} }, port: 0 } : await serve(PUB);
   const url = live ? 'https://jinga-retech.vercel.app/decision/' : `http://127.0.0.1:${port}/decision/`;
   console.log(`\n/decision 점검 — ${url}${HEADLESS ? ' (headless)' : ''}\n`);
-  const cdp = await connect();
+  const cdp = await connect({ headless: HEADLESS, port: PORT_CDP, profile: 'jinga-checkdecision' });
   const { send } = cdp;
 
   try {
@@ -173,6 +116,30 @@ async function main() {
     ok('출처 없는 주장 수를 화면에 적는다', /출처 없는 주장 0건/.test(rsum), rsum);
     const bad = await ev(send, `document.querySelectorAll('#report .rsum.bad').length`);
     ok('위반이 0건이라 빨간 표시가 없다', bad === 0, `${bad}건`);
+
+    // 전세가율(2026-11-26) — 분모가 매매 **추정**가이므로 전세가율도 추정입니다.
+    // 그래서 「안 보이는 것」보다 「공공 신고값처럼 보이는 것」이 위험합니다. 둘을 따로 봅니다.
+    const jCells = (() => {
+      try {
+        const idx = JSON.parse(fs.readFileSync(path.join(PUB, 'decision-index.json'), 'utf8'));
+        return idx.counts?.withJeonse ?? 0;
+      } catch { return -1; }
+    })();
+    ok('색인에 전세가율이 실렸다', jCells > 0, `전세가율 실린 면적 칸 ${jCells}칸`);
+
+    const jBadge = await ev(send, `(() => {
+      const lis = [...document.querySelectorAll('#report .claims li')].filter(e => e.textContent.includes('전세가율'));
+      if (!lis.length) return 'none';
+      for (const e of lis) {
+        const b = e.querySelector('.bq');
+        if (!b) return 'no-badge';
+        if (/건수/.test(e.textContent)) continue;            // 건수는 공공 신고값이 맞습니다
+        if (!b.className.includes('bq-est')) return 'not-est:' + b.className;
+      }
+      return 'ok:' + lis.length;
+    })()`);
+    ok('전세가율은 추정으로만 적힌다', String(jBadge).startsWith('ok:') || jBadge === 'none',
+      jBadge === 'none' ? '이 단지에는 전세가율이 없습니다(표본 부족)' : String(jBadge));
 
     // 각주마다 출처 원문이 붙어 있고, 번호가 아래 출처 목록 안을 가리키는지.
     // 글자 수로 재면 안 됩니다 — 「이용자 입력값」처럼 짧고 정당한 출처가 있습니다.
